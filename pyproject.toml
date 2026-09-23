@@ -1,0 +1,29 @@
+[project]
+name = "incidentlab"
+version = "0.1.0"
+description = "Local evidence-backed incident diagnosis and verified repair"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.16,<2",
+    "fastapi>=0.115,<1",
+    "opentelemetry-sdk>=1.38,<2",
+    "opentelemetry-exporter-otlp-proto-http>=1.38,<2",
+    "psycopg[binary]>=3.2,<4",
+    "sqlalchemy>=2.0,<3",
+    "temporalio>=1.10,<2",
+    "uvicorn>=0.30,<1",
+]
+
+[dependency-groups]
+dev = ["httpx>=0.27,<1", "ruff>=0.13,<1"]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

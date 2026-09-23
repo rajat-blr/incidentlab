@@ -1,0 +1,15 @@
+{
+  "id": "pool-exhaustion",
+  "version": 1,
+  "service": "checkout",
+  "description": "After rejected checkout requests, a valid checkout fails because database capacity is exhausted.",
+  "reset_command": "python3 -m sample_service.reset --database <path>",
+  "fault_mode": "pool_leak",
+  "traffic": [
+    {"sku": "widget", "quantity": 99, "expected_status": 409},
+    {"sku": "widget", "quantity": 99, "expected_status": 409},
+    {"sku": "widget", "quantity": 1, "expected_status": 503}
+  ],
+  "failure_signal": {"status": 503, "error": "database_pool_timeout"},
+  "healthy_signal": {"status": 200, "remaining_inventory": 9}
+}

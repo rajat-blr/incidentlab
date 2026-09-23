@@ -1,0 +1,1 @@
+"""Deterministic checkout incident fixture."""

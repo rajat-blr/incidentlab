@@ -1,0 +1,135 @@
+"""Durable Step 5 incident workflow with deterministic placeholder outputs."""
+
+from datetime import timedelta
+
+from temporalio import workflow
+from temporalio.common import RetryPolicy
+
+ACTIVITY_RETRY = RetryPolicy(
+    initial_interval=timedelta(seconds=1),
+    backoff_coefficient=2,
+    maximum_interval=timedelta(seconds=5),
+    maximum_attempts=3,
+)
+
+
+@workflow.defn
+class IncidentWorkflow:
+    def __init__(self) -> None:
+        self.approval: str | None = None
+        self.cancel_requested = False
+        self.cancel_actor = "unknown"
+
+    async def _activity(self, name: str, data: dict, *, long_running: bool = False) -> dict:
+        return await workflow.execute_activity(
+            name,
+            data,
+            result_type=dict,
+            start_to_close_timeout=timedelta(seconds=45 if long_running else 15),
+            heartbeat_timeout=timedelta(seconds=5) if long_running else None,
+            retry_policy=ACTIVITY_RETRY,
+        )
+
+    async def _transition(
+        self, run_id: str, state: str, step: str, details: dict | None = None
+    ) -> None:
+        await self._activity(
+            "transition_run",
+            {
+                "run_id": run_id,
+                "state": state,
+                "effect_key": f"run:{run_id}:state:{step}",
+                "details": details or {},
+            },
+        )
+
+    async def _stop_if_cancelled(self, run_id: str, step: str) -> bool:
+        if not self.cancel_requested:
+            return False
+        await self._transition(
+            run_id, "CANCELLED", f"cancelled:{step}", {"actor": self.cancel_actor}
+        )
+        return True
+
+    @workflow.run
+    async def run(self, data: dict) -> dict:
+        run_id = data["run_id"]
+        try:
+            await self._transition(run_id, "REPRODUCING", "reproducing")
+            await self._activity(
+                "reproduce_incident",
+                {
+                    "run_id": run_id,
+                    "scenario_id": data["scenario_id"],
+                    "effect_key": f"run:{run_id}:reproduction",
+                },
+                long_running=True,
+            )
+            if await self._stop_if_cancelled(run_id, "after-reproduction"):
+                return {"state": "CANCELLED"}
+
+            await self._transition(run_id, "COLLECTING", "collecting")
+            await self._activity(
+                "collect_evidence_placeholder",
+                {"run_id": run_id, "effect_key": f"run:{run_id}:evidence-placeholder"},
+            )
+            if await self._stop_if_cancelled(run_id, "after-collection"):
+                return {"state": "CANCELLED"}
+
+            await self._transition(run_id, "DIAGNOSING", "diagnosing")
+            await self._activity(
+                "diagnose_placeholder",
+                {"run_id": run_id, "effect_key": f"run:{run_id}:diagnosis-placeholder"},
+            )
+            await self._transition(run_id, "AWAITING_REPAIR_APPROVAL", "awaiting-approval")
+            await workflow.wait_condition(
+                lambda: self.approval is not None or self.cancel_requested
+            )
+            if await self._stop_if_cancelled(run_id, "awaiting-approval"):
+                return {"state": "CANCELLED"}
+            if self.approval == "rejected":
+                await self._transition(run_id, "CLOSED", "approval-rejected")
+                return {"state": "CLOSED"}
+
+            await self._transition(run_id, "GENERATING", "generating")
+            await self._activity(
+                "generate_repair_placeholder",
+                {"run_id": run_id, "effect_key": f"run:{run_id}:repair-placeholder"},
+            )
+            if await self._stop_if_cancelled(run_id, "after-generation"):
+                return {"state": "CANCELLED"}
+
+            await self._transition(run_id, "VERIFYING", "verifying")
+            await self._activity(
+                "verify_placeholder",
+                {"run_id": run_id, "effect_key": f"run:{run_id}:verification-placeholder"},
+                long_running=True,
+            )
+            if await self._stop_if_cancelled(run_id, "after-verification"):
+                return {"state": "CANCELLED"}
+
+            await self._transition(run_id, "REPORTING", "reporting")
+            await self._activity(
+                "report_placeholder",
+                {"run_id": run_id, "effect_key": f"run:{run_id}:report-placeholder"},
+            )
+            await self._transition(run_id, "COMPLETED", "completed")
+            return {"state": "COMPLETED"}
+        except Exception as error:
+            await self._transition(
+                run_id,
+                "FAILED",
+                "failed",
+                {"failure_category": type(error).__name__},
+            )
+            raise
+
+    @workflow.signal
+    async def repair_approval(self, decision: str) -> None:
+        if self.approval is None:
+            self.approval = decision
+
+    @workflow.signal
+    async def request_cancel(self, actor: str) -> None:
+        self.cancel_requested = True
+        self.cancel_actor = actor

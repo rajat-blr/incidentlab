@@ -1,0 +1,8 @@
+{
+  "scenario_id": "pool-exhaustion",
+  "version": 1,
+  "root_cause_label": "connection_not_returned_on_out_of_stock",
+  "mechanism": "The fault path does not return a checked-out database connection when inventory is insufficient. Two rejected requests exhaust the two-slot pool.",
+  "expected_affected_files": ["sample_service/app.py"],
+  "expected_repair": "Always return the acquired connection, including the out-of-stock branch."
+}

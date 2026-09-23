@@ -1,0 +1,87 @@
+include:
+  - compose.telemetry.yaml
+
+services:
+  postgres:
+    image: postgres:16.10
+    environment:
+      POSTGRES_USER: incidentlab
+      POSTGRES_PASSWORD: incidentlab-local
+      POSTGRES_DB: incidentlab
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incidentlab -d incidentlab"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  temporal:
+    image: temporalio/temporal:1.6.2
+    user: "0:0"
+    command: ["server", "start-dev", "--ip", "0.0.0.0", "--db-filename", "/data/temporal.db"]
+    volumes:
+      - temporal_data:/data
+    ports:
+      - "127.0.0.1:7233:7233"
+      - "127.0.0.1:8233:8233"
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://incidentlab:incidentlab-local@postgres:5432/incidentlab
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql+psycopg://incidentlab:incidentlab-local@postgres:5432/incidentlab
+      TEMPORAL_ADDRESS: temporal:7233
+      SCENARIO_ROOT: /app/scenarios
+      REPOSITORY_GIT_DIR: /repository/.git
+    volumes:
+      - ./.git:/repository/.git:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=2)"
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: ["python", "-m", "incidentlab.workflow.worker"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://incidentlab:incidentlab-local@postgres:5432/incidentlab
+      TEMPORAL_ADDRESS: temporal:7233
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+    stop_grace_period: 10s
+
+volumes:
+  postgres_data:
+  temporal_data:

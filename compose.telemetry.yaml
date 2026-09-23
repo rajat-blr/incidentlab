@@ -1,0 +1,36 @@
+services:
+  collector:
+    image: otel/opentelemetry-collector:0.161.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./telemetry/collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4318:4318"
+    depends_on:
+      - jaeger
+      - loki
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "127.0.0.1:16686:16686"
+
+  loki:
+    image: grafana/loki:3.7.0
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./telemetry/loki.yaml:/etc/loki/config.yaml:ro
+    ports:
+      - "127.0.0.1:3100:3100"
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./telemetry/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      - collector
