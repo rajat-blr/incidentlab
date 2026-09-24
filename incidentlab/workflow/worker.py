@@ -1,4 +1,4 @@
-"""Temporal worker process for the Step 5 incident workflow."""
+"""Temporal worker process for IncidentLab runs."""
 
 import asyncio
 import os

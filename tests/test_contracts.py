@@ -43,7 +43,7 @@ class ContractTests(unittest.TestCase):
     def test_hypothesis_rejects_conflicting_citations(self) -> None:
         with self.assertRaises(ValidationError):
             Hypothesis(
-                id="h1",
+                id=uuid4(),
                 run_id=uuid4(),
                 summary="pool leak",
                 mechanism="connection leak",

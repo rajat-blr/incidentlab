@@ -35,6 +35,21 @@ evidence_items = sa.Table(
     sa.Column("content_sha256", sa.String(64), nullable=False),
 )
 
+evidence_artifacts = sa.Table(
+    "evidence_artifacts",
+    metadata,
+    sa.Column("id", sa.Uuid(), primary_key=True),
+    sa.Column("run_id", sa.Uuid(), sa.ForeignKey("incident_runs.id"), nullable=False),
+    sa.Column("source", sa.String(255), nullable=False),
+    sa.Column("media_type", sa.String(128), nullable=False),
+    sa.Column("content", sa.LargeBinary(), nullable=False),
+    sa.Column("content_sha256", sa.String(64), nullable=False),
+    sa.Column("retrieved_at", sa.DateTime(timezone=True), nullable=False),
+    sa.UniqueConstraint(
+        "run_id", "source", "content_sha256", name="uq_evidence_artifacts_run_source_hash"
+    ),
+)
+
 hypotheses = sa.Table(
     "hypotheses",
     metadata,

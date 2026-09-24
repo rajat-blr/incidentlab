@@ -8,8 +8,25 @@ from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import insert
 
-from incidentlab.contracts.models import IncidentRun, RunState
-from incidentlab.db.tables import approvals, audit_events, incident_runs, run_outputs
+from incidentlab.contracts.models import (
+    EvidenceArtifact,
+    EvidenceItem,
+    Hypothesis,
+    IncidentRun,
+    RunState,
+)
+from incidentlab.db.tables import (
+    approvals,
+    audit_events,
+    evidence_artifacts,
+    evidence_items,
+    hypotheses,
+    incident_runs,
+    model_usage,
+    run_outputs,
+)
+from incidentlab.evidence.collection import EvidenceBundle
+from incidentlab.model_adapter.diagnosis import DiagnosisResult
 
 
 @lru_cache
@@ -109,6 +126,60 @@ def list_events(run_id: UUID) -> list[dict]:
     ]
 
 
+def list_evidence(run_id: UUID) -> list[EvidenceItem]:
+    with engine().connect() as connection:
+        rows = (
+            connection.execute(
+                sa.select(evidence_items)
+                .where(evidence_items.c.run_id == run_id)
+                .order_by(evidence_items.c.kind, evidence_items.c.id)
+            )
+            .mappings()
+            .all()
+        )
+    return [EvidenceItem.model_validate(dict(row)) for row in rows]
+
+
+def get_evidence_artifact(artifact_id: UUID) -> tuple[EvidenceArtifact, bytes] | None:
+    with engine().connect() as connection:
+        row = (
+            connection.execute(
+                sa.select(evidence_artifacts).where(evidence_artifacts.c.id == artifact_id)
+            )
+            .mappings()
+            .one_or_none()
+        )
+    if row is None:
+        return None
+    metadata = EvidenceArtifact(
+        id=row["id"],
+        run_id=row["run_id"],
+        source=row["source"],
+        media_type=row["media_type"],
+        content_sha256=row["content_sha256"],
+        byte_size=len(row["content"]),
+        retrieved_at=row["retrieved_at"],
+    )
+    return metadata, row["content"]
+
+
+def list_hypotheses(run_id: UUID) -> list[Hypothesis]:
+    with engine().connect() as connection:
+        rows = (
+            connection.execute(
+                sa.select(hypotheses).where(hypotheses.c.run_id == run_id).order_by(hypotheses.c.id)
+            )
+            .mappings()
+            .all()
+        )
+    values = []
+    for row in rows:
+        data = dict(row)
+        data.pop("validation_status")
+        values.append(Hypothesis.model_validate(data))
+    return values
+
+
 def _insert_event(
     connection: sa.Connection,
     run_id: UUID,
@@ -195,6 +266,149 @@ def record_output(run_id: UUID, column: str, payload: dict, effect_key: str) -> 
                 )
             )
     return inserted
+
+
+def record_evidence_bundle(run_id: UUID, bundle: EvidenceBundle, effect_key: str) -> bool:
+    """Atomically save exact artifacts, normalized items, and the durable activity effect."""
+    now = datetime.now(UTC)
+    artifacts = tuple(bundle.artifacts)
+    items = tuple(bundle.items)
+    artifacts_by_id = {artifact.id: artifact for artifact in artifacts}
+    for item in items:
+        referenced = UUID(item.artifact_ref.rsplit("/", 1)[-1])
+        if referenced not in artifacts_by_id:
+            raise ValueError(f"evidence {item.id} references an artifact outside its bundle")
+        artifact = artifacts_by_id[referenced]
+        if item.content_sha256 != artifact.content_sha256:
+            raise ValueError(f"evidence {item.id} hash does not match its artifact")
+    with engine().begin() as connection:
+        inserted = _insert_event(
+            connection,
+            run_id,
+            "evidence_recorded",
+            "worker",
+            str(run_id),
+            effect_key,
+            {"artifact_count": len(artifacts), "evidence_count": len(items)},
+            now,
+        )
+        if not inserted:
+            return False
+        for artifact in artifacts:
+            connection.execute(
+                insert(evidence_artifacts)
+                .values(
+                    id=artifact.id,
+                    run_id=run_id,
+                    source=artifact.source,
+                    media_type=artifact.media_type,
+                    content=artifact.content,
+                    content_sha256=artifact.content_sha256,
+                    retrieved_at=artifact.retrieved_at,
+                )
+                .on_conflict_do_nothing(index_elements=[evidence_artifacts.c.id])
+            )
+        for item in items:
+            connection.execute(
+                insert(evidence_items)
+                .values(**item.model_dump(exclude={"schema_version"}))
+                .on_conflict_do_nothing(index_elements=[evidence_items.c.id])
+            )
+    return True
+
+
+def record_diagnosis(
+    run_id: UUID,
+    diagnosis: DiagnosisResult,
+    provider: str,
+    model_id: str,
+    prompt_version: str,
+    effect_key: str,
+) -> bool:
+    now = datetime.now(UTC)
+    result_hypotheses = tuple(diagnosis.hypotheses)
+    usage = diagnosis.usage
+    with engine().begin() as connection:
+        inserted = _insert_event(
+            connection,
+            run_id,
+            "diagnosis_recorded",
+            "worker",
+            str(run_id),
+            effect_key,
+            {
+                "hypothesis_count": len(result_hypotheses),
+                "tool_call_count": diagnosis.tool_call_count,
+                "model_id": model_id,
+                "prompt_version": prompt_version,
+            },
+            now,
+        )
+        if not inserted:
+            return False
+        for index, request in enumerate(diagnosis.tool_requests):
+            _insert_event(
+                connection,
+                run_id,
+                "diagnosis_tool_call",
+                "worker",
+                str(run_id),
+                f"{effect_key}:tool:{index}",
+                request.model_dump(mode="json"),
+                now,
+            )
+        for hypothesis in result_hypotheses:
+            connection.execute(
+                insert(hypotheses)
+                .values(
+                    id=hypothesis.id,
+                    run_id=run_id,
+                    summary=hypothesis.summary,
+                    mechanism=hypothesis.mechanism,
+                    supporting_evidence_ids=hypothesis.supporting_evidence_ids,
+                    contradicting_evidence_ids=hypothesis.contradicting_evidence_ids,
+                    confidence=hypothesis.confidence,
+                    proposed_checks=[
+                        check.model_dump(mode="json") for check in hypothesis.proposed_checks
+                    ],
+                    validation_status="validated",
+                    model_id=hypothesis.model_id,
+                    prompt_version=hypothesis.prompt_version,
+                )
+                .on_conflict_do_nothing(index_elements=[hypotheses.c.id])
+            )
+        usage_id = uuid5(NAMESPACE_URL, f"incidentlab:{run_id}:{prompt_version}:usage")
+        connection.execute(
+            insert(model_usage)
+            .values(
+                id=usage_id,
+                run_id=run_id,
+                provider=provider,
+                model_id=model_id,
+                prompt_version=prompt_version,
+                input_tokens=usage.input_tokens,
+                output_tokens=usage.output_tokens,
+                latency_ms=usage.latency_ms,
+                estimated_cost_usd=0,
+            )
+            .on_conflict_do_nothing(index_elements=[model_usage.c.id])
+        )
+    return True
+
+
+def record_diagnosis_rejection(run_id: UUID, category: str, detail: str, effect_key: str) -> bool:
+    now = datetime.now(UTC)
+    with engine().begin() as connection:
+        return _insert_event(
+            connection,
+            run_id,
+            "diagnosis_rejected",
+            "worker",
+            str(run_id),
+            effect_key,
+            {"category": category[:128], "detail": detail[:500]},
+            now,
+        )
 
 
 def record_approval(

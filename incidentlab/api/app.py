@@ -1,18 +1,21 @@
-"""IncidentLab HTTP API for scenarios and durable Step 5 runs."""
+"""IncidentLab HTTP API for durable runs and attributable evidence."""
 
 import asyncio
+import hashlib
 import os
 import socket
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from sqlalchemy import create_engine, text
 from temporalio.client import Client
 from temporalio.common import WorkflowIDConflictPolicy
 from temporalio.service import RPCError
 
 from incidentlab.contracts.models import (
+    EvidenceItem,
+    Hypothesis,
     IncidentRun,
     RepairApprovalRequest,
     RunCancelRequest,
@@ -149,6 +152,7 @@ async def create_run(request: RunCreateRequest) -> IncidentRun:
                 "run_id": str(run.id),
                 "scenario_id": run.scenario_id,
                 "scenario_version": run.scenario_version,
+                "pinned_commit": run.pinned_commit,
             },
             id=run.workflow_id,
             task_queue=TASK_QUEUE,
@@ -168,6 +172,36 @@ async def read_run(run_id: UUID) -> IncidentRun:
 async def read_events(run_id: UUID) -> list[dict]:
     await asyncio.to_thread(require_run, run_id)
     return await asyncio.to_thread(repository.list_events, run_id)
+
+
+@app.get("/runs/{run_id}/evidence", response_model=list[EvidenceItem])
+async def read_evidence(run_id: UUID) -> list[EvidenceItem]:
+    await asyncio.to_thread(require_run, run_id)
+    return await asyncio.to_thread(repository.list_evidence, run_id)
+
+
+@app.get("/runs/{run_id}/hypotheses", response_model=list[Hypothesis])
+async def read_hypotheses(run_id: UUID) -> list[Hypothesis]:
+    await asyncio.to_thread(require_run, run_id)
+    return await asyncio.to_thread(repository.list_hypotheses, run_id)
+
+
+@app.get("/evidence/artifacts/{artifact_id}")
+async def read_evidence_artifact(artifact_id: UUID) -> Response:
+    result = await asyncio.to_thread(repository.get_evidence_artifact, artifact_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="evidence_artifact_not_found")
+    metadata, content = result
+    if hashlib.sha256(content).hexdigest() != metadata.content_sha256:
+        raise HTTPException(status_code=500, detail="evidence_artifact_hash_mismatch")
+    return Response(
+        content=content,
+        media_type=metadata.media_type,
+        headers={
+            "ETag": f'"sha256:{metadata.content_sha256}"',
+            "X-Content-SHA256": metadata.content_sha256,
+        },
+    )
 
 
 @app.post("/runs/{run_id}/repair-approval")

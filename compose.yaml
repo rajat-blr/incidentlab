@@ -75,10 +75,21 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://incidentlab:incidentlab-local@postgres:5432/incidentlab
       TEMPORAL_ADDRESS: temporal:7233
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318
+      JAEGER_URL: http://jaeger:16686
+      PROMETHEUS_URL: http://prometheus:9090
+      LOKI_URL: http://loki:3100
+      REPOSITORY_GIT_DIR: /repository/.git
+      GEMINI_API_KEY:
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+    volumes:
+      - ./.git:/repository/.git:ro
     depends_on:
       migrate:
         condition: service_completed_successfully
       temporal:
+        condition: service_started
+      collector:
         condition: service_started
     stop_grace_period: 10s
 

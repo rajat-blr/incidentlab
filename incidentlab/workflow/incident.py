@@ -1,4 +1,4 @@
-"""Durable Step 5 incident workflow with deterministic placeholder outputs."""
+"""Durable incident workflow with evidence collection and downstream placeholders."""
 
 from datetime import timedelta
 
@@ -20,12 +20,21 @@ class IncidentWorkflow:
         self.cancel_requested = False
         self.cancel_actor = "unknown"
 
-    async def _activity(self, name: str, data: dict, *, long_running: bool = False) -> dict:
+    async def _activity(
+        self,
+        name: str,
+        data: dict,
+        *,
+        long_running: bool = False,
+        timeout_seconds: int | None = None,
+    ) -> dict:
         return await workflow.execute_activity(
             name,
             data,
             result_type=dict,
-            start_to_close_timeout=timedelta(seconds=45 if long_running else 15),
+            start_to_close_timeout=timedelta(
+                seconds=timeout_seconds or (45 if long_running else 15)
+            ),
             heartbeat_timeout=timedelta(seconds=5) if long_running else None,
             retry_policy=ACTIVITY_RETRY,
         )
@@ -56,7 +65,7 @@ class IncidentWorkflow:
         run_id = data["run_id"]
         try:
             await self._transition(run_id, "REPRODUCING", "reproducing")
-            await self._activity(
+            reproduction = await self._activity(
                 "reproduce_incident",
                 {
                     "run_id": run_id,
@@ -71,7 +80,15 @@ class IncidentWorkflow:
             await self._transition(run_id, "COLLECTING", "collecting")
             await self._activity(
                 "collect_evidence_placeholder",
-                {"run_id": run_id, "effect_key": f"run:{run_id}:evidence-placeholder"},
+                {
+                    "run_id": run_id,
+                    "effect_key": f"run:{run_id}:evidence-placeholder",
+                    "pinned_commit": data.get("pinned_commit"),
+                    "observed_start": reproduction.get("observed_start"),
+                    "observed_end": reproduction.get("observed_end"),
+                    "request_ids": reproduction.get("request_ids", []),
+                },
+                timeout_seconds=45,
             )
             if await self._stop_if_cancelled(run_id, "after-collection"):
                 return {"state": "CANCELLED"}
@@ -80,6 +97,7 @@ class IncidentWorkflow:
             await self._activity(
                 "diagnose_placeholder",
                 {"run_id": run_id, "effect_key": f"run:{run_id}:diagnosis-placeholder"},
+                timeout_seconds=45,
             )
             await self._transition(run_id, "AWAITING_REPAIR_APPROVAL", "awaiting-approval")
             await workflow.wait_condition(

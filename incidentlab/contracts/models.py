@@ -101,15 +101,57 @@ class EvidenceItem(Contract):
         return self
 
 
+class EvidenceArtifact(Contract):
+    id: UUID
+    run_id: UUID
+    source: str = Field(min_length=1)
+    media_type: str = Field(min_length=1)
+    content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    byte_size: int = Field(ge=0)
+    retrieved_at: datetime
+
+
+class EvidenceLookup(Contract):
+    tool: Literal["query_metric", "fetch_trace", "search_logs", "search_repository"]
+    evidence_id: str = Field(min_length=1, max_length=128)
+
+
+class HypothesisDraft(Contract):
+    summary: str = Field(min_length=1, max_length=500)
+    mechanism: str = Field(min_length=1, max_length=2000)
+    supporting_evidence_ids: list[str] = Field(min_length=1, max_length=12)
+    contradicting_evidence_ids: list[str] = Field(default_factory=list, max_length=12)
+    confidence: Literal["low", "medium", "high"]
+    proposed_checks: list[EvidenceLookup] = Field(default_factory=list, max_length=2)
+
+    @field_validator("supporting_evidence_ids", "contradicting_evidence_ids")
+    @classmethod
+    def unique_citations(cls, value: list[str]) -> list[str]:
+        if len(value) != len(set(value)):
+            raise ValueError("evidence IDs must be unique")
+        return value
+
+    @model_validator(mode="after")
+    def distinct_citations(self) -> "HypothesisDraft":
+        if set(self.supporting_evidence_ids) & set(self.contradicting_evidence_ids):
+            raise ValueError("evidence cannot both support and contradict a hypothesis")
+        return self
+
+
+class DiagnosisDraft(Contract):
+    hypotheses: list[HypothesisDraft] = Field(min_length=1, max_length=3)
+    follow_up_queries: list[EvidenceLookup] = Field(default_factory=list, max_length=2)
+
+
 class Hypothesis(Contract):
-    id: str
+    id: UUID
     run_id: UUID
     summary: str = Field(min_length=1)
     mechanism: str = Field(min_length=1)
     supporting_evidence_ids: list[str]
     contradicting_evidence_ids: list[str]
     confidence: Literal["low", "medium", "high"]
-    proposed_checks: list[str] = Field(default_factory=list)
+    proposed_checks: list[EvidenceLookup] = Field(default_factory=list, max_length=2)
     model_id: str | None = None
     prompt_version: str | None = None
 

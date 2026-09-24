@@ -1,7 +1,9 @@
 """Temporal Activities. Side effects live here, outside deterministic workflow code."""
 
 import asyncio
+import os
 import tempfile
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -10,7 +12,10 @@ from temporalio.exceptions import ApplicationError
 
 from incidentlab.contracts.models import RunState
 from incidentlab.db import repository
-from sample_service.demo import replay
+from incidentlab.evidence.collection import collect_git_metadata, collect_telemetry, combine
+from incidentlab.model_adapter.diagnosis import PROMPT_VERSION, DiagnosisError, diagnose
+from incidentlab.model_adapter.gemini_adapter import GeminiDiagnosisAdapter
+from sample_service.observed_replay import replay_with_telemetry
 
 
 @activity.defn(name="transition_run")
@@ -29,12 +34,17 @@ async def transition_run_activity(data: dict) -> dict:
 async def reproduce_incident_activity(data: dict) -> dict:
     activity.heartbeat("resetting scenario")
     with tempfile.TemporaryDirectory(prefix="incidentlab-run-") as temporary:
-        results = await asyncio.to_thread(replay, Path(temporary) / "checkout.sqlite3", "pool_leak")
-    statuses = [status for status, _ in results]
+        root = Path(temporary)
+        payload = await asyncio.to_thread(
+            replay_with_telemetry,
+            root / "checkout.sqlite3",
+            data["run_id"],
+            root,
+        )
+    statuses = payload["statuses"]
     activity.heartbeat("replay completed")
-    if statuses != [409, 409, 503] or results[-1][1].get("error") != "database_pool_timeout":
+    if statuses != [409, 409, 503] or payload["failure"] != "database_pool_timeout":
         raise ApplicationError("scenario did not reproduce", non_retryable=True)
-    payload = {"statuses": statuses, "failure": "database_pool_timeout"}
     await asyncio.to_thread(
         repository.record_output,
         UUID(data["run_id"]),
@@ -59,24 +69,83 @@ async def _placeholder(data: dict, column: str, payload: dict) -> dict:
 
 @activity.defn(name="collect_evidence_placeholder")
 async def collect_evidence_placeholder(data: dict) -> dict:
-    return await _placeholder(
-        data,
-        "evidence_placeholder",
-        {"status": "placeholder", "note": "Real collectors arrive in PRD Step 6."},
+    """The legacy activity name is retained so Step 5 workflow histories remain replayable."""
+    run_id = UUID(data["run_id"])
+    run = await asyncio.to_thread(repository.get_run, run_id)
+    if run is None:
+        raise ApplicationError("run not found", non_retryable=True)
+    start = datetime.fromisoformat(data.get("observed_start") or datetime.now(UTC).isoformat())
+    end = datetime.fromisoformat(data.get("observed_end") or start.isoformat())
+    telemetry = await asyncio.to_thread(
+        collect_telemetry,
+        run_id,
+        start,
+        end,
+        data.get("request_ids", []),
     )
+    git = await asyncio.to_thread(
+        collect_git_metadata,
+        run_id,
+        data.get("pinned_commit") or run.pinned_commit,
+        Path(os.environ.get("REPOSITORY_GIT_DIR", "/repository/.git")),
+    )
+    bundle = combine(telemetry, git)
+    await asyncio.to_thread(
+        repository.record_evidence_bundle,
+        run_id,
+        bundle,
+        data["effect_key"],
+    )
+    return {
+        "status": "collected",
+        "artifact_count": len(bundle.artifacts),
+        "evidence_count": len(bundle.items),
+        "gap_count": sum(item.kind == "gap" for item in bundle.items),
+    }
 
 
 @activity.defn(name="diagnose_placeholder")
 async def diagnose_placeholder(data: dict) -> dict:
-    return await _placeholder(
-        data,
-        "diagnosis_placeholder",
-        {
-            "status": "placeholder",
-            "summary": "Connection pool exhausted after rejected checkout requests.",
-            "source": "deterministic-step-5",
-        },
+    """The legacy activity name is retained so existing workflow histories remain replayable."""
+    run_id = UUID(data["run_id"])
+    evidence = await asyncio.to_thread(repository.list_evidence, run_id)
+    try:
+        adapter = GeminiDiagnosisAdapter()
+        try:
+            result = await asyncio.to_thread(
+                diagnose,
+                run_id,
+                evidence,
+                adapter,
+                repository.get_evidence_artifact,
+            )
+        finally:
+            adapter.close()
+    except DiagnosisError as error:
+        await asyncio.to_thread(
+            repository.record_diagnosis_rejection,
+            run_id,
+            type(error).__name__,
+            str(error),
+            f"{data['effect_key']}:rejected",
+        )
+        raise ApplicationError(str(error), non_retryable=True) from error
+    await asyncio.to_thread(
+        repository.record_diagnosis,
+        run_id,
+        result,
+        adapter.provider,
+        adapter.model_id,
+        PROMPT_VERSION,
+        data["effect_key"],
     )
+    return {
+        "status": "validated",
+        "hypothesis_count": len(result.hypotheses),
+        "tool_call_count": result.tool_call_count,
+        "model_id": adapter.model_id,
+        "prompt_version": PROMPT_VERSION,
+    }
 
 
 @activity.defn(name="generate_repair_placeholder")
