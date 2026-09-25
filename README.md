@@ -9,8 +9,8 @@ hypotheses, and enforces a human approval gate before repair work proceeds.
 > IncidentLab is an educational development project, not a production incident
 > response system. It does not merge code or deploy changes.
 
-Steps 1–7 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
-Repair generation and sandboxed verification remain roadmap work.
+Steps 1–8 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
+Repair generation and workflow-integrated candidate verification remain roadmap work.
 
 ## What works today
 
@@ -26,6 +26,8 @@ Repair generation and sandboxed verification remain roadmap work.
   and REST endpoints for runs, evidence, hypotheses, approval, and cancellation.
 - Repeatable acceptance checks for workflow durability, evidence integrity, and
   live diagnosis.
+- An independent Docker sandbox for manually supplied patches, with pinned inputs,
+  fixed checks, resource limits, hashed artifacts, and hostile-code containment.
 
 ## Architecture
 
@@ -43,6 +45,8 @@ Checkout gateway -> Inventory service -> SQLite fixture
 FastAPI -> PostgreSQL <- Temporal workflow/worker -> Gemini adapter
                                                         |
                                            Validated hypotheses + audit trail
+
+Manual patch -> Host-side sandbox runner -> Constrained verification container
 ```
 
 The sample inventory service owns a two-connection pool. In `pool_leak` mode,
@@ -99,6 +103,7 @@ request succeeds.
    .venv/bin/python scripts/step5_restart_check.py
    .venv/bin/python scripts/step6_evidence_check.py
    .venv/bin/python scripts/step7_diagnosis_check.py
+   .venv/bin/python scripts/step8_sandbox_check.py
    ```
 
 The Step 7 check makes a live Gemini request and rejects the repair at the human
@@ -149,10 +154,13 @@ Useful API routes include:
 - Raw artifacts are size-bounded and hash-checked before use.
 - The model cannot supply shell commands or determine verification outcomes.
 - Human approval is required before repair generation.
+- Verification uses a read-only, network-disabled, non-root container without the
+  Docker socket or private evaluation inputs.
 
 See [ADR 0001](docs/adr/0001-first-vertical-slice.md) for the initial scope and
 security decisions, and [telemetry/queries.md](telemetry/queries.md) for the
-bounded incident queries.
+bounded incident queries. The [sandbox boundary](docs/sandbox.md) documents the
+implemented isolation controls and their limitations.
 
 ## Project layout
 
@@ -169,10 +177,10 @@ docs/adr/           Architecture decision records
 
 ## Roadmap
 
-The next milestone is Step 8: an independent sandbox runner that can apply a
-manually supplied patch at a pinned commit, enforce resource and network limits,
-run fixed verification commands, retain artifacts, and clean up reliably. The
-remaining sequence is tracked in the [PRD and build plan](incidentlab-prd-and-build-plan.md).
+The next milestone is Step 9: connect an approved diagnosis to bounded repair
+generation and deterministic patch policy, then pass eligible candidates to the
+independent verifier. The remaining sequence is tracked in the
+[PRD and build plan](incidentlab-prd-and-build-plan.md).
 
 Stop the local stack without deleting its volumes:
 

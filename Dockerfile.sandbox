@@ -1,0 +1,13 @@
+FROM python:3.12-slim@sha256:2f17fc044b579bab302c2e8054d3a686e2cb9a83de48e70534b94cd8ebbe06a9
+
+COPY --from=ghcr.io/astral-sh/uv:0.12.9@sha256:8b940d3a9d65bed080436972241af2e21c84b5e8c9193f7014ed71479ee795ff /uv /bin/uv
+
+WORKDIR /opt/incidentlab-runner
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen
+
+COPY incidentlab/sandbox/container_check.py ./container_check.py
+
+ENV PATH="/opt/incidentlab-runner/.venv/bin:${PATH}"
+WORKDIR /workspace
+USER 65532:65532
