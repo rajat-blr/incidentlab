@@ -93,6 +93,21 @@ services:
         condition: service_started
     stop_grace_period: 10s
 
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
 volumes:
   postgres_data:
   temporal_data:

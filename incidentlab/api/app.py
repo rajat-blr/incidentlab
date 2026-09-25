@@ -5,9 +5,11 @@ import hashlib
 import os
 import socket
 from pathlib import Path
+from typing import Literal
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from temporalio.client import Client
 from temporalio.common import WorkflowIDConflictPolicy
@@ -27,6 +29,7 @@ from incidentlab.contracts.models import (
     VerificationRun,
 )
 from incidentlab.db import repository
+from incidentlab.reporting import assemble_report, render_markdown
 from incidentlab.workflow.incident import IncidentWorkflow
 from incidentlab.workflow.worker import TASK_QUEUE
 
@@ -165,6 +168,14 @@ async def create_run(request: RunCreateRequest) -> IncidentRun:
     return run
 
 
+@app.get("/runs", response_model=list[IncidentRun])
+async def read_runs(
+    state: RunState | None = None,
+    limit: int = Query(default=50, ge=1, le=200),
+) -> list[IncidentRun]:
+    return await asyncio.to_thread(repository.list_runs, state=state, limit=limit)
+
+
 @app.get("/runs/{run_id}", response_model=IncidentRun)
 async def read_run(run_id: UUID) -> IncidentRun:
     return await asyncio.to_thread(require_run, run_id)
@@ -198,6 +209,31 @@ async def read_candidates(run_id: UUID) -> list[RepairCandidate]:
 async def read_verifications(run_id: UUID) -> list[VerificationRun]:
     await asyncio.to_thread(require_run, run_id)
     return await asyncio.to_thread(repository.list_verifications, run_id)
+
+
+@app.get("/runs/{run_id}/report")
+async def read_report(
+    run_id: UUID,
+    format: Literal["json", "markdown"] = "json",
+) -> Response:
+    run = await asyncio.to_thread(require_run, run_id)
+    evidence, hypotheses, candidates, verifications, events = await asyncio.gather(
+        asyncio.to_thread(repository.list_evidence, run_id),
+        asyncio.to_thread(repository.list_hypotheses, run_id),
+        asyncio.to_thread(repository.list_repair_candidates, run_id),
+        asyncio.to_thread(repository.list_verifications, run_id),
+        asyncio.to_thread(repository.list_events, run_id),
+    )
+    report = assemble_report(run, evidence, hypotheses, candidates, verifications, events)
+    filename = f"incidentlab-{run_id}.{'md' if format == 'markdown' else 'json'}"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    if format == "markdown":
+        return Response(
+            content=render_markdown(report),
+            media_type="text/markdown; charset=utf-8",
+            headers=headers,
+        )
+    return JSONResponse(content=report, headers=headers)
 
 
 @app.get("/evidence/artifacts/{artifact_id}")

@@ -5,3 +5,6 @@ __pycache__/
 .ruff_cache/
 .pytest_cache/
 .env
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo

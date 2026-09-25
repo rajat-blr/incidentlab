@@ -9,8 +9,8 @@ hypotheses, and enforces a human approval gate before repair work proceeds.
 > IncidentLab is an educational development project, not a production incident
 > response system. It does not merge code or deploy changes.
 
-Steps 1–10 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
-The user-facing review flow and later evaluation/hardening milestones remain roadmap work.
+Steps 1–11 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
+Evaluation, integrations, and later hardening milestones remain roadmap work.
 
 ## What works today
 
@@ -26,6 +26,9 @@ The user-facing review flow and later evaluation/hardening milestones remain roa
   deterministic unified diffs, and a fail-closed patch policy.
 - Persisted baseline and post-patch checks with hash-addressed raw logs,
   fact-derived outcomes, explicit inconclusive handling, and deterministic ranking.
+- A responsive React review console with live run status, evidence and diagnosis
+  review, approval controls, safe diff rendering, verification logs, audit history,
+  and deterministic Markdown report export.
 - PostgreSQL persistence, Alembic migrations, audit events, model-usage records,
   and REST endpoints for runs, evidence, hypotheses, approval, and cancellation.
 - Repeatable acceptance checks for workflow durability, evidence integrity, live
@@ -100,6 +103,8 @@ request succeeds.
    curl http://127.0.0.1:8000/ready
    ```
 
+   Then open the review console at `http://127.0.0.1:5173`.
+
 5. Run the acceptance checks:
 
    ```sh
@@ -132,6 +137,7 @@ host-side verifier with:
 .venv/bin/ruff format --check incidentlab sample_service tests migrations scripts
 TEST_DATABASE_ADMIN_URL=postgresql://incidentlab:incidentlab-local@127.0.0.1:55432/postgres \
 .venv/bin/python -m unittest discover -s tests -v
+cd frontend && npm ci && npm run typecheck && npm test && npm run build
 ```
 
 The migration test creates and removes a temporary PostgreSQL database. The
@@ -141,6 +147,7 @@ Compose PostgreSQL service must be running.
 
 | Service | Address | Purpose |
 | --- | --- | --- |
+| IncidentLab review console | `http://127.0.0.1:5173` | Review runs, evidence, repairs, verification, and audit history |
 | IncidentLab API | `http://127.0.0.1:8000` | Runs, evidence, hypotheses, and approvals |
 | Temporal UI | `http://127.0.0.1:8233` | Workflow history and activity attempts |
 | Jaeger | `http://127.0.0.1:16686` | Distributed traces |
@@ -153,12 +160,14 @@ Useful API routes include:
 | --- | --- | --- |
 | `GET` | `/scenarios` | List public scenario metadata |
 | `POST` | `/runs` | Start or retrieve an idempotent run |
+| `GET` | `/runs` | List runs, optionally filtered by state |
 | `GET` | `/runs/{id}` | Read current run state |
 | `GET` | `/runs/{id}/events` | Read the audit trail |
 | `GET` | `/runs/{id}/evidence` | Read normalized evidence |
 | `GET` | `/runs/{id}/hypotheses` | Read validated diagnosis results |
 | `GET` | `/runs/{id}/candidates` | Read policy-accepted repair candidates |
 | `GET` | `/runs/{id}/verifications` | Read checks, outcomes, and candidate ranking |
+| `GET` | `/runs/{id}/report` | Download the deterministic JSON or Markdown report |
 | `GET` | `/verification/artifacts/{id}` | Read a hash-verified raw check log |
 | `POST` | `/runs/{id}/repair-approval` | Approve or reject repair generation |
 | `POST` | `/runs/{id}/cancel` | Request durable cancellation |
@@ -189,6 +198,7 @@ implemented isolation controls and their limitations.
 
 ```text
 incidentlab/       API, contracts, persistence, evidence, model, and workflow code
+frontend/          React and TypeScript review console served by nginx
 sample_service/    Fault-injected checkout fixture and replay tools
 scenarios/         Public scenario contract and private evaluation truth
 telemetry/         Collector, Prometheus, Loki, and query configuration
@@ -200,9 +210,9 @@ docs/adr/           Architecture decision records
 
 ## Roadmap
 
-The next milestone is Step 11: build the run list, evidence explorer, diff review,
-verification matrix, report export, and audit UI. The remaining sequence is tracked in the
-[PRD and build plan](incidentlab-prd-and-build-plan.md).
+The next milestone is Step 12: add a second scenario, a repeated-run evaluation
+harness, adversarial cases, baseline comparisons, and metrics export. The remaining
+sequence is tracked in the [PRD and build plan](incidentlab-prd-and-build-plan.md).
 
 Stop the local stack without deleting its volumes:
 

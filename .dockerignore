@@ -6,3 +6,5 @@ __pycache__/
 scenarios/private/
 docs/
 telemetry/
+frontend/node_modules/
+frontend/dist/

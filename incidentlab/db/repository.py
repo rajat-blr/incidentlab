@@ -118,6 +118,15 @@ def get_run(run_id: UUID) -> IncidentRun | None:
     return _run_from_row(row) if row else None
 
 
+def list_runs(*, state: RunState | None = None, limit: int = 50) -> list[IncidentRun]:
+    statement = sa.select(incident_runs).order_by(incident_runs.c.created_at.desc()).limit(limit)
+    if state is not None:
+        statement = statement.where(incident_runs.c.state == state.value)
+    with engine().connect() as connection:
+        rows = connection.execute(statement).mappings().all()
+    return [_run_from_row(row) for row in rows]
+
+
 def list_events(run_id: UUID) -> list[dict]:
     with engine().connect() as connection:
         rows = (
