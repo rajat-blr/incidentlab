@@ -9,6 +9,7 @@
 | Baseline does not fail | Verification is `INCONCLUSIVE`, never `PASS` | Repair the scenario setup and rerun verification |
 | Candidate still reproduces incident | Verification is `FAIL` | Reject the candidate and review raw check logs |
 | Sandbox timeout/output limit | Verification is `INCONCLUSIVE` with preserved bounded log | Fix infrastructure or reduce the deterministic workload |
+| Verifier service stops | Run remains visibly in `VERIFYING`; no outcome is inferred | Restart `verifier`; it resumes unverified candidates and re-signals persisted results idempotently |
 | Duplicate API request | Existing run is returned | Reuse the original run ID |
 | Invalid/over-privileged GitHub installation | Webhook returns 403; no write occurs | Correct App permissions and reinstall |
 | Draft-PR retry | Existing draft is returned from the deterministic head branch | Continue review in the same PR |

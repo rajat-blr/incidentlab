@@ -20,6 +20,7 @@ def verify_run_candidates(
     repository_path: Path,
     *,
     image: str = "incidentlab-sandbox:step8",
+    runtime_root: Path | None = None,
 ) -> tuple[SandboxRunResult, ...]:
     run = repository.get_run(run_id)
     if run is None:
@@ -28,8 +29,17 @@ def verify_run_candidates(
     if not candidates:
         raise ValueError("run has no repair candidates")
     results = []
-    with tempfile.TemporaryDirectory(prefix="incidentlab-verification-") as temporary:
-        runner = DockerSandboxRunner(repository_path, Path(temporary), image=image)
+    if runtime_root:
+        runtime_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix="incidentlab-verification-", dir=runtime_root
+    ) as temporary:
+        runner = DockerSandboxRunner(
+            repository_path,
+            Path(temporary),
+            image=image,
+            workspace_root=runtime_root,
+        )
         for candidate in candidates:
             result = runner.run(
                 candidate.target_commit,
@@ -61,7 +71,8 @@ def verify_and_signal(
     repository_path: Path,
     *,
     image: str = "incidentlab-sandbox:step8",
+    runtime_root: Path | None = None,
 ) -> tuple[SandboxRunResult, ...]:
-    results = verify_run_candidates(run_id, repository_path, image=image)
+    results = verify_run_candidates(run_id, repository_path, image=image, runtime_root=runtime_root)
     asyncio.run(signal_verification_complete(run_id))
     return results

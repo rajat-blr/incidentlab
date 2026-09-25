@@ -38,6 +38,24 @@ class SandboxRunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(SandboxError, "unsafe path"):
                 runner._validate_patch(patch)
 
+    def test_patch_applies_when_workspace_is_nested_inside_repository(self) -> None:
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            target = workspace / "sample_service" / "app.py"
+            target.parent.mkdir(parents=True)
+            target.write_text("old\n")
+            patch = """diff --git a/sample_service/app.py b/sample_service/app.py
+--- a/sample_service/app.py
++++ b/sample_service/app.py
+@@ -1 +1 @@
+-old
++new
+"""
+            result = self.runner(root)._apply_patch(workspace, patch)
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(target.read_text(), "new\n")
+
     def test_unknown_scenario_is_rejected_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             runner = self.runner(Path(temporary))

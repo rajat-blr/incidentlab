@@ -94,6 +94,31 @@ services:
         condition: service_started
     stop_grace_period: 10s
 
+  verifier:
+    build:
+      context: .
+      dockerfile: Dockerfile.verifier
+    environment:
+      DATABASE_URL: postgresql+psycopg://incidentlab:incidentlab-local@postgres:5432/incidentlab
+      TEMPORAL_ADDRESS: temporal:7233
+      HOST_REPOSITORY_PATH: ${PWD}
+      VERIFIER_RUNTIME_ROOT: ${PWD}/.incidentlab-runtime
+      SANDBOX_IMAGE: incidentlab-sandbox:step8
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${PWD}:${PWD}:ro
+      - ${PWD}/.incidentlab-runtime:${PWD}/.incidentlab-runtime
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; os.kill(1, 0)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   frontend:
     build:
       context: .

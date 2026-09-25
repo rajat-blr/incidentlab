@@ -1,0 +1,17 @@
+FROM python:3.12-slim
+
+COPY --from=ghcr.io/astral-sh/uv:0.12.9 /uv /bin/uv
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends docker-cli git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+
+COPY incidentlab ./incidentlab
+COPY sample_service ./sample_service
+
+ENV PATH="/app/.venv/bin:${PATH}"
+CMD ["python", "-m", "incidentlab.verification.agent"]

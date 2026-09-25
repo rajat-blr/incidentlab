@@ -1,8 +1,10 @@
 # Sandbox boundary
 
-The Step 8 verifier is a host-side runner that accepts a full pinned commit and a
-bounded unified diff. It is not called from the API or model worker, and those
-services do not receive the Docker socket.
+The Step 8 verifier is a trusted Compose service that accepts a full pinned commit
+and a bounded unified diff. It automatically drains durable runs waiting in
+`VERIFYING`. It is not called from the API or model worker, and those services do
+not receive the Docker socket. A manual single-run command remains available for
+recovery and debugging.
 
 For every candidate, the runner:
 

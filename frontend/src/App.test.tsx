@@ -5,7 +5,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App, DiffViewer } from "./App";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  localStorage.clear();
+});
 
 function jsonResponse(value: unknown) {
   return new Response(JSON.stringify(value), {
@@ -58,5 +61,29 @@ describe("IncidentLab frontend", () => {
     render(<DiffViewer diff={'diff --git a/x b/x\n+<script>alert("x")</script>\n'} />);
     expect(screen.getByText('+<script>alert("x")</script>')).toBeInTheDocument();
     expect(document.querySelector("script")).toBeNull();
+  });
+
+  it("opens the approval checkpoint on the overview without tab hunting", async () => {
+    const run = {
+      schema_version: 1,
+      id: "11111111-1111-1111-1111-111111111111",
+      scenario_id: "inventory-underflow",
+      scenario_version: 1,
+      pinned_commit: "a".repeat(40),
+      workflow_id: "incidentlab-run-1",
+      state: "AWAITING_REPAIR_APPROVAL",
+      created_at: "2026-09-25T05:00:00Z",
+      updated_at: "2026-09-25T05:01:00Z",
+    };
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.endsWith(`/api/runs/${run.id}`)) return jsonResponse(run);
+      if (url.includes(`/api/runs/${run.id}/`)) return jsonResponse([]);
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    renderApp(`/runs/${run.id}`);
+    expect(await screen.findByRole("dialog", { name: "Generate a bounded repair?" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Approve repair generation" })).toBeEnabled();
+    expect(screen.getByText("Review the diagnosis before generating a repair")).toBeInTheDocument();
   });
 });

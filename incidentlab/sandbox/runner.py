@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import re
 import subprocess
 import tarfile
@@ -78,12 +79,14 @@ class DockerSandboxRunner:
         image: str = "incidentlab-sandbox:step8",
         allowed_path_prefixes: tuple[str, ...] = ("sample_service/",),
         limits: SandboxLimits | None = None,
+        workspace_root: Path | None = None,
     ) -> None:
         self.repository = repository.resolve()
         self.artifacts_root = artifacts_root.resolve()
         self.image = image
         self.allowed_path_prefixes = allowed_path_prefixes
         self.limits = limits or SandboxLimits()
+        self.workspace_root = workspace_root.resolve() if workspace_root else None
 
     def image_digest(self) -> str:
         result = subprocess.run(
@@ -191,6 +194,7 @@ class DockerSandboxRunner:
                 result = subprocess.run(
                     command,
                     cwd=workspace,
+                    env={**os.environ, "GIT_CEILING_DIRECTORIES": str(workspace.parent)},
                     input=unified_diff,
                     capture_output=True,
                     text=True,
@@ -431,7 +435,11 @@ class DockerSandboxRunner:
         )
 
         try:
-            with tempfile.TemporaryDirectory(prefix="incidentlab-sandbox-") as temporary:
+            if self.workspace_root:
+                self.workspace_root.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryDirectory(
+                prefix="incidentlab-sandbox-", dir=self.workspace_root
+            ) as temporary:
                 root = Path(temporary)
                 baseline = root / "baseline"
                 candidate = root / "candidate"

@@ -33,8 +33,9 @@ Steps 1–14 of the [build plan](incidentlab-prd-and-build-plan.md) are complete
   and REST endpoints for runs, evidence, hypotheses, approval, and cancellation.
 - Repeatable acceptance checks for workflow durability, evidence integrity, live
   diagnosis, repair policy, and candidate verification.
-- An independent Docker sandbox for manually supplied patches, with pinned inputs,
-  fixed checks, resource limits, hashed artifacts, and hostile-code containment.
+- An automatic trusted verifier backed by an independent Docker sandbox, with
+  pinned inputs, fixed checks, resource limits, hashed artifacts, and hostile-code
+  containment.
 - A versioned repeated-run evaluation harness with deterministic and uncited
   baselines, adversarial probes, CSV metrics, and explicit failure reports.
 - An opt-in GitHub App boundary that validates webhook signatures and installation
@@ -58,7 +59,7 @@ FastAPI -> PostgreSQL <- Temporal workflow/worker -> Gemini adapters
                        Approved diagnosis -> patch policy -> candidate diff
                                                         |
                                                         v
-Host-side sandbox runner ----------------> Constrained verification container
+Trusted verifier service ---------------> Constrained verification container
         |
         +-- explicit second approval --> Optional GitHub draft PR
 ```
@@ -129,12 +130,14 @@ the stock guard and commits a negative quantity; the healthy control rejects it.
 
 The Step 7 and Step 9 checks make live Gemini requests. Step 9 records approval,
 validates the generated candidate, and sends only a policy-accepted diff to the
-independent sandbox verifier. Step 10 persists every verification log, derives
-the terminal state from mandatory checks, and records deterministic ranking. The
-evaluation and release demo are offline and do not require a model API key.
+independent sandbox verifier. The Compose verifier automatically drains runs in
+`VERIFYING`, persists every check log, signals Temporal, and lets the workflow
+derive its terminal state from mandatory facts. The evaluation and release demo
+are offline and do not require a model API key.
 
-For an individual run already waiting in `VERIFYING`, invoke the trusted
-host-side verifier with:
+The UI updates while verification runs; no manual command is required. For
+recovery or isolated debugging, an individual waiting run can still be verified
+with:
 
 ```sh
 .venv/bin/python scripts/verify_run.py <run-id>
@@ -181,6 +184,7 @@ operation.
 | --- | --- | --- |
 | IncidentLab review console | `http://127.0.0.1:5173` | Review runs, evidence, repairs, verification, and audit history |
 | IncidentLab API | `http://127.0.0.1:8000` | Runs, evidence, hypotheses, and approvals |
+| Trusted verifier | background service | Automatically verifies policy-accepted candidates in the sandbox |
 | Temporal UI | `http://127.0.0.1:8233` | Workflow history and activity attempts |
 | Jaeger | `http://127.0.0.1:16686` | Distributed traces |
 | Prometheus | `http://127.0.0.1:9090` | Pool and request metrics |
@@ -221,7 +225,7 @@ Useful API routes include:
 - Verification uses a read-only, network-disabled, non-root container without the
   Docker socket or private evaluation inputs.
 - The API and model worker never receive the Docker socket; a separate trusted
-  host command persists sandbox facts before signaling the durable workflow.
+  verifier service persists sandbox facts before signaling the durable workflow.
 - GitHub writes require a separate recorded approval, a `PASS` verification, and
   an explicitly enabled installation token; only draft PRs can be created.
 

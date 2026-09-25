@@ -12,9 +12,10 @@ write and its healthy rejection, then produces the evaluation artifacts in
 `evaluation-results/demo/`.
 
 For the full interactive path, start Compose, open `http://127.0.0.1:5173`, create a
-run, inspect cited evidence, approve bounded generation, run the trusted verifier
-when prompted, and export the report. Stop and restart the worker while the run is
-waiting for approval to demonstrate durable recovery.
+run, inspect cited evidence, approve bounded generation from the overview dialog,
+watch the trusted verifier update the run automatically, and export the report.
+Stop and restart the worker while the run is waiting for approval to demonstrate
+durable recovery.
 
 The optional GitHub demonstration is intentionally separate. Configure a private
 GitHub App from `docs/github-app.yml`, set the opt-in environment variables, then run

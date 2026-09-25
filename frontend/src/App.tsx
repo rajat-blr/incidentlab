@@ -11,7 +11,6 @@ import {
   Download,
   FileCode2,
   FileText,
-  FlaskConical,
   Gauge,
   GitCommitHorizontal,
   ListChecks,
@@ -28,7 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type FormEvent, type ReactNode, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   Link,
   Navigate,
@@ -150,20 +149,9 @@ function AppShell({ children }: { children: ReactNode }) {
           <span>IncidentLab</span>
         </Link>
         <nav aria-label="Primary navigation">
-          <span className="nav-heading">Workspace</span>
           <Link className="nav-link active" to="/runs">
             <Activity size={17} /> Runs
           </Link>
-          <span className="nav-link disabled" aria-disabled="true">
-            <FlaskConical size={17} /> Scenarios
-          </span>
-          <span className="nav-link disabled" aria-disabled="true">
-            <ShieldCheck size={17} /> Policies
-          </span>
-          <span className="nav-heading nav-heading-secondary">System</span>
-          <span className="nav-link disabled" aria-disabled="true">
-            <ScrollText size={17} /> Audit log
-          </span>
         </nav>
         <div className="sidebar-foot">
           <span className="system-dot" /> Local development
@@ -331,6 +319,7 @@ function RunDetailPage() {
   const queryClient = useQueryClient();
   const [actor, setActor] = useState(() => localStorage.getItem("incidentlab.actor") ?? "local-reviewer");
   const [artifact, setArtifact] = useState<{ title: string; ref: string } | null>(null);
+  const [approvalDismissed, setApprovalDismissed] = useState(false);
 
   const run = useQuery({
     queryKey: ["run", runId],
@@ -344,10 +333,18 @@ function RunDetailPage() {
   const events = useQuery({ queryKey: ["events", runId], queryFn: () => api.events(runId), refetchInterval: run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
   const modelUsage = useQuery({ queryKey: ["model-usage", runId], queryFn: () => api.modelUsage(runId) });
 
+  useEffect(() => {
+    if (!run.data) return;
+    for (const key of ["evidence", "hypotheses", "candidates", "verifications", "events", "model-usage"]) {
+      void queryClient.invalidateQueries({ queryKey: [key, runId] });
+    }
+  }, [queryClient, run.data?.state, runId]);
+
   const approval = useMutation({
     mutationFn: (decision: "approved" | "rejected") => api.approve(runId, actor.trim(), decision),
     onSuccess: async () => {
       localStorage.setItem("incidentlab.actor", actor.trim());
+      setApprovalDismissed(true);
       await queryClient.invalidateQueries({ queryKey: ["run", runId] });
       await queryClient.invalidateQueries({ queryKey: ["events", runId] });
     },
@@ -397,15 +394,23 @@ function RunDetailPage() {
         </nav>
 
         <div className="tab-panel">
-          {tab === "overview" ? <OverviewTab run={run.data} evidence={selectedEvidence} candidates={selectedCandidates} verifications={selectedVerifications} hypothesis={selectedHypotheses[0]} events={selectedEvents} modelUsage={modelUsage.data ?? []} /> : null}
+          {tab === "overview" ? <OverviewTab run={run.data} evidence={selectedEvidence} candidates={selectedCandidates} verifications={selectedVerifications} hypothesis={selectedHypotheses[0]} events={selectedEvents} modelUsage={modelUsage.data ?? []} onOpenApproval={() => setApprovalDismissed(false)} /> : null}
           {tab === "evidence" ? <EvidenceTab items={selectedEvidence} onArtifact={(item) => setArtifact({ title: `${humanize(item.kind)} evidence`, ref: item.artifact_ref })} /> : null}
-          {tab === "diagnosis" ? <DiagnosisTab run={run.data} hypotheses={selectedHypotheses} evidence={selectedEvidence} actor={actor} setActor={setActor} approval={approval} /> : null}
+          {tab === "diagnosis" ? <DiagnosisTab hypotheses={selectedHypotheses} evidence={selectedEvidence} /> : null}
           {tab === "repair" ? <RepairTab candidates={selectedCandidates} events={selectedEvents} /> : null}
           {tab === "verification" ? <VerificationTab run={run.data} candidates={selectedCandidates} verifications={selectedVerifications} onArtifact={(check) => setArtifact({ title: `${humanize(check.name)} log`, ref: check.artifact_ref })} /> : null}
           {tab === "audit" ? <AuditTab events={selectedEvents} /> : null}
         </div>
       </div>
       {artifact ? <ArtifactModal title={artifact.title} artifactRef={artifact.ref} onClose={() => setArtifact(null)} /> : null}
+      {run.data.state === "AWAITING_REPAIR_APPROVAL" && !approvalDismissed ? (
+        <ApprovalModal
+          actor={actor}
+          setActor={setActor}
+          approval={approval}
+          onClose={() => setApprovalDismissed(true)}
+        />
+      ) : null}
     </AppShell>
   );
 }
@@ -429,7 +434,7 @@ function WorkflowTimeline({ run }: { run: IncidentRun }) {
   );
 }
 
-function OverviewTab({ run, evidence, candidates, verifications, hypothesis, events, modelUsage }: {
+function OverviewTab({ run, evidence, candidates, verifications, hypothesis, events, modelUsage, onOpenApproval }: {
   run: IncidentRun;
   evidence: EvidenceItem[];
   candidates: RepairCandidate[];
@@ -437,6 +442,7 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
   hypothesis: { summary: string; mechanism: string; confidence: string } | undefined;
   events: AuditEvent[];
   modelUsage: ModelUsage[];
+  onOpenApproval: () => void;
 }) {
   const reproduction = events.find((event) => event.kind === "reproduction_recorded");
   const top = [...verifications].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))[0];
@@ -445,6 +451,18 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
   const estimatedCost = modelUsage.reduce((total, item) => total + Number(item.estimated_cost_usd), 0);
   return (
     <div className="overview-grid">
+      {run.state === "AWAITING_REPAIR_APPROVAL" ? (
+        <section className="decision-banner span-two">
+          <div>
+            <span className="eyebrow">Decision required</span>
+            <h2>Review the diagnosis before generating a repair</h2>
+            <p>Approval permits one bounded patch proposal. It does not execute, merge, or deploy code.</p>
+          </div>
+          <button className="button button-primary" type="button" onClick={onOpenApproval}>
+            Review decision <ChevronRight size={16} />
+          </button>
+        </section>
+      ) : null}
       <section className="panel span-two">
         <div className="panel-head"><div><span className="eyebrow">Current conclusion</span><h2>{hypothesis?.summary ?? "Diagnosis has not completed"}</h2></div>{hypothesis ? <StatusBadge value={hypothesis.confidence === "high" ? "PASS" : "INCONCLUSIVE"} label={`${humanize(hypothesis.confidence)} confidence`} /> : null}</div>
         <div className="panel-body"><p className="lead-copy">{hypothesis?.mechanism ?? "IncidentLab is still collecting facts for this run."}</p></div>
@@ -495,28 +513,13 @@ function EvidenceTab({ items, onArtifact }: { items: EvidenceItem[]; onArtifact:
   );
 }
 
-function DiagnosisTab({ run, hypotheses, evidence, actor, setActor, approval }: {
-  run: IncidentRun;
+function DiagnosisTab({ hypotheses, evidence }: {
   hypotheses: Awaited<ReturnType<typeof api.hypotheses>>;
   evidence: EvidenceItem[];
-  actor: string;
-  setActor: (value: string) => void;
-  approval: ReturnType<typeof useMutation<{ run_id: string; decision: string }, Error, "approved" | "rejected">>;
 }) {
   const byId = new Map(evidence.map((item) => [item.id, item]));
   return (
     <div className="stack">
-      {run.state === "AWAITING_REPAIR_APPROVAL" ? (
-        <section className="approval-panel">
-          <div><span className="eyebrow">Human decision required</span><h2>Allow bounded repair generation?</h2><p>Approval allows Gemini to propose a patch. It does not merge, deploy, or bypass deterministic policy.</p></div>
-          <label className="actor-field"><span>Decision actor</span><input value={actor} maxLength={128} onChange={(event) => setActor(event.target.value)} /></label>
-          {approval.error ? <ErrorState error={approval.error} /> : null}
-          <div className="approval-actions">
-            <button className="button" type="button" disabled={approval.isPending || !actor.trim()} onClick={() => approval.mutate("rejected")}>Reject and close</button>
-            <button className="button button-primary" type="button" disabled={approval.isPending || !actor.trim()} onClick={() => approval.mutate("approved")}><ShieldCheck size={16} /> Approve generation</button>
-          </div>
-        </section>
-      ) : null}
       {!hypotheses.length ? <EmptyState icon={<Search size={24} />} title="No validated diagnosis" detail="Hypotheses will appear after the diagnosis stage completes." /> : null}
       {hypotheses.map((hypothesis) => (
         <article className="panel" key={hypothesis.id}>
@@ -531,6 +534,34 @@ function DiagnosisTab({ run, hypotheses, evidence, actor, setActor, approval }: 
           </div>
         </article>
       ))}
+    </div>
+  );
+}
+
+function ApprovalModal({ actor, setActor, approval, onClose }: {
+  actor: string;
+  setActor: (value: string) => void;
+  approval: ReturnType<typeof useMutation<{ run_id: string; decision: string }, Error, "approved" | "rejected">>;
+  onClose: () => void;
+}) {
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="modal approval-modal" role="dialog" aria-modal="true" aria-labelledby="approval-title" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="modal-head">
+          <div><span className="eyebrow">Human checkpoint</span><h2 id="approval-title">Generate a bounded repair?</h2></div>
+          <button className="icon-button" type="button" aria-label="Close" onClick={onClose}><X size={18} /></button>
+        </div>
+        <p className="modal-lead">IncidentLab has completed diagnosis. Approving permits Gemini to propose a small patch against the pinned commit. Deterministic policy and sandbox verification still run before anything is marked successful.</p>
+        <div className="approval-safety"><ShieldCheck size={18} /><span>No merge, deployment, or model-provided command execution.</span></div>
+        <label className="actor-field"><span>Decision recorded as</span><input value={actor} maxLength={128} onChange={(event) => setActor(event.target.value)} /></label>
+        {approval.error ? <ErrorState error={approval.error} /> : null}
+        <div className="modal-actions approval-modal-actions">
+          <button className="button" type="button" disabled={approval.isPending || !actor.trim()} onClick={() => approval.mutate("rejected")}>Reject and close run</button>
+          <button className="button button-primary" type="button" disabled={approval.isPending || !actor.trim()} onClick={() => approval.mutate("approved")}>
+            {approval.isPending ? <LoaderCircle className="spin" size={16} /> : <ShieldCheck size={16} />} Approve repair generation
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -570,7 +601,7 @@ export function DiffViewer({ diff }: { diff: string }) {
 
 function VerificationTab({ run, candidates, verifications, onArtifact }: { run: IncidentRun; candidates: RepairCandidate[]; verifications: VerificationRun[]; onArtifact: (check: VerificationCheck) => void }) {
   const ordered = [...verifications].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
-  if (!ordered.length) return <EmptyState icon={run.state === "VERIFYING" ? <LoaderCircle className="spin" size={24} /> : <ListChecks size={24} />} title={run.state === "VERIFYING" ? "Waiting for the trusted verifier" : "No verification recorded"} detail={run.state === "VERIFYING" ? "Run scripts/verify_run.py for this run if the local verifier agent is not active." : "Verification facts appear after a policy-accepted candidate reaches the sandbox."} />;
+  if (!ordered.length) return <EmptyState icon={run.state === "VERIFYING" ? <LoaderCircle className="spin" size={24} /> : <ListChecks size={24} />} title={run.state === "VERIFYING" ? "Sandbox verification is running" : "No verification recorded"} detail={run.state === "VERIFYING" ? "The trusted verifier is checking the baseline, build, tests, and repeated incident replay. This view updates automatically." : "Verification facts appear after a policy-accepted candidate reaches the sandbox."} />;
   return <div className="stack">{ordered.map((verification) => { const candidate = candidates.find((item) => item.id === verification.candidate_id); return <article className="panel" key={verification.id}><div className="panel-head"><div><span className="eyebrow">Rank {verification.rank ?? "—"} · {candidate ? shortId(candidate.id) : shortId(verification.candidate_id)}</span><h2>{candidate?.explanation ?? "Repair candidate"}</h2></div><StatusBadge value={verification.outcome} /></div><div className="verification-summary"><span>Score version<strong>{verification.score_version}</strong></span><span>Environment<strong><code>{shortId(verification.environment_digest.replace("sha256:", ""), 16)}</code></strong></span><span>Changed lines<strong>{verification.score?.changed_lines ?? "—"}</strong></span></div><div className="check-table"><div className="check-header"><span>Mandatory check</span><span>Duration</span><span>Exit</span><span>Outcome</span><span /></div>{verification.checks.map((check) => <VerificationRow key={check.name} check={check} onArtifact={onArtifact} />)}</div></article>;})}</div>;
 }
 
