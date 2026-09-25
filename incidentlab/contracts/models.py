@@ -188,6 +188,19 @@ class RepairCandidate(Contract):
     expected_behavior: str = Field(min_length=1)
     changed_paths: list[str] = Field(min_length=1)
     generator_id: str
+    diff_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    policy_status: Literal["accepted"]
+    policy_version: str = Field(min_length=1)
+
+
+class RepairCandidateDraft(Contract):
+    unified_diff: str = Field(min_length=1, max_length=65536)
+    explanation: str = Field(min_length=1, max_length=2000)
+    expected_behavior: str = Field(min_length=1, max_length=1000)
+
+
+class RepairGenerationDraft(Contract):
+    candidates: list[RepairCandidateDraft] = Field(min_length=1, max_length=2)
 
 
 class VerificationCheck(Contract):

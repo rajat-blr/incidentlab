@@ -113,6 +113,7 @@ class IncidentWorkflow:
             await self._activity(
                 "generate_repair_placeholder",
                 {"run_id": run_id, "effect_key": f"run:{run_id}:repair-placeholder"},
+                timeout_seconds=60,
             )
             if await self._stop_if_cancelled(run_id, "after-generation"):
                 return {"state": "CANCELLED"}

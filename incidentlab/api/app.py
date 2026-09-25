@@ -18,6 +18,7 @@ from incidentlab.contracts.models import (
     Hypothesis,
     IncidentRun,
     RepairApprovalRequest,
+    RepairCandidate,
     RunCancelRequest,
     RunCreateRequest,
     RunState,
@@ -184,6 +185,12 @@ async def read_evidence(run_id: UUID) -> list[EvidenceItem]:
 async def read_hypotheses(run_id: UUID) -> list[Hypothesis]:
     await asyncio.to_thread(require_run, run_id)
     return await asyncio.to_thread(repository.list_hypotheses, run_id)
+
+
+@app.get("/runs/{run_id}/candidates", response_model=list[RepairCandidate])
+async def read_candidates(run_id: UUID) -> list[RepairCandidate]:
+    await asyncio.to_thread(require_run, run_id)
+    return await asyncio.to_thread(repository.list_repair_candidates, run_id)
 
 
 @app.get("/evidence/artifacts/{artifact_id}")

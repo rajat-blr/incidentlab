@@ -15,6 +15,10 @@ from incidentlab.db import repository
 from incidentlab.evidence.collection import collect_git_metadata, collect_telemetry, combine
 from incidentlab.model_adapter.diagnosis import PROMPT_VERSION, DiagnosisError, diagnose
 from incidentlab.model_adapter.gemini_adapter import GeminiDiagnosisAdapter
+from incidentlab.model_adapter.gemini_repair_adapter import GeminiRepairAdapter
+from incidentlab.model_adapter.repair import PROMPT_VERSION as REPAIR_PROMPT_VERSION
+from incidentlab.model_adapter.repair import RepairError, generate_repairs
+from incidentlab.policy.context import RepositoryContextError, read_pinned_source
 from sample_service.observed_replay import replay_with_telemetry
 
 
@@ -150,11 +154,87 @@ async def diagnose_placeholder(data: dict) -> dict:
 
 @activity.defn(name="generate_repair_placeholder")
 async def generate_repair_placeholder(data: dict) -> dict:
-    return await _placeholder(
-        data,
-        "repair_placeholder",
-        {"status": "placeholder", "candidate_count": 1, "source": "deterministic-step-5"},
+    """The legacy name remains stable while the activity performs real generation."""
+    run_id = UUID(data["run_id"])
+    approval = await asyncio.to_thread(repository.get_approval, run_id)
+    if approval is None or approval["decision"] != "approved":
+        error = RepairError("repair generation requires recorded approval")
+        await asyncio.to_thread(
+            repository.record_repair_rejection,
+            run_id,
+            "approval",
+            str(error),
+            f"{data['effect_key']}:rejected",
+        )
+        raise ApplicationError(str(error), non_retryable=True) from error
+    run = await asyncio.to_thread(repository.get_run, run_id)
+    hypotheses = await asyncio.to_thread(repository.list_hypotheses, run_id)
+    reproduction = await asyncio.to_thread(repository.get_run_output, run_id, "reproduction")
+    if run is None or not hypotheses or reproduction is None:
+        error = RepairError("repair inputs are incomplete")
+        await asyncio.to_thread(
+            repository.record_repair_rejection,
+            run_id,
+            "inputs",
+            str(error),
+            f"{data['effect_key']}:rejected",
+        )
+        raise ApplicationError(str(error), non_retryable=True) from error
+    confidence_order = {"high": 0, "medium": 1, "low": 2}
+    hypothesis = min(
+        hypotheses,
+        key=lambda item: (confidence_order[item.confidence], str(item.id)),
     )
+    try:
+        source = await asyncio.to_thread(
+            read_pinned_source,
+            Path(os.environ.get("REPOSITORY_GIT_DIR", "/repository/.git")),
+            run.pinned_commit,
+            "sample_service/app.py",
+        )
+        adapter = GeminiRepairAdapter()
+        try:
+            result = await asyncio.to_thread(
+                generate_repairs,
+                run_id,
+                run.pinned_commit,
+                hypothesis,
+                reproduction,
+                source,
+                adapter,
+            )
+        finally:
+            adapter.close()
+    except (RepairError, RepositoryContextError) as error:
+        await asyncio.to_thread(
+            repository.record_repair_rejection,
+            run_id,
+            type(error).__name__,
+            str(error),
+            f"{data['effect_key']}:rejected",
+        )
+        raise ApplicationError(str(error), non_retryable=True) from error
+    await asyncio.to_thread(
+        repository.record_repair_generation,
+        run_id,
+        result,
+        adapter.provider,
+        adapter.model_id,
+        REPAIR_PROMPT_VERSION,
+        data["effect_key"],
+    )
+    if not result.candidates:
+        raise ApplicationError(
+            "all generated repair candidates were rejected by policy",
+            non_retryable=True,
+        )
+    return {
+        "status": "validated",
+        "candidate_count": len(result.candidates),
+        "rejected_count": sum(not decision.accepted for decision in result.decisions),
+        "model_id": adapter.model_id,
+        "prompt_version": REPAIR_PROMPT_VERSION,
+    }
 
 
 @activity.defn(name="verify_placeholder")
@@ -164,7 +244,10 @@ async def verify_placeholder(data: dict) -> dict:
     return await _placeholder(
         data,
         "verification_placeholder",
-        {"status": "INCONCLUSIVE", "reason": "Sandbox verification arrives in PRD Step 8."},
+        {
+            "status": "INCONCLUSIVE",
+            "reason": "Independent verifier persistence and ranking arrive in PRD Step 10.",
+        },
     )
 
 

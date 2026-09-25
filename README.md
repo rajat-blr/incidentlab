@@ -9,8 +9,8 @@ hypotheses, and enforces a human approval gate before repair work proceeds.
 > IncidentLab is an educational development project, not a production incident
 > response system. It does not merge code or deploy changes.
 
-Steps 1–8 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
-Repair generation and workflow-integrated candidate verification remain roadmap work.
+Steps 1–9 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
+Full before/after verification persistence and deterministic ranking remain roadmap work.
 
 ## What works today
 
@@ -22,10 +22,12 @@ Repair generation and workflow-integrated candidate verification remain roadmap 
   evidence records.
 - Gemini diagnosis with structured output, validated citations, bounded follow-up
   lookups, secret redaction, and prompt-injection defenses.
+- Approval-gated Gemini repair generation with bounded line replacements,
+  deterministic unified diffs, and a fail-closed patch policy.
 - PostgreSQL persistence, Alembic migrations, audit events, model-usage records,
   and REST endpoints for runs, evidence, hypotheses, approval, and cancellation.
-- Repeatable acceptance checks for workflow durability, evidence integrity, and
-  live diagnosis.
+- Repeatable acceptance checks for workflow durability, evidence integrity, live
+  diagnosis, repair policy, and candidate verification.
 - An independent Docker sandbox for manually supplied patches, with pinned inputs,
   fixed checks, resource limits, hashed artifacts, and hostile-code containment.
 
@@ -42,11 +44,12 @@ Checkout gateway -> Inventory service -> SQLite fixture
                                                \     |     /
                                                 Evidence collector
                                                         |
-FastAPI -> PostgreSQL <- Temporal workflow/worker -> Gemini adapter
+FastAPI -> PostgreSQL <- Temporal workflow/worker -> Gemini adapters
                                                         |
-                                           Validated hypotheses + audit trail
-
-Manual patch -> Host-side sandbox runner -> Constrained verification container
+                       Approved diagnosis -> patch policy -> candidate diff
+                                                        |
+                                                        v
+Host-side sandbox runner ----------------> Constrained verification container
 ```
 
 The sample inventory service owns a two-connection pool. In `pool_leak` mode,
@@ -104,10 +107,12 @@ request succeeds.
    .venv/bin/python scripts/step6_evidence_check.py
    .venv/bin/python scripts/step7_diagnosis_check.py
    .venv/bin/python scripts/step8_sandbox_check.py
+   .venv/bin/python scripts/step9_repair_check.py
    ```
 
-The Step 7 check makes a live Gemini request and rejects the repair at the human
-approval gate, so placeholder repair generation does not continue.
+The Step 7 and Step 9 checks make live Gemini requests. Step 9 records approval,
+validates the generated candidate, and sends only a policy-accepted diff to the
+independent sandbox verifier.
 
 ## Development checks
 
@@ -141,6 +146,7 @@ Useful API routes include:
 | `GET` | `/runs/{id}/events` | Read the audit trail |
 | `GET` | `/runs/{id}/evidence` | Read normalized evidence |
 | `GET` | `/runs/{id}/hypotheses` | Read validated diagnosis results |
+| `GET` | `/runs/{id}/candidates` | Read policy-accepted repair candidates |
 | `POST` | `/runs/{id}/repair-approval` | Approve or reject repair generation |
 | `POST` | `/runs/{id}/cancel` | Request durable cancellation |
 
@@ -154,6 +160,8 @@ Useful API routes include:
 - Raw artifacts are size-bounded and hash-checked before use.
 - The model cannot supply shell commands or determine verification outcomes.
 - Human approval is required before repair generation.
+- Model line replacements are converted to diffs against the exact pinned blob;
+  allowlist, size, secret, syntax, and clean-apply checks run before persistence.
 - Verification uses a read-only, network-disabled, non-root container without the
   Docker socket or private evaluation inputs.
 
@@ -177,9 +185,9 @@ docs/adr/           Architecture decision records
 
 ## Roadmap
 
-The next milestone is Step 9: connect an approved diagnosis to bounded repair
-generation and deterministic patch policy, then pass eligible candidates to the
-independent verifier. The remaining sequence is tracked in the
+The next milestone is Step 10: persist full before/after verification evidence,
+derive outcomes from recorded facts, and rank eligible candidates deterministically.
+The remaining sequence is tracked in the
 [PRD and build plan](incidentlab-prd-and-build-plan.md).
 
 Stop the local stack without deleting its volumes:

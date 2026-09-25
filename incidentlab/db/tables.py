@@ -90,6 +90,12 @@ repair_candidates = sa.Table(
     sa.Column("generator_id", sa.String(255), nullable=False),
     sa.Column("explanation", sa.Text(), nullable=False),
     sa.Column("expected_behavior", sa.Text(), nullable=False),
+    sa.Column("unified_diff", sa.Text(), nullable=False),
+    sa.Column("diff_sha256", sa.String(64), nullable=False),
+    sa.Column("policy_status", sa.String(32), nullable=False),
+    sa.Column("policy_version", sa.String(64), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.UniqueConstraint("run_id", "diff_sha256", name="uq_repair_candidates_run_diff"),
 )
 
 verification_runs = sa.Table(

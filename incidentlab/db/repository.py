@@ -13,6 +13,7 @@ from incidentlab.contracts.models import (
     EvidenceItem,
     Hypothesis,
     IncidentRun,
+    RepairCandidate,
     RunState,
 )
 from incidentlab.db.tables import (
@@ -23,10 +24,12 @@ from incidentlab.db.tables import (
     hypotheses,
     incident_runs,
     model_usage,
+    repair_candidates,
     run_outputs,
 )
 from incidentlab.evidence.collection import EvidenceBundle
 from incidentlab.model_adapter.diagnosis import DiagnosisResult
+from incidentlab.model_adapter.repair import RepairGenerationResult
 
 
 @lru_cache
@@ -178,6 +181,35 @@ def list_hypotheses(run_id: UUID) -> list[Hypothesis]:
         data.pop("validation_status")
         values.append(Hypothesis.model_validate(data))
     return values
+
+
+def list_repair_candidates(run_id: UUID) -> list[RepairCandidate]:
+    with engine().connect() as connection:
+        rows = (
+            connection.execute(
+                sa.select(repair_candidates)
+                .where(repair_candidates.c.run_id == run_id)
+                .order_by(repair_candidates.c.created_at, repair_candidates.c.id)
+            )
+            .mappings()
+            .all()
+        )
+    values = []
+    for row in rows:
+        data = dict(row)
+        data.pop("diff_artifact_ref")
+        data.pop("created_at")
+        values.append(RepairCandidate.model_validate(data))
+    return values
+
+
+def get_run_output(run_id: UUID, column: str) -> dict | None:
+    if column not in run_outputs.c:
+        raise ValueError("invalid output column")
+    with engine().connect() as connection:
+        return connection.execute(
+            sa.select(run_outputs.c[column]).where(run_outputs.c.run_id == run_id)
+        ).scalar_one_or_none()
 
 
 def _insert_event(
@@ -403,6 +435,103 @@ def record_diagnosis_rejection(run_id: UUID, category: str, detail: str, effect_
             connection,
             run_id,
             "diagnosis_rejected",
+            "worker",
+            str(run_id),
+            effect_key,
+            {"category": category[:128], "detail": detail[:500]},
+            now,
+        )
+
+
+def record_repair_generation(
+    run_id: UUID,
+    generation: RepairGenerationResult,
+    provider: str,
+    model_id: str,
+    prompt_version: str,
+    effect_key: str,
+) -> bool:
+    now = datetime.now(UTC)
+    with engine().begin() as connection:
+        inserted = _insert_event(
+            connection,
+            run_id,
+            "repair_generation_recorded",
+            "worker",
+            str(run_id),
+            effect_key,
+            {
+                "candidate_count": len(generation.candidates),
+                "rejected_count": sum(not decision.accepted for decision in generation.decisions),
+                "model_id": model_id,
+                "prompt_version": prompt_version,
+            },
+            now,
+        )
+        if not inserted:
+            return False
+        for index, decision in enumerate(generation.decisions):
+            _insert_event(
+                connection,
+                run_id,
+                "repair_policy_decision",
+                "policy",
+                str(run_id),
+                f"{effect_key}:policy:{index}",
+                {
+                    "accepted": decision.accepted,
+                    "category": decision.category,
+                    "detail": decision.detail[:500],
+                    "diff_sha256": decision.diff_sha256,
+                },
+                now,
+            )
+        for candidate in generation.candidates:
+            connection.execute(
+                insert(repair_candidates)
+                .values(
+                    id=candidate.id,
+                    run_id=candidate.run_id,
+                    target_commit=candidate.target_commit,
+                    diff_artifact_ref=f"db://repair-candidates/{candidate.id}/diff",
+                    changed_paths=candidate.changed_paths,
+                    generator_id=candidate.generator_id,
+                    explanation=candidate.explanation,
+                    expected_behavior=candidate.expected_behavior,
+                    unified_diff=candidate.unified_diff,
+                    diff_sha256=candidate.diff_sha256,
+                    policy_status=candidate.policy_status,
+                    policy_version=candidate.policy_version,
+                    created_at=now,
+                )
+                .on_conflict_do_nothing(index_elements=[repair_candidates.c.id])
+            )
+        usage_id = uuid5(NAMESPACE_URL, f"incidentlab:{run_id}:{prompt_version}:usage")
+        connection.execute(
+            insert(model_usage)
+            .values(
+                id=usage_id,
+                run_id=run_id,
+                provider=provider,
+                model_id=model_id,
+                prompt_version=prompt_version,
+                input_tokens=generation.usage.input_tokens,
+                output_tokens=generation.usage.output_tokens,
+                latency_ms=generation.usage.latency_ms,
+                estimated_cost_usd=0,
+            )
+            .on_conflict_do_nothing(index_elements=[model_usage.c.id])
+        )
+    return True
+
+
+def record_repair_rejection(run_id: UUID, category: str, detail: str, effect_key: str) -> bool:
+    now = datetime.now(UTC)
+    with engine().begin() as connection:
+        return _insert_event(
+            connection,
+            run_id,
+            "repair_generation_rejected",
             "worker",
             str(run_id),
             effect_key,
