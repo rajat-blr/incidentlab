@@ -23,6 +23,7 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(report["report_version"], REPORT_VERSION)
         self.assertIn("State: **INCONCLUSIVE**", markdown)
         self.assertIn("No validated diagnosis was recorded", markdown)
+        self.assertIn("No model usage was recorded", markdown)
         self.assertIn("does not deploy or merge", markdown)
 
 

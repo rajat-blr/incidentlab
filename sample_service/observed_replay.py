@@ -33,15 +33,34 @@ def _wait_for(url: str, timeout: float = 10) -> None:
     raise RuntimeError(f"service did not become ready: {url}")
 
 
-def replay_with_telemetry(database: Path, run_id: str, log_dir: Path) -> dict:
+SCENARIO_REPLAYS = {
+    "pool-exhaustion": {
+        "fault_mode": "pool_leak",
+        "traffic": (("widget", 99), ("widget", 99), ("widget", 1)),
+        "suffixes": ("a", "b", "failure"),
+    },
+    "inventory-underflow": {
+        "fault_mode": "inventory_underflow",
+        "traffic": (("widget", 11),),
+        "suffixes": ("failure",),
+    },
+}
+
+
+def replay_with_telemetry(
+    database: Path, run_id: str, log_dir: Path, scenario_id: str = "pool-exhaustion"
+) -> dict:
+    scenario = SCENARIO_REPLAYS.get(scenario_id)
+    if scenario is None:
+        raise ValueError(f"unsupported scenario: {scenario_id}")
     reset_database(database)
     inventory_port, gateway_port = _free_port(), _free_port()
     root_id = f"run-{run_id[:8]}-{uuid.uuid4().hex[:8]}"
-    request_ids = [f"{root_id}-{suffix}" for suffix in ("a", "b", "failure")]
+    request_ids = [f"{root_id}-{suffix}" for suffix in scenario["suffixes"]]
     environment = {
         **os.environ,
         "INCIDENTLAB_DATABASE": str(database),
-        "INCIDENTLAB_FAULT": "pool_leak",
+        "INCIDENTLAB_FAULT": scenario["fault_mode"],
         "INCIDENTLAB_RUN_ID": run_id,
         "INCIDENTLAB_PORT": str(inventory_port),
         "OTEL_BSP_SCHEDULE_DELAY": "200",
@@ -75,15 +94,15 @@ def replay_with_telemetry(database: Path, run_id: str, log_dir: Path) -> dict:
         )
         _wait_for(f"http://127.0.0.1:{gateway_port}/health")
         results = [
-            post_checkout(gateway_port, "widget", 99, request_ids[0]),
-            post_checkout(gateway_port, "widget", 99, request_ids[1]),
-            post_checkout(gateway_port, "widget", 1, request_ids[2]),
+            post_checkout(gateway_port, sku, quantity, request_id)
+            for (sku, quantity), request_id in zip(scenario["traffic"], request_ids, strict=True)
         ]
         # Allow one metric export and Collector/Prometheus scrape before shutdown.
         time.sleep(2.25)
         return {
             "statuses": [status for status, _ in results],
             "failure": results[-1][1].get("error"),
+            "response": results[-1][1],
             "request_ids": request_ids,
             "observed_start": started.isoformat(),
             "observed_end": (datetime.now(UTC) + timedelta(seconds=2)).isoformat(),

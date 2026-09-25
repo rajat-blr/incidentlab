@@ -3,6 +3,7 @@ import type {
   EvidenceItem,
   Hypothesis,
   IncidentRun,
+  ModelUsage,
   RepairCandidate,
   RunState,
   ScenarioSummary,
@@ -52,6 +53,7 @@ export const api = {
   verifications: (id: string) =>
     request<VerificationRun[]>(`/runs/${id}/verifications`),
   events: (id: string) => request<AuditEvent[]>(`/runs/${id}/events`),
+  modelUsage: (id: string) => request<ModelUsage[]>(`/runs/${id}/model-usage`),
   createRun: (scenarioId: string, idempotencyKey: string) =>
     request<IncidentRun>("/runs", {
       method: "POST",

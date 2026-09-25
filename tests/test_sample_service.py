@@ -3,11 +3,19 @@ import unittest
 from pathlib import Path
 
 from sample_service.app import CheckoutService
-from sample_service.demo import replay
+from sample_service.demo import replay, replay_inventory_underflow
 from sample_service.reset import reset_database
 
 
 class CheckoutIncidentTests(unittest.TestCase):
+    def test_inventory_underflow_is_distinct_and_resettable(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            database = Path(temporary) / "checkout.sqlite3"
+            faulty = replay_inventory_underflow(database, "inventory_underflow")
+            healthy = replay_inventory_underflow(database, "off")
+        self.assertEqual(faulty, [(200, {"sku": "widget", "remaining_inventory": -1})])
+        self.assertEqual(healthy, [(409, {"error": "out_of_stock"})])
+
     def test_fault_reproduces_and_reset_restores_healthy_behavior(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             database = Path(temporary) / "checkout.sqlite3"

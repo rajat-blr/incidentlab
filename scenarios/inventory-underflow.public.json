@@ -1,0 +1,13 @@
+{
+  "id": "inventory-underflow",
+  "version": 1,
+  "service": "checkout",
+  "description": "A checkout larger than available stock succeeds and stores a negative inventory quantity.",
+  "reset_command": "python3 -m sample_service.reset --database <path>",
+  "fault_mode": "inventory_underflow",
+  "traffic": [
+    {"sku": "widget", "quantity": 11, "expected_status": 200}
+  ],
+  "failure_signal": {"status": 200, "remaining_inventory": -1},
+  "healthy_signal": {"status": 409, "error": "out_of_stock"}
+}

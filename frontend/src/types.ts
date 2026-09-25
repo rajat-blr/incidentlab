@@ -120,6 +120,19 @@ export interface AuditEvent {
   details: Record<string, unknown>;
 }
 
+export interface ModelUsage {
+  schema_version: 1;
+  id: string;
+  run_id: string;
+  provider: string;
+  model_id: string;
+  prompt_version: string;
+  input_tokens: number;
+  output_tokens: number;
+  latency_ms: number;
+  estimated_cost_usd: number;
+}
+
 export const terminalStates = new Set<RunState>([
   "COMPLETED",
   "NO_VERIFIED_CANDIDATE",

@@ -52,8 +52,10 @@ class DatabasePool:
 
 class CheckoutService:
     def __init__(self, database: Path, fault_mode: str = "off"):
-        if fault_mode not in {"off", "pool_leak"}:
-            raise ValueError("INCIDENTLAB_FAULT must be 'off' or 'pool_leak'")
+        if fault_mode not in {"off", "pool_leak", "inventory_underflow"}:
+            raise ValueError(
+                "INCIDENTLAB_FAULT must be 'off', 'pool_leak', or 'inventory_underflow'"
+            )
         self.pool = DatabasePool(database)
         self.fault_mode = fault_mode
         self._checkout_lock = threading.Lock()
@@ -93,7 +95,7 @@ class CheckoutService:
                     ).fetchone()
                 if row is None:
                     return 404, {"error": "unknown_sku"}
-                if row[0] < quantity:
+                if row[0] < quantity and self.fault_mode != "inventory_underflow":
                     if self.fault_mode == "pool_leak":
                         # Intentional incident fixture: this branch leaves its slot checked out.
                         return_connection = False

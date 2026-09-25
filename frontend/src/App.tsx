@@ -44,6 +44,7 @@ import type {
   AuditEvent,
   EvidenceItem,
   IncidentRun,
+  ModelUsage,
   RepairCandidate,
   RunState,
   VerificationCheck,
@@ -341,6 +342,7 @@ function RunDetailPage() {
   const candidates = useQuery({ queryKey: ["candidates", runId], queryFn: () => api.candidates(runId), refetchInterval: run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
   const verifications = useQuery({ queryKey: ["verifications", runId], queryFn: () => api.verifications(runId), refetchInterval: run.data?.state === "VERIFYING" ? 2_000 : false });
   const events = useQuery({ queryKey: ["events", runId], queryFn: () => api.events(runId), refetchInterval: run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
+  const modelUsage = useQuery({ queryKey: ["model-usage", runId], queryFn: () => api.modelUsage(runId) });
 
   const approval = useMutation({
     mutationFn: (decision: "approved" | "rejected") => api.approve(runId, actor.trim(), decision),
@@ -395,7 +397,7 @@ function RunDetailPage() {
         </nav>
 
         <div className="tab-panel">
-          {tab === "overview" ? <OverviewTab run={run.data} evidence={selectedEvidence} candidates={selectedCandidates} verifications={selectedVerifications} hypothesis={selectedHypotheses[0]} events={selectedEvents} /> : null}
+          {tab === "overview" ? <OverviewTab run={run.data} evidence={selectedEvidence} candidates={selectedCandidates} verifications={selectedVerifications} hypothesis={selectedHypotheses[0]} events={selectedEvents} modelUsage={modelUsage.data ?? []} /> : null}
           {tab === "evidence" ? <EvidenceTab items={selectedEvidence} onArtifact={(item) => setArtifact({ title: `${humanize(item.kind)} evidence`, ref: item.artifact_ref })} /> : null}
           {tab === "diagnosis" ? <DiagnosisTab run={run.data} hypotheses={selectedHypotheses} evidence={selectedEvidence} actor={actor} setActor={setActor} approval={approval} /> : null}
           {tab === "repair" ? <RepairTab candidates={selectedCandidates} events={selectedEvents} /> : null}
@@ -427,16 +429,20 @@ function WorkflowTimeline({ run }: { run: IncidentRun }) {
   );
 }
 
-function OverviewTab({ run, evidence, candidates, verifications, hypothesis, events }: {
+function OverviewTab({ run, evidence, candidates, verifications, hypothesis, events, modelUsage }: {
   run: IncidentRun;
   evidence: EvidenceItem[];
   candidates: RepairCandidate[];
   verifications: VerificationRun[];
   hypothesis: { summary: string; mechanism: string; confidence: string } | undefined;
   events: AuditEvent[];
+  modelUsage: ModelUsage[];
 }) {
   const reproduction = events.find((event) => event.kind === "reproduction_recorded");
   const top = [...verifications].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))[0];
+  const inputTokens = modelUsage.reduce((total, item) => total + item.input_tokens, 0);
+  const outputTokens = modelUsage.reduce((total, item) => total + item.output_tokens, 0);
+  const estimatedCost = modelUsage.reduce((total, item) => total + Number(item.estimated_cost_usd), 0);
   return (
     <div className="overview-grid">
       <section className="panel span-two">
@@ -447,6 +453,7 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
       <section className="stat-panel"><span>Evidence</span><strong>{evidence.length}</strong><small>{evidence.filter((item) => item.kind === "gap").length} explicit gaps</small></section>
       <section className="stat-panel"><span>Repair candidates</span><strong>{candidates.length}</strong><small>{candidates.length ? "Policy accepted" : "None accepted yet"}</small></section>
       <section className="stat-panel"><span>Best verification</span><strong>{top?.outcome ?? "Pending"}</strong><small>{top?.rank ? `Rank ${top.rank} · ${top.score_version}` : "Waiting for facts"}</small></section>
+      <section className="stat-panel"><span>Model usage</span><strong>{inputTokens + outputTokens} tokens</strong><small>{modelUsage.length} calls · ${estimatedCost.toFixed(6)}</small></section>
       <section className="panel span-two">
         <div className="panel-head"><div><span className="eyebrow">Reproduction</span><h2>Observed incident facts</h2></div><Route size={18} /></div>
         <div className="panel-body fact-row">

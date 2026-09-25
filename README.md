@@ -7,14 +7,14 @@ hypotheses, and enforces a human approval gate before repair work proceeds.
 
 > [!IMPORTANT]
 > IncidentLab is an educational development project, not a production incident
-> response system. It does not merge code or deploy changes.
+> response system. Its optional GitHub integration creates draft PRs only; it cannot
+> mark them ready, merge code, or deploy changes.
 
-Steps 1–11 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
-Evaluation, integrations, and later hardening milestones remain roadmap work.
+Steps 1–14 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
 
 ## What works today
 
-- Deterministic database connection-pool exhaustion scenario.
+- Deterministic database connection-pool exhaustion and inventory-underflow scenarios.
 - Durable, idempotent Temporal workflow with retries, cancellation, and approval.
 - OpenTelemetry traces, Prometheus metrics, and Loki logs collected through an
   OpenTelemetry Collector.
@@ -35,6 +35,10 @@ Evaluation, integrations, and later hardening milestones remain roadmap work.
   diagnosis, repair policy, and candidate verification.
 - An independent Docker sandbox for manually supplied patches, with pinned inputs,
   fixed checks, resource limits, hashed artifacts, and hostile-code containment.
+- A versioned repeated-run evaluation harness with deterministic and uncited
+  baselines, adversarial probes, CSV metrics, and explicit failure reports.
+- An opt-in GitHub App boundary that validates webhook signatures and installation
+  permissions and creates or reuses verified draft PRs idempotently.
 
 ## Architecture
 
@@ -55,12 +59,15 @@ FastAPI -> PostgreSQL <- Temporal workflow/worker -> Gemini adapters
                                                         |
                                                         v
 Host-side sandbox runner ----------------> Constrained verification container
+        |
+        +-- explicit second approval --> Optional GitHub draft PR
 ```
 
 The sample inventory service owns a two-connection pool. In `pool_leak` mode,
 failed checkout requests leak connections; a later valid request receives HTTP
 503. With the fault disabled, connections are returned and the same valid
-request succeeds.
+request succeeds. In `inventory_underflow` mode, an oversized checkout bypasses
+the stock guard and commits a negative quantity; the healthy control rejects it.
 
 ## Prerequisites
 
@@ -116,12 +123,15 @@ request succeeds.
    .venv/bin/python scripts/step8_sandbox_check.py
    .venv/bin/python scripts/step9_repair_check.py
    .venv/bin/python scripts/step10_verification_check.py
+   .venv/bin/python scripts/evaluate.py --trials 5 --output evaluation-results/latest
+   .venv/bin/python scripts/demo_release.py
    ```
 
 The Step 7 and Step 9 checks make live Gemini requests. Step 9 records approval,
 validates the generated candidate, and sends only a policy-accepted diff to the
 independent sandbox verifier. Step 10 persists every verification log, derives
-the terminal state from mandatory checks, and records deterministic ranking.
+the terminal state from mandatory checks, and records deterministic ranking. The
+evaluation and release demo are offline and do not require a model API key.
 
 For an individual run already waiting in `VERIFYING`, invoke the trusted
 host-side verifier with:
@@ -142,6 +152,28 @@ cd frontend && npm ci && npm run typecheck && npm test && npm run build
 
 The migration test creates and removes a temporary PostgreSQL database. The
 Compose PostgreSQL service must be running.
+
+## Evaluation
+
+The single release-evaluation command exports `report.json`, `metrics.csv`, and
+`failures.json`. It compares IncidentLab with a deterministic keyword baseline and
+an uncited one-shot baseline across both scenarios. See
+[evaluation methodology](docs/evaluation.md) for metric definitions and limitations.
+
+## Optional GitHub draft PR
+
+The core product needs no GitHub credentials. To enable the optional integration,
+create a private GitHub App from [the minimal manifest](docs/github-app.yml), expose
+the signed webhook endpoint, and set the opt-in variables in `.env`. After a run has
+a `PASS` candidate, record the separate approval and create or reuse its draft:
+
+```sh
+.venv/bin/python scripts/create_draft_pr.py RUN_ID --approved-by YOUR_NAME
+```
+
+The deterministic `incidentlab/run-RUN_ID` branch and remote PR lookup make retries
+idempotent. The integration has no merge, deployment, workflow, or administration
+operation.
 
 ## Local services
 
@@ -167,10 +199,12 @@ Useful API routes include:
 | `GET` | `/runs/{id}/hypotheses` | Read validated diagnosis results |
 | `GET` | `/runs/{id}/candidates` | Read policy-accepted repair candidates |
 | `GET` | `/runs/{id}/verifications` | Read checks, outcomes, and candidate ranking |
+| `GET` | `/runs/{id}/model-usage` | Read provider, token, latency, and recorded cost facts |
 | `GET` | `/runs/{id}/report` | Download the deterministic JSON or Markdown report |
 | `GET` | `/verification/artifacts/{id}` | Read a hash-verified raw check log |
 | `POST` | `/runs/{id}/repair-approval` | Approve or reject repair generation |
 | `POST` | `/runs/{id}/cancel` | Request durable cancellation |
+| `POST` | `/integrations/github/webhook` | Validate signed GitHub App lifecycle events |
 
 ## Trust boundaries
 
@@ -188,11 +222,14 @@ Useful API routes include:
   Docker socket or private evaluation inputs.
 - The API and model worker never receive the Docker socket; a separate trusted
   host command persists sandbox facts before signaling the durable workflow.
+- GitHub writes require a separate recorded approval, a `PASS` verification, and
+  an explicitly enabled installation token; only draft PRs can be created.
 
-See [ADR 0001](docs/adr/0001-first-vertical-slice.md) for the initial scope and
-security decisions, and [telemetry/queries.md](telemetry/queries.md) for the
-bounded incident queries. The [sandbox boundary](docs/sandbox.md) documents the
-implemented isolation controls and their limitations.
+Start with the [architecture](docs/architecture.md), [threat model](docs/threat-model.md),
+[failure modes](docs/failure-modes.md), and [release demo](docs/demo.md). The ADRs
+record the [initial scope](docs/adr/0001-first-vertical-slice.md) and
+[evaluation/GitHub tradeoffs](docs/adr/0002-evaluation-and-draft-pr.md). The
+[sandbox boundary](docs/sandbox.md) documents isolation controls and limitations.
 
 ## Project layout
 
@@ -204,15 +241,16 @@ scenarios/         Public scenario contract and private evaluation truth
 telemetry/         Collector, Prometheus, Loki, and query configuration
 migrations/        Alembic database migrations
 scripts/           Repeatable acceptance checks
+evaluation-results/ Generated local evaluation output (ignored by Git)
 tests/             Contract, migration, evidence, diagnosis, and fixture tests
-docs/adr/           Architecture decision records
+docs/               Architecture, security, operations, evaluation, and ADRs
 ```
 
-## Roadmap
+## Release status
 
-The next milestone is Step 12: add a second scenario, a repeated-run evaluation
-harness, adversarial cases, baseline comparisons, and metrics export. The remaining
-sequence is tracked in the [PRD and build plan](incidentlab-prd-and-build-plan.md).
+The first-release definition of done is met. Future work is intentionally outside
+the PRD: stronger isolation, arbitrary repository onboarding, additional providers,
+and hosted multi-user operation.
 
 Stop the local stack without deleting its volumes:
 

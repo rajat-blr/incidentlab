@@ -367,7 +367,10 @@ class DockerSandboxRunner:
         *,
         candidate_id: str | None = None,
         cancel_event: threading.Event | None = None,
+        scenario_id: str = "pool-exhaustion",
     ) -> SandboxRunResult:
+        if scenario_id not in {"pool-exhaustion", "inventory-underflow"}:
+            raise SandboxError("unsupported verification scenario")
         self._validate_commit(target_commit)
         changed_paths = self._validate_patch(unified_diff)
         environment_digest = self.image_digest()
@@ -409,6 +412,8 @@ class DockerSandboxRunner:
                     "healthy",
                     "--trials",
                     "3",
+                    "--scenario",
+                    scenario_id,
                 ),
             ),
             (
@@ -419,6 +424,8 @@ class DockerSandboxRunner:
                     "repaired",
                     "--trials",
                     "5",
+                    "--scenario",
+                    scenario_id,
                 ),
             ),
         )
@@ -442,6 +449,8 @@ class DockerSandboxRunner:
                         "baseline",
                         "--trials",
                         "3",
+                        "--scenario",
+                        scenario_id,
                     ),
                     cancel_event,
                 )
@@ -486,6 +495,7 @@ class DockerSandboxRunner:
             manifest = {
                 "candidate_id": identifier,
                 "target_commit": target_commit,
+                "scenario_id": scenario_id,
                 "environment_digest": environment_digest,
                 "changed_paths": list(changed_paths),
                 "checks": [asdict(check) for check in checks],

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from temporalio.client import Client
@@ -19,6 +19,7 @@ from incidentlab.contracts.models import (
     EvidenceItem,
     Hypothesis,
     IncidentRun,
+    ModelUsage,
     RepairApprovalRequest,
     RepairCandidate,
     RunCancelRequest,
@@ -29,6 +30,11 @@ from incidentlab.contracts.models import (
     VerificationRun,
 )
 from incidentlab.db import repository
+from incidentlab.github_integration import (
+    GitHubIntegrationError,
+    validate_installation_permissions,
+    verify_webhook_signature,
+)
 from incidentlab.reporting import assemble_report, render_markdown
 from incidentlab.workflow.incident import IncidentWorkflow
 from incidentlab.workflow.worker import TASK_QUEUE
@@ -117,6 +123,31 @@ def check_temporal() -> None:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "alive"}
+
+
+@app.post("/integrations/github/webhook")
+async def github_webhook(
+    request: Request,
+    x_hub_signature_256: str | None = Header(default=None),
+    x_github_event: str | None = Header(default=None),
+) -> dict[str, str]:
+    secret = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
+    body = await request.body()
+    if not verify_webhook_signature(secret, body, x_hub_signature_256):
+        raise HTTPException(status_code=401, detail="invalid_webhook_signature")
+    try:
+        payload = await request.json()
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail="invalid_webhook_payload") from error
+    if x_github_event in {"installation", "installation_repositories"}:
+        permissions = payload.get("installation", {}).get("permissions", {})
+        try:
+            validate_installation_permissions(permissions)
+        except GitHubIntegrationError as error:
+            raise HTTPException(
+                status_code=403, detail="unsafe_installation_permissions"
+            ) from error
+    return {"status": "accepted", "event": x_github_event or "unknown"}
 
 
 @app.get("/ready")
@@ -211,20 +242,27 @@ async def read_verifications(run_id: UUID) -> list[VerificationRun]:
     return await asyncio.to_thread(repository.list_verifications, run_id)
 
 
+@app.get("/runs/{run_id}/model-usage", response_model=list[ModelUsage])
+async def read_model_usage(run_id: UUID) -> list[ModelUsage]:
+    await asyncio.to_thread(require_run, run_id)
+    return await asyncio.to_thread(repository.list_model_usage, run_id)
+
+
 @app.get("/runs/{run_id}/report")
 async def read_report(
     run_id: UUID,
     format: Literal["json", "markdown"] = "json",
 ) -> Response:
     run = await asyncio.to_thread(require_run, run_id)
-    evidence, hypotheses, candidates, verifications, events = await asyncio.gather(
+    evidence, hypotheses, candidates, verifications, events, usage = await asyncio.gather(
         asyncio.to_thread(repository.list_evidence, run_id),
         asyncio.to_thread(repository.list_hypotheses, run_id),
         asyncio.to_thread(repository.list_repair_candidates, run_id),
         asyncio.to_thread(repository.list_verifications, run_id),
         asyncio.to_thread(repository.list_events, run_id),
+        asyncio.to_thread(repository.list_model_usage, run_id),
     )
-    report = assemble_report(run, evidence, hypotheses, candidates, verifications, events)
+    report = assemble_report(run, evidence, hypotheses, candidates, verifications, events, usage)
     filename = f"incidentlab-{run_id}.{'md' if format == 'markdown' else 'json'}"
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
     if format == "markdown":

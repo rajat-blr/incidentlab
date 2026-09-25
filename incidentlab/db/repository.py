@@ -15,6 +15,7 @@ from incidentlab.contracts.models import (
     EvidenceItem,
     Hypothesis,
     IncidentRun,
+    ModelUsage,
     RepairCandidate,
     RunState,
     VerificationRun,
@@ -245,6 +246,20 @@ def list_verifications(run_id: UUID) -> list[VerificationRun]:
             .all()
         )
     return [VerificationRun.model_validate(dict(row)) for row in rows]
+
+
+def list_model_usage(run_id: UUID) -> list[ModelUsage]:
+    with engine().connect() as connection:
+        rows = (
+            connection.execute(
+                sa.select(model_usage)
+                .where(model_usage.c.run_id == run_id)
+                .order_by(model_usage.c.id)
+            )
+            .mappings()
+            .all()
+        )
+    return [ModelUsage.model_validate(dict(row)) for row in rows]
 
 
 def get_verification_artifact(artifact_id: UUID) -> tuple[dict, bytes] | None:
@@ -772,10 +787,16 @@ def finalize_verification_ranking(run_id: UUID, effect_key: str) -> dict:
 
 
 def record_approval(
-    run_id: UUID, actor: str, decision: str, policy_version: str = "approval-v1"
+    run_id: UUID,
+    actor: str,
+    decision: str,
+    policy_version: str = "approval-v1",
+    action: str = "generate_repair",
 ) -> tuple[dict, bool]:
+    if action not in {"generate_repair", "create_draft_pr"}:
+        raise ValueError("unsupported approval action")
     now = datetime.now(UTC)
-    approval_id = uuid5(NAMESPACE_URL, f"incidentlab:{run_id}:generate_repair")
+    approval_id = uuid5(NAMESPACE_URL, f"incidentlab:{run_id}:{action}")
     with engine().begin() as connection:
         created = connection.execute(
             insert(approvals)
@@ -783,7 +804,7 @@ def record_approval(
                 id=approval_id,
                 run_id=run_id,
                 actor=actor,
-                action="generate_repair",
+                action=action,
                 decision=decision,
                 policy_version=policy_version,
                 decided_at=now,
@@ -794,7 +815,7 @@ def record_approval(
         row = (
             connection.execute(
                 sa.select(approvals).where(
-                    approvals.c.run_id == run_id, approvals.c.action == "generate_repair"
+                    approvals.c.run_id == run_id, approvals.c.action == action
                 )
             )
             .mappings()
@@ -804,25 +825,42 @@ def record_approval(
             _insert_event(
                 connection,
                 run_id,
-                "repair_approval",
+                "repair_approval" if action == "generate_repair" else "draft_pr_approval",
                 actor,
                 str(run_id),
-                f"run:{run_id}:repair-approval",
-                {"decision": decision, "policy_version": policy_version},
+                f"run:{run_id}:{action}-approval",
+                {"action": action, "decision": decision, "policy_version": policy_version},
                 now,
             )
     return dict(row), created is not None
 
 
-def get_approval(run_id: UUID) -> dict | None:
+def get_approval(run_id: UUID, action: str = "generate_repair") -> dict | None:
     with engine().connect() as connection:
         row = (
             connection.execute(
                 sa.select(approvals).where(
-                    approvals.c.run_id == run_id, approvals.c.action == "generate_repair"
+                    approvals.c.run_id == run_id, approvals.c.action == action
                 )
             )
             .mappings()
             .one_or_none()
         )
     return dict(row) if row else None
+
+
+def record_integration_event(
+    run_id: UUID, kind: str, actor: str, effect_key: str, details: dict
+) -> bool:
+    now = datetime.now(UTC)
+    with engine().begin() as connection:
+        return _insert_event(
+            connection,
+            run_id,
+            kind,
+            actor,
+            str(run_id),
+            effect_key,
+            details,
+            now,
+        )

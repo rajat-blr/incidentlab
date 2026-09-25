@@ -6,6 +6,7 @@ from incidentlab.contracts.models import (
     EvidenceItem,
     Hypothesis,
     IncidentRun,
+    ModelUsage,
     RepairCandidate,
     VerificationRun,
 )
@@ -20,6 +21,7 @@ def assemble_report(
     candidates: list[RepairCandidate],
     verifications: list[VerificationRun],
     events: list[dict],
+    model_usage: list[ModelUsage] | None = None,
 ) -> dict:
     return {
         "report_version": REPORT_VERSION,
@@ -29,6 +31,7 @@ def assemble_report(
         "candidates": [item.model_dump(mode="json") for item in candidates],
         "verifications": [item.model_dump(mode="json") for item in verifications],
         "events": events,
+        "model_usage": [item.model_dump(mode="json") for item in (model_usage or [])],
         "limitations": [
             "This is a local educational system and does not deploy or merge changes.",
             "Verification applies only to the pinned commit and recorded sandbox environment.",
@@ -113,6 +116,22 @@ def render_markdown(report: dict) -> str:
                 f"`{check['content_sha256']}` |"
             )
         lines.append("")
+    lines.extend(["## Model usage", ""])
+    if report["model_usage"]:
+        total_input = sum(item["input_tokens"] for item in report["model_usage"])
+        total_output = sum(item["output_tokens"] for item in report["model_usage"])
+        total_cost = sum(float(item["estimated_cost_usd"]) for item in report["model_usage"])
+        lines.extend(
+            [
+                f"- Calls: {len(report['model_usage'])}",
+                f"- Input tokens: {total_input}",
+                f"- Output tokens: {total_output}",
+                f"- Recorded estimated cost: ${total_cost:.6f}",
+                "",
+            ]
+        )
+    else:
+        lines.extend(["No model usage was recorded.", ""])
     lines.extend(["## Limitations", ""])
     lines.extend(f"- {item}" for item in report["limitations"])
     return "\n".join(lines) + "\n"

@@ -1,0 +1,8 @@
+{
+  "scenario_id": "inventory-underflow",
+  "version": 1,
+  "root_cause_label": "insufficient_inventory_guard_bypassed",
+  "mechanism": "The faulty mode bypasses the insufficient-inventory guard, subtracting an oversized order and committing a negative quantity.",
+  "expected_affected_files": ["sample_service/app.py"],
+  "expected_repair": "Reject a checkout when requested quantity exceeds current inventory before updating the row."
+}

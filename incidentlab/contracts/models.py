@@ -70,6 +70,11 @@ class RunCancelRequest(Contract):
     actor: str = Field(min_length=1, max_length=128)
 
 
+class DraftPullRequestRequest(Contract):
+    actor: str = Field(min_length=1, max_length=128)
+    repository: str = Field(pattern=r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+
+
 class IncidentRun(Contract):
     id: UUID
     scenario_id: str

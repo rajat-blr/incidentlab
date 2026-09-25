@@ -33,16 +33,24 @@ def post_checkout(
 
 
 def replay(database: Path, fault_mode: str) -> list[tuple[int, dict]]:
+    return replay_traffic(database, fault_mode, (("widget", 99), ("widget", 99), ("widget", 1)))
+
+
+def replay_traffic(
+    database: Path,
+    fault_mode: str,
+    traffic: tuple[tuple[str, int], ...],
+) -> list[tuple[int, dict]]:
     reset_database(database)
     service = CheckoutService(database, fault_mode)
     with running_server(service) as server:
         with running_gateway(f"http://127.0.0.1:{server.server_port}") as gateway:
             port = gateway.server_port
-            return [
-                post_checkout(port, "widget", 99),
-                post_checkout(port, "widget", 99),
-                post_checkout(port, "widget", 1),
-            ]
+            return [post_checkout(port, sku, quantity) for sku, quantity in traffic]
+
+
+def replay_inventory_underflow(database: Path, fault_mode: str) -> list[tuple[int, dict]]:
+    return replay_traffic(database, fault_mode, (("widget", 11),))
 
 
 def main() -> None:

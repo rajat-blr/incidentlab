@@ -44,10 +44,17 @@ async def reproduce_incident_activity(data: dict) -> dict:
             root / "checkout.sqlite3",
             data["run_id"],
             root,
+            data["scenario_id"],
         )
     statuses = payload["statuses"]
     activity.heartbeat("replay completed")
-    if statuses != [409, 409, 503] or payload["failure"] != "database_pool_timeout":
+    reproduced = {
+        "pool-exhaustion": statuses == [409, 409, 503]
+        and payload["failure"] == "database_pool_timeout",
+        "inventory-underflow": statuses == [200]
+        and payload["response"].get("remaining_inventory", 0) < 0,
+    }.get(data["scenario_id"], False)
+    if not reproduced:
         raise ApplicationError("scenario did not reproduce", non_retryable=True)
     await asyncio.to_thread(
         repository.record_output,

@@ -35,6 +35,7 @@ def verify_run_candidates(
                 candidate.target_commit,
                 candidate.unified_diff,
                 candidate_id=str(candidate.id),
+                scenario_id=run.scenario_id,
             )
             repository.record_verification_result(
                 run_id,

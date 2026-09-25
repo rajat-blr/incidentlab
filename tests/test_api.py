@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import json
 import unittest
 from datetime import UTC, datetime
 from unittest.mock import patch
@@ -14,8 +17,11 @@ class ApiContractTests(unittest.TestCase):
         with TestClient(app) as client:
             response = client.get("/scenarios")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()[0]["id"], "pool-exhaustion")
-        self.assertEqual(response.json()[0]["schema_version"], 1)
+        self.assertEqual(
+            {item["id"] for item in response.json()},
+            {"pool-exhaustion", "inventory-underflow"},
+        )
+        self.assertTrue(all(item["schema_version"] == 1 for item in response.json()))
         self.assertNotIn("root_cause_label", response.text)
         self.assertNotIn("expected_repair", response.text)
 
@@ -23,6 +29,43 @@ class ApiContractTests(unittest.TestCase):
         with TestClient(app) as client:
             response = client.get("/health")
         self.assertEqual(response.json(), {"status": "alive"})
+
+    def test_github_webhook_rejects_invalid_signature(self) -> None:
+        with patch.dict("os.environ", {"GITHUB_WEBHOOK_SECRET": "test-secret"}):
+            with TestClient(app) as client:
+                response = client.post(
+                    "/integrations/github/webhook",
+                    content=b"{}",
+                    headers={"X-Hub-Signature-256": "sha256=invalid"},
+                )
+        self.assertEqual(response.status_code, 401)
+
+    def test_github_webhook_accepts_minimal_installation(self) -> None:
+        body = json.dumps(
+            {
+                "installation": {
+                    "permissions": {
+                        "metadata": "read",
+                        "contents": "write",
+                        "pull_requests": "write",
+                    }
+                }
+            },
+            separators=(",", ":"),
+        ).encode()
+        signature = "sha256=" + hmac.new(b"test-secret", body, hashlib.sha256).hexdigest()
+        with patch.dict("os.environ", {"GITHUB_WEBHOOK_SECRET": "test-secret"}):
+            with TestClient(app) as client:
+                response = client.post(
+                    "/integrations/github/webhook",
+                    content=body,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Hub-Signature-256": signature,
+                        "X-GitHub-Event": "installation",
+                    },
+                )
+        self.assertEqual(response.status_code, 200)
 
     def test_runs_endpoint_returns_reviewable_run_summaries(self) -> None:
         run = IncidentRun(

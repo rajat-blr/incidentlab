@@ -38,6 +38,12 @@ class SandboxRunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(SandboxError, "unsafe path"):
                 runner._validate_patch(patch)
 
+    def test_unknown_scenario_is_rejected_before_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            runner = self.runner(Path(temporary))
+            with self.assertRaisesRegex(SandboxError, "unsupported verification scenario"):
+                runner.run("a" * 40, "unused", scenario_id="unknown")
+
     def test_export_omits_private_evaluation_truth(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

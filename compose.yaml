@@ -48,6 +48,7 @@ services:
       TEMPORAL_ADDRESS: temporal:7233
       SCENARIO_ROOT: /app/scenarios
       REPOSITORY_GIT_DIR: /repository/.git
+      GITHUB_WEBHOOK_SECRET:
     volumes:
       - ./.git:/repository/.git:ro
     ports:
