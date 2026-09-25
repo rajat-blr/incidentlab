@@ -9,8 +9,8 @@ hypotheses, and enforces a human approval gate before repair work proceeds.
 > IncidentLab is an educational development project, not a production incident
 > response system. It does not merge code or deploy changes.
 
-Steps 1–9 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
-Full before/after verification persistence and deterministic ranking remain roadmap work.
+Steps 1–10 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
+The user-facing review flow and later evaluation/hardening milestones remain roadmap work.
 
 ## What works today
 
@@ -24,6 +24,8 @@ Full before/after verification persistence and deterministic ranking remain road
   lookups, secret redaction, and prompt-injection defenses.
 - Approval-gated Gemini repair generation with bounded line replacements,
   deterministic unified diffs, and a fail-closed patch policy.
+- Persisted baseline and post-patch checks with hash-addressed raw logs,
+  fact-derived outcomes, explicit inconclusive handling, and deterministic ranking.
 - PostgreSQL persistence, Alembic migrations, audit events, model-usage records,
   and REST endpoints for runs, evidence, hypotheses, approval, and cancellation.
 - Repeatable acceptance checks for workflow durability, evidence integrity, live
@@ -108,11 +110,20 @@ request succeeds.
    .venv/bin/python scripts/step7_diagnosis_check.py
    .venv/bin/python scripts/step8_sandbox_check.py
    .venv/bin/python scripts/step9_repair_check.py
+   .venv/bin/python scripts/step10_verification_check.py
    ```
 
 The Step 7 and Step 9 checks make live Gemini requests. Step 9 records approval,
 validates the generated candidate, and sends only a policy-accepted diff to the
-independent sandbox verifier.
+independent sandbox verifier. Step 10 persists every verification log, derives
+the terminal state from mandatory checks, and records deterministic ranking.
+
+For an individual run already waiting in `VERIFYING`, invoke the trusted
+host-side verifier with:
+
+```sh
+.venv/bin/python scripts/verify_run.py <run-id>
+```
 
 ## Development checks
 
@@ -147,6 +158,8 @@ Useful API routes include:
 | `GET` | `/runs/{id}/evidence` | Read normalized evidence |
 | `GET` | `/runs/{id}/hypotheses` | Read validated diagnosis results |
 | `GET` | `/runs/{id}/candidates` | Read policy-accepted repair candidates |
+| `GET` | `/runs/{id}/verifications` | Read checks, outcomes, and candidate ranking |
+| `GET` | `/verification/artifacts/{id}` | Read a hash-verified raw check log |
 | `POST` | `/runs/{id}/repair-approval` | Approve or reject repair generation |
 | `POST` | `/runs/{id}/cancel` | Request durable cancellation |
 
@@ -164,6 +177,8 @@ Useful API routes include:
   allowlist, size, secret, syntax, and clean-apply checks run before persistence.
 - Verification uses a read-only, network-disabled, non-root container without the
   Docker socket or private evaluation inputs.
+- The API and model worker never receive the Docker socket; a separate trusted
+  host command persists sandbox facts before signaling the durable workflow.
 
 See [ADR 0001](docs/adr/0001-first-vertical-slice.md) for the initial scope and
 security decisions, and [telemetry/queries.md](telemetry/queries.md) for the
@@ -185,9 +200,8 @@ docs/adr/           Architecture decision records
 
 ## Roadmap
 
-The next milestone is Step 10: persist full before/after verification evidence,
-derive outcomes from recorded facts, and rank eligible candidates deterministically.
-The remaining sequence is tracked in the
+The next milestone is Step 11: build the run list, evidence explorer, diff review,
+verification matrix, report export, and audit UI. The remaining sequence is tracked in the
 [PRD and build plan](incidentlab-prd-and-build-plan.md).
 
 Stop the local stack without deleting its volumes:

@@ -218,8 +218,9 @@ class VerificationCheck(Contract):
     started_at: datetime
     finished_at: datetime
     exit_code: int | None
-    artifact_ref: str | None
-    content_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    failure_reason: str | None = None
+    artifact_ref: str = Field(min_length=1)
+    content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class VerificationRun(Contract):
@@ -229,6 +230,10 @@ class VerificationRun(Contract):
     checks: list[VerificationCheck]
     outcome: Literal["PASS", "FAIL", "INCONCLUSIVE"]
     score_version: str
+    rank: int | None = Field(default=None, ge=1)
+    score: dict[str, int] | None = None
+    started_at: datetime
+    finished_at: datetime
 
 
 class AuditEvent(Contract):

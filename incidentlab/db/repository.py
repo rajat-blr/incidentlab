@@ -1,8 +1,10 @@
 """Durable PostgreSQL operations used by the API and Temporal Activities."""
 
+import hashlib
 import os
 from datetime import UTC, datetime
 from functools import lru_cache
+from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import sqlalchemy as sa
@@ -15,6 +17,7 @@ from incidentlab.contracts.models import (
     IncidentRun,
     RepairCandidate,
     RunState,
+    VerificationRun,
 )
 from incidentlab.db.tables import (
     approvals,
@@ -26,10 +29,21 @@ from incidentlab.db.tables import (
     model_usage,
     repair_candidates,
     run_outputs,
+    verification_artifacts,
+    verification_runs,
 )
 from incidentlab.evidence.collection import EvidenceBundle
 from incidentlab.model_adapter.diagnosis import DiagnosisResult
 from incidentlab.model_adapter.repair import RepairGenerationResult
+from incidentlab.sandbox.runner import SandboxRunResult
+from incidentlab.verification import (
+    SCORE_VERSION,
+    RankingFact,
+    changed_line_count,
+    derive_outcome,
+    rank_candidates,
+    terminal_state,
+)
 
 
 @lru_cache
@@ -201,6 +215,47 @@ def list_repair_candidates(run_id: UUID) -> list[RepairCandidate]:
         data.pop("created_at")
         values.append(RepairCandidate.model_validate(data))
     return values
+
+
+def list_verifications(run_id: UUID) -> list[VerificationRun]:
+    with engine().connect() as connection:
+        rows = (
+            connection.execute(
+                sa.select(verification_runs)
+                .join(
+                    repair_candidates,
+                    verification_runs.c.candidate_id == repair_candidates.c.id,
+                )
+                .where(repair_candidates.c.run_id == run_id)
+                .order_by(
+                    verification_runs.c.rank.asc().nulls_last(),
+                    verification_runs.c.candidate_id,
+                )
+            )
+            .mappings()
+            .all()
+        )
+    return [VerificationRun.model_validate(dict(row)) for row in rows]
+
+
+def get_verification_artifact(artifact_id: UUID) -> tuple[dict, bytes] | None:
+    with engine().connect() as connection:
+        row = (
+            connection.execute(
+                sa.select(verification_artifacts).where(verification_artifacts.c.id == artifact_id)
+            )
+            .mappings()
+            .one_or_none()
+        )
+    if row is None:
+        return None
+    return (
+        {
+            "media_type": row["media_type"],
+            "content_sha256": row["content_sha256"],
+        },
+        row["content"],
+    )
 
 
 def get_run_output(run_id: UUID, column: str) -> dict | None:
@@ -538,6 +593,173 @@ def record_repair_rejection(run_id: UUID, category: str, detail: str, effect_key
             {"category": category[:128], "detail": detail[:500]},
             now,
         )
+
+
+def record_verification_result(
+    run_id: UUID,
+    result: SandboxRunResult,
+    effect_key: str,
+) -> bool:
+    """Persist raw check artifacts and derive outcome without trusting the manifest result."""
+    candidate_id = UUID(result.candidate_id)
+    verification_id = uuid5(
+        NAMESPACE_URL,
+        f"incidentlab:{candidate_id}:verification:{result.environment_digest}",
+    )
+    if len({check.name for check in result.checks}) != len(result.checks):
+        raise ValueError("verification contains duplicate check names")
+    artifacts: list[tuple[UUID, str, bytes, str]] = []
+    persisted_checks: list[dict] = []
+    for check in result.checks:
+        path = Path(check.artifact_ref)
+        content = path.read_bytes()
+        digest = hashlib.sha256(content).hexdigest()
+        if digest != check.content_sha256:
+            raise ValueError(f"verification artifact hash mismatch for {check.name}")
+        artifact_id = uuid5(
+            NAMESPACE_URL,
+            f"incidentlab:{verification_id}:artifact:{check.name}:{digest}",
+        )
+        artifacts.append((artifact_id, check.name, content, digest))
+        persisted_checks.append(
+            {
+                "schema_version": 1,
+                "name": check.name,
+                "outcome": check.outcome,
+                "started_at": check.started_at,
+                "finished_at": check.finished_at,
+                "exit_code": check.exit_code,
+                "failure_reason": check.failure_reason,
+                "artifact_ref": f"/verification/artifacts/{artifact_id}",
+                "content_sha256": digest,
+            }
+        )
+    outcome = derive_outcome(result.checks)
+    started_at = min(datetime.fromisoformat(check.started_at) for check in result.checks)
+    finished_at = max(datetime.fromisoformat(check.finished_at) for check in result.checks)
+    now = datetime.now(UTC)
+    with engine().begin() as connection:
+        candidate = connection.execute(
+            sa.select(repair_candidates.c.id).where(
+                repair_candidates.c.id == candidate_id,
+                repair_candidates.c.run_id == run_id,
+            )
+        ).scalar_one_or_none()
+        if candidate is None:
+            raise ValueError("verification candidate does not belong to the run")
+        inserted = _insert_event(
+            connection,
+            run_id,
+            "verification_recorded",
+            "verifier",
+            str(run_id),
+            effect_key,
+            {
+                "candidate_id": str(candidate_id),
+                "outcome": outcome,
+                "check_count": len(persisted_checks),
+                "environment_digest": result.environment_digest,
+            },
+            now,
+        )
+        if not inserted:
+            return False
+        connection.execute(
+            insert(verification_runs).values(
+                id=verification_id,
+                candidate_id=candidate_id,
+                environment_digest=result.environment_digest,
+                checks=persisted_checks,
+                outcome=outcome,
+                score_version=SCORE_VERSION,
+                started_at=started_at,
+                finished_at=finished_at,
+            )
+        )
+        for artifact_id, check_name, content, digest in artifacts:
+            connection.execute(
+                insert(verification_artifacts).values(
+                    id=artifact_id,
+                    verification_id=verification_id,
+                    check_name=check_name,
+                    media_type="text/plain; charset=utf-8",
+                    content=content,
+                    content_sha256=digest,
+                    created_at=now,
+                )
+            )
+    return True
+
+
+def finalize_verification_ranking(run_id: UUID, effect_key: str) -> dict:
+    """Rank every candidate from persisted facts and return the workflow terminal state."""
+    now = datetime.now(UTC)
+    with engine().begin() as connection:
+        candidate_rows = (
+            connection.execute(
+                sa.select(
+                    repair_candidates.c.id,
+                    repair_candidates.c.unified_diff,
+                    repair_candidates.c.changed_paths,
+                ).where(repair_candidates.c.run_id == run_id)
+            )
+            .mappings()
+            .all()
+        )
+        verification_rows = (
+            connection.execute(
+                sa.select(verification_runs)
+                .join(
+                    repair_candidates,
+                    verification_runs.c.candidate_id == repair_candidates.c.id,
+                )
+                .where(repair_candidates.c.run_id == run_id)
+            )
+            .mappings()
+            .all()
+        )
+        if not candidate_rows or len(verification_rows) != len(candidate_rows):
+            raise ValueError("verification is incomplete for one or more candidates")
+        by_candidate = {row["candidate_id"]: row for row in verification_rows}
+        facts = [
+            RankingFact(
+                candidate_id=row["id"],
+                outcome=by_candidate[row["id"]]["outcome"],
+                changed_lines=changed_line_count(row["unified_diff"]),
+                changed_files=len(row["changed_paths"]),
+            )
+            for row in candidate_rows
+        ]
+        ranked = rank_candidates(facts)
+        for item in ranked:
+            connection.execute(
+                verification_runs.update()
+                .where(verification_runs.c.candidate_id == item.candidate_id)
+                .values(rank=item.rank, score=item.score, score_version=SCORE_VERSION)
+            )
+        outcomes = [row["outcome"] for row in verification_rows]
+        state = terminal_state(outcomes)
+        _insert_event(
+            connection,
+            run_id,
+            "verification_ranking_recorded",
+            "verifier",
+            str(run_id),
+            effect_key,
+            {
+                "candidate_count": len(ranked),
+                "verified_count": outcomes.count("PASS"),
+                "terminal_state": state,
+                "score_version": SCORE_VERSION,
+            },
+            now,
+        )
+    return {
+        "terminal_state": state,
+        "candidate_count": len(ranked),
+        "verified_count": outcomes.count("PASS"),
+        "score_version": SCORE_VERSION,
+    }
 
 
 def record_approval(

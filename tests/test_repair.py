@@ -64,6 +64,16 @@ class FakeRepairAdapter:
         return RepairModelResult(self.draft, Usage(20, 10, 1))
 
 
+class SequenceRepairAdapter(FakeRepairAdapter):
+    def __init__(self, drafts):
+        self.drafts = iter(drafts)
+        self.payloads = []
+
+    def generate(self, payload):
+        self.payloads.append(payload)
+        return RepairModelResult(next(self.drafts), Usage(20, 10, 1))
+
+
 class RepairPolicyTests(unittest.TestCase):
     def setUp(self) -> None:
         self.source = Path(APP_PATH).read_text()
@@ -159,6 +169,49 @@ class RepairGenerationTests(unittest.TestCase):
         self.assertEqual(result.candidates[0].policy_version, POLICY_VERSION)
         self.assertEqual([decision.accepted for decision in result.decisions], [True, False])
         self.assertEqual(adapter.payload["allowed_files"], [APP_PATH])
+
+    def test_one_bounded_retry_uses_sanitized_policy_feedback(self) -> None:
+        source = Path(APP_PATH).read_text()
+        fixed = source.replace(
+            """                    if self.fault_mode == "pool_leak":
+                        # Intentional incident fixture: this branch leaves its slot checked out.
+                        return_connection = False
+""",
+            "",
+            1,
+        )
+        invalid = RepairCandidateDraft(
+            unified_diff=unified_diff("old\n", "new\n", "compose.yaml"),
+            explanation="Invalid scope.",
+            expected_behavior="Not allowed.",
+        )
+        valid = RepairCandidateDraft(
+            unified_diff=unified_diff(source, fixed),
+            explanation="Release the connection.",
+            expected_behavior="The valid request succeeds.",
+        )
+        adapter = SequenceRepairAdapter(
+            [
+                RepairGenerationDraft(candidates=[invalid]),
+                RepairGenerationDraft(candidates=[valid]),
+            ]
+        )
+        run_id = uuid4()
+        result = generate_repairs(
+            run_id,
+            "a" * 40,
+            hypothesis(run_id),
+            {"statuses": [409, 409, 503]},
+            source,
+            adapter,
+        )
+        self.assertEqual(len(result.candidates), 1)
+        self.assertEqual(len(adapter.payloads), 2)
+        self.assertEqual(
+            adapter.payloads[1]["retry_feedback"]["policy_categories"],
+            ["forbidden_path"],
+        )
+        self.assertEqual(result.usage, Usage(40, 20, 2))
 
     def test_pinned_context_reader_returns_exact_git_blob(self) -> None:
         commit = subprocess.run(

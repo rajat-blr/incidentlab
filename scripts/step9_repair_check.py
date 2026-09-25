@@ -112,9 +112,14 @@ def main() -> None:
     if not verifier_results:
         raise AssertionError("No accepted candidate reached the independent verifier")
 
-    final = wait_for_state(run_id, {"COMPLETED", "FAILED", "CANCELLED"}, timeout=30)
-    if final["state"] != "COMPLETED":
-        raise AssertionError(f"Approved workflow did not complete: {final}")
+    request(
+        "POST",
+        f"/runs/{run_id}/cancel",
+        {"actor": "step9-repair-check"},
+    )
+    final = wait_for_state(run_id, {"FAILED", "CANCELLED"}, timeout=30)
+    if final["state"] != "CANCELLED":
+        raise AssertionError(f"Step 9 handoff did not cancel cleanly: {final}")
     events = request("GET", f"/runs/{run_id}/events")
     if not isinstance(events, list):
         raise AssertionError("Unexpected events response")

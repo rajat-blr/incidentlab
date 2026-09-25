@@ -107,8 +107,29 @@ verification_runs = sa.Table(
     sa.Column("checks", sa.JSON(), nullable=False),
     sa.Column("outcome", sa.String(24), nullable=False),
     sa.Column("score_version", sa.String(64), nullable=False),
+    sa.Column("rank", sa.Integer()),
+    sa.Column("score", sa.JSON()),
     sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
     sa.Column("finished_at", sa.DateTime(timezone=True)),
+    sa.UniqueConstraint("candidate_id", name="uq_verification_runs_candidate"),
+)
+
+verification_artifacts = sa.Table(
+    "verification_artifacts",
+    metadata,
+    sa.Column("id", sa.Uuid(), primary_key=True),
+    sa.Column(
+        "verification_id",
+        sa.Uuid(),
+        sa.ForeignKey("verification_runs.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    sa.Column("check_name", sa.String(64), nullable=False),
+    sa.Column("media_type", sa.String(128), nullable=False),
+    sa.Column("content", sa.LargeBinary(), nullable=False),
+    sa.Column("content_sha256", sa.String(64), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.UniqueConstraint("verification_id", "check_name", name="uq_verification_artifact_check"),
 )
 
 audit_events = sa.Table(

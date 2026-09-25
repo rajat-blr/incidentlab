@@ -24,6 +24,7 @@ from incidentlab.contracts.models import (
     RunState,
     ScenarioManifest,
     ScenarioSummary,
+    VerificationRun,
 )
 from incidentlab.db import repository
 from incidentlab.workflow.incident import IncidentWorkflow
@@ -193,6 +194,12 @@ async def read_candidates(run_id: UUID) -> list[RepairCandidate]:
     return await asyncio.to_thread(repository.list_repair_candidates, run_id)
 
 
+@app.get("/runs/{run_id}/verifications", response_model=list[VerificationRun])
+async def read_verifications(run_id: UUID) -> list[VerificationRun]:
+    await asyncio.to_thread(require_run, run_id)
+    return await asyncio.to_thread(repository.list_verifications, run_id)
+
+
 @app.get("/evidence/artifacts/{artifact_id}")
 async def read_evidence_artifact(artifact_id: UUID) -> Response:
     result = await asyncio.to_thread(repository.get_evidence_artifact, artifact_id)
@@ -207,6 +214,24 @@ async def read_evidence_artifact(artifact_id: UUID) -> Response:
         headers={
             "ETag": f'"sha256:{metadata.content_sha256}"',
             "X-Content-SHA256": metadata.content_sha256,
+        },
+    )
+
+
+@app.get("/verification/artifacts/{artifact_id}")
+async def read_verification_artifact(artifact_id: UUID) -> Response:
+    result = await asyncio.to_thread(repository.get_verification_artifact, artifact_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="verification_artifact_not_found")
+    metadata, content = result
+    if hashlib.sha256(content).hexdigest() != metadata["content_sha256"]:
+        raise HTTPException(status_code=500, detail="verification_artifact_hash_mismatch")
+    return Response(
+        content=content,
+        media_type=metadata["media_type"],
+        headers={
+            "ETag": f'"sha256:{metadata["content_sha256"]}"',
+            "X-Content-SHA256": metadata["content_sha256"],
         },
     )
 

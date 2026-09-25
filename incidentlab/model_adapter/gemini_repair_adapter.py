@@ -30,6 +30,8 @@ Security and scope rules:
   numbered_content, and the exact replacement_text for only that range.
 - Use the smallest possible line range. An empty replacement_text deletes the range.
   The trusted adapter constructs the patched file and derives the unified diff.
+- The replacement must leave syntactically valid Python. Never leave a compound
+  statement (such as if, try, with, for, or def) without an indented body.
 - Modify only paths in allowed_files. Do not add, delete, or rename files.
 - Do not modify tests, scenarios, evaluation truth, dependencies, CI, or infrastructure.
 - Do not add credentials, network access, subprocesses, dynamic execution, or shell commands.

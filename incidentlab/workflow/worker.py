@@ -9,6 +9,7 @@ from temporalio.worker import Worker
 from incidentlab.workflow.activities import (
     collect_evidence_placeholder,
     diagnose_placeholder,
+    finalize_verification,
     generate_repair_placeholder,
     report_placeholder,
     reproduce_incident_activity,
@@ -33,6 +34,7 @@ async def run_worker() -> None:
             diagnose_placeholder,
             generate_repair_placeholder,
             verify_placeholder,
+            finalize_verification,
             report_placeholder,
         ],
     )

@@ -16,7 +16,7 @@ from incidentlab.contracts.models import (
 from incidentlab.model_adapter.diagnosis import Usage
 from incidentlab.policy.repair import POLICY_VERSION, PolicyDecision, RepairPolicy
 
-PROMPT_VERSION = "repair-v4"
+PROMPT_VERSION = "repair-v5"
 
 
 class RepairError(RuntimeError):
@@ -70,46 +70,62 @@ def generate_repairs(
             ),
         },
     }
-    model_result = adapter.generate(payload)
-    try:
-        draft = RepairGenerationDraft.model_validate(model_result.draft)
-    except ValidationError as error:
-        raise RepairError(f"repair schema validation failed: {error}") from error
-
     decisions: list[PolicyDecision] = []
     candidates: list[RepairCandidate] = []
     seen_digests: set[str] = set()
-    for index, proposed in enumerate(draft.candidates):
-        decision = repair_policy.evaluate(proposed, pinned_source)
-        if decision.accepted and decision.diff_sha256 in seen_digests:
-            decision = PolicyDecision(
-                False,
-                "duplicate",
-                "duplicate candidate diff",
-                (),
-                decision.diff_sha256,
+    usage = Usage()
+    attempt_payload = payload
+    for attempt in range(2):
+        model_result = adapter.generate(attempt_payload)
+        usage += model_result.usage
+        try:
+            draft = RepairGenerationDraft.model_validate(model_result.draft)
+        except ValidationError as error:
+            raise RepairError(f"repair schema validation failed: {error}") from error
+        for index, proposed in enumerate(draft.candidates):
+            decision = repair_policy.evaluate(proposed, pinned_source)
+            if decision.accepted and decision.diff_sha256 in seen_digests:
+                decision = PolicyDecision(
+                    False,
+                    "duplicate",
+                    "duplicate candidate diff",
+                    (),
+                    decision.diff_sha256,
+                )
+            decisions.append(decision)
+            if not decision.accepted or len(candidates) >= 2:
+                continue
+            seen_digests.add(decision.diff_sha256)
+            candidate_id = uuid5(
+                NAMESPACE_URL,
+                f"incidentlab:{run_id}:{PROMPT_VERSION}:{attempt}:{index}:{decision.diff_sha256}",
             )
-        decisions.append(decision)
-        if not decision.accepted:
-            continue
-        seen_digests.add(decision.diff_sha256)
-        candidate_id = uuid5(
-            NAMESPACE_URL,
-            f"incidentlab:{run_id}:{PROMPT_VERSION}:{index}:{decision.diff_sha256}",
-        )
-        candidates.append(
-            RepairCandidate(
-                id=candidate_id,
-                run_id=run_id,
-                target_commit=target_commit,
-                unified_diff=proposed.unified_diff,
-                explanation=proposed.explanation,
-                expected_behavior=proposed.expected_behavior,
-                changed_paths=list(decision.changed_paths),
-                generator_id=adapter.model_id,
-                diff_sha256=decision.diff_sha256,
-                policy_status="accepted",
-                policy_version=POLICY_VERSION,
+            candidates.append(
+                RepairCandidate(
+                    id=candidate_id,
+                    run_id=run_id,
+                    target_commit=target_commit,
+                    unified_diff=proposed.unified_diff,
+                    explanation=proposed.explanation,
+                    expected_behavior=proposed.expected_behavior,
+                    changed_paths=list(decision.changed_paths),
+                    generator_id=adapter.model_id,
+                    diff_sha256=decision.diff_sha256,
+                    policy_status="accepted",
+                    policy_version=POLICY_VERSION,
+                )
             )
-        )
-    return RepairGenerationResult(tuple(candidates), tuple(decisions), model_result.usage)
+        if candidates:
+            break
+        attempt_payload = {
+            **payload,
+            "retry_feedback": {
+                "instruction": (
+                    "All previous candidates were rejected. Return a corrected, minimal, "
+                    "syntactically complete replacement."
+                ),
+                "policy_categories": [decision.category for decision in decisions],
+                "policy_details": [decision.detail for decision in decisions],
+            },
+        }
+    return RepairGenerationResult(tuple(candidates), tuple(decisions), usage)

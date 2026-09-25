@@ -1,4 +1,4 @@
-"""Durable incident workflow with evidence collection and downstream placeholders."""
+"""Durable incident workflow with approval and externally isolated verification."""
 
 from datetime import timedelta
 
@@ -17,6 +17,7 @@ ACTIVITY_RETRY = RetryPolicy(
 class IncidentWorkflow:
     def __init__(self) -> None:
         self.approval: str | None = None
+        self.verification_available = False
         self.cancel_requested = False
         self.cancel_actor = "unknown"
 
@@ -119,13 +120,27 @@ class IncidentWorkflow:
                 return {"state": "CANCELLED"}
 
             await self._transition(run_id, "VERIFYING", "verifying")
-            await self._activity(
-                "verify_placeholder",
-                {"run_id": run_id, "effect_key": f"run:{run_id}:verification-placeholder"},
-                long_running=True,
+            await workflow.wait_condition(
+                lambda: self.verification_available or self.cancel_requested
             )
-            if await self._stop_if_cancelled(run_id, "after-verification"):
+            if await self._stop_if_cancelled(run_id, "awaiting-verification"):
                 return {"state": "CANCELLED"}
+            verification = await self._activity(
+                "finalize_verification",
+                {"run_id": run_id, "effect_key": f"run:{run_id}:verification-ranking"},
+            )
+            terminal_state = verification["terminal_state"]
+            if terminal_state != "COMPLETED":
+                await self._transition(
+                    run_id,
+                    terminal_state,
+                    "verification-terminal",
+                    {
+                        "verified_count": verification["verified_count"],
+                        "score_version": verification["score_version"],
+                    },
+                )
+                return {"state": terminal_state}
 
             await self._transition(run_id, "REPORTING", "reporting")
             await self._activity(
@@ -147,6 +162,10 @@ class IncidentWorkflow:
     async def repair_approval(self, decision: str) -> None:
         if self.approval is None:
             self.approval = decision
+
+    @workflow.signal
+    async def verification_completed(self) -> None:
+        self.verification_available = True
 
     @workflow.signal
     async def request_cancel(self, actor: str) -> None:

@@ -251,6 +251,18 @@ async def verify_placeholder(data: dict) -> dict:
     )
 
 
+@activity.defn(name="finalize_verification")
+async def finalize_verification(data: dict) -> dict:
+    try:
+        return await asyncio.to_thread(
+            repository.finalize_verification_ranking,
+            UUID(data["run_id"]),
+            data["effect_key"],
+        )
+    except ValueError as error:
+        raise ApplicationError(str(error), non_retryable=True) from error
+
+
 @activity.defn(name="report_placeholder")
 async def report_placeholder(data: dict) -> dict:
     return await _placeholder(

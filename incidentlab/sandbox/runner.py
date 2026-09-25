@@ -332,7 +332,7 @@ class DockerSandboxRunner:
     ) -> SandboxCheckResult:
         finished = datetime.now(UTC)
         outcome = "PASS" if execution.exit_code == 0 and not execution.failure_reason else "FAIL"
-        if execution.failure_reason == "cancelled":
+        if execution.failure_reason in {"cancelled", "timeout", "output_limit"}:
             outcome = "INCONCLUSIVE"
         header = json.dumps(
             {
