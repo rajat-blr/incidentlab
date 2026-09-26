@@ -1,6 +1,5 @@
 import difflib
 import hashlib
-import json
 import os
 import subprocess
 import unittest
@@ -15,10 +14,10 @@ from incidentlab.contracts.models import (
     RepairGenerationDraft,
 )
 from incidentlab.model_adapter.diagnosis import Usage
-from incidentlab.model_adapter.gemini_repair_adapter import (
-    GeminiRepairAdapter,
-    GeminiRepairCandidate,
-    GeminiRepairSchema,
+from incidentlab.model_adapter.openai_repair_adapter import (
+    OpenAIRepairAdapter,
+    OpenAIRepairCandidate,
+    OpenAIRepairSchema,
 )
 from incidentlab.model_adapter.repair import RepairError, RepairModelResult, generate_repairs
 from incidentlab.policy.context import read_pinned_source
@@ -113,6 +112,13 @@ class RepairPolicyTests(unittest.TestCase):
         decision = self.policy.evaluate(self.draft(diff), self.source)
         self.assertFalse(decision.accepted)
         self.assertEqual(decision.category, "patch_apply")
+
+    def test_removed_local_binding_still_in_use_is_rejected(self) -> None:
+        broken = self.fixed.replace("                remaining = row[0] - quantity\n", "", 1)
+        decision = self.policy.evaluate(self.draft(unified_diff(self.source, broken)), self.source)
+        self.assertFalse(decision.accepted)
+        self.assertEqual(decision.category, "undefined_name")
+        self.assertIn("remaining", decision.detail)
 
     def test_secret_and_execution_primitives_are_rejected(self) -> None:
         secret_source = self.source.replace(
@@ -213,6 +219,65 @@ class RepairGenerationTests(unittest.TestCase):
         )
         self.assertEqual(result.usage, Usage(40, 20, 2))
 
+    def test_candidate_must_change_active_scenario_mechanism(self) -> None:
+        source = Path(APP_PATH).read_text()
+        wrong = source.replace(
+            'self.fault_mode != "inventory_underflow"',
+            'self.fault_mode == "inventory_underflow"',
+            1,
+        )
+        fixed = source.replace(
+            """                    if self.fault_mode == "pool_leak":
+                        # Intentional incident fixture: this branch leaves its slot checked out.
+                        return_connection = False
+""",
+            "",
+            1,
+        )
+        adapter = SequenceRepairAdapter(
+            [
+                RepairGenerationDraft(
+                    candidates=[
+                        RepairCandidateDraft(
+                            unified_diff=unified_diff(source, wrong),
+                            explanation="Change the inactive scenario.",
+                            expected_behavior="Not sufficient.",
+                        )
+                    ]
+                ),
+                RepairGenerationDraft(
+                    candidates=[
+                        RepairCandidateDraft(
+                            unified_diff=unified_diff(source, fixed),
+                            explanation="Release the checked-out connection.",
+                            expected_behavior="The valid request succeeds.",
+                        )
+                    ]
+                ),
+            ]
+        )
+        run_id = uuid4()
+        result = generate_repairs(
+            run_id,
+            "a" * 40,
+            hypothesis(run_id),
+            {"statuses": [409, 409, 503]},
+            source,
+            adapter,
+            scenario_id="pool-exhaustion",
+        )
+        self.assertEqual(
+            [item.category for item in result.decisions],
+            ["scenario_scope", "accepted"],
+        )
+        self.assertEqual(len(result.candidates), 1)
+        self.assertEqual(adapter.payloads[0]["active_scenario_id"], "pool-exhaustion")
+        self.assertEqual(adapter.payloads[0]["active_fault_mode"], "pool_leak")
+        self.assertEqual(
+            adapter.payloads[1]["retry_feedback"]["allowed_changed_source_markers"],
+            ['"pool_leak"', "return_connection"],
+        )
+
     def test_pinned_context_reader_returns_exact_git_blob(self) -> None:
         commit = subprocess.run(
             ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
@@ -227,14 +292,14 @@ class RepairGenerationTests(unittest.TestCase):
         self.assertEqual(source, expected)
 
 
-class GeminiRepairAdapterTests(unittest.TestCase):
+class OpenAIRepairAdapterTests(unittest.TestCase):
     def test_adapter_fails_closed_without_key(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
-            with self.assertRaisesRegex(RepairError, "GEMINI_API_KEY"):
-                GeminiRepairAdapter()
+            with self.assertRaisesRegex(RepairError, "OPENAI_API_KEY"):
+                OpenAIRepairAdapter()
 
     def test_adapter_uses_provider_compatible_schema(self) -> None:
-        candidate = GeminiRepairCandidate(
+        candidate = OpenAIRepairCandidate(
             path=APP_PATH,
             start_line=1,
             end_line=1,
@@ -243,16 +308,14 @@ class GeminiRepairAdapterTests(unittest.TestCase):
             expected_behavior="Healthy.",
         )
         response = SimpleNamespace(
-            parsed=GeminiRepairSchema(candidates=[candidate]),
-            usage_metadata=SimpleNamespace(prompt_token_count=9, candidates_token_count=4),
+            output_parsed=OpenAIRepairSchema(candidates=[candidate]),
+            usage=SimpleNamespace(input_tokens=9, output_tokens=4),
         )
         calls = []
         client = SimpleNamespace(
-            models=SimpleNamespace(
-                generate_content=lambda **kwargs: calls.append(kwargs) or response
-            )
+            responses=SimpleNamespace(parse=lambda **kwargs: calls.append(kwargs) or response)
         )
-        adapter = GeminiRepairAdapter(client=client, model_id="test-model")
+        adapter = OpenAIRepairAdapter(client=client, model_id="test-model")
         result = adapter.generate(
             {
                 "allowed_files": [APP_PATH],
@@ -261,8 +324,11 @@ class GeminiRepairAdapterTests(unittest.TestCase):
         )
         self.assertEqual(len(result.draft.candidates), 1)
         self.assertIn("@@ -1 +1 @@", result.draft.candidates[0].unified_diff)
-        self.assertEqual(calls[0]["config"].response_schema, GeminiRepairSchema)
-        self.assertNotIn("additionalProperties", json.dumps(GeminiRepairSchema.model_json_schema()))
+        self.assertEqual(calls[0]["text_format"], OpenAIRepairSchema)
+        self.assertEqual(calls[0]["text"], {"verbosity": "low"})
+        self.assertEqual(calls[0]["reasoning"], {"effort": "low"})
+        self.assertFalse(calls[0]["store"])
+        self.assertEqual(result.usage, Usage(9, 4, result.usage.latency_ms))
 
 
 if __name__ == "__main__":

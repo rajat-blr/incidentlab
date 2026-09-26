@@ -6,13 +6,14 @@ import ast
 import hashlib
 import re
 import subprocess
+import symtable
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from incidentlab.contracts.models import RepairCandidateDraft
 
-POLICY_VERSION = "repair-policy-v1"
+POLICY_VERSION = "repair-policy-v2"
 DIFF_HEADER = re.compile(r"^diff --git a/(.+) b/(.+)$")
 HUNK_HEADER = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$")
 SECRET_PATTERNS = (
@@ -190,6 +191,55 @@ class RepairPolicy:
                 raise PolicyViolation("file_operation", "diff changed an unexpected file")
             return target.read_text(encoding="utf-8")
 
+    @staticmethod
+    def _reject_removed_bindings(source: str, patched: str, path: str) -> None:
+        """Reject patches that turn an existing local binding into an unresolved global."""
+
+        def scopes(content: str) -> dict[tuple[tuple[str, str], ...], symtable.SymbolTable]:
+            root = symtable.symtable(content, path, "exec")
+            result: dict[tuple[tuple[str, str], ...], symtable.SymbolTable] = {}
+
+            def visit(
+                table: symtable.SymbolTable,
+                parent: tuple[tuple[str, str], ...] = (),
+            ) -> None:
+                key = (*parent, (table.get_type(), table.get_name()))
+                result[key] = table
+                for child in table.get_children():
+                    visit(child, key)
+
+            visit(root)
+            return result
+
+        original_scopes = scopes(source)
+        patched_scopes = scopes(patched)
+        for key, original_scope in original_scopes.items():
+            if original_scope.get_type() != "function":
+                continue
+            patched_scope = patched_scopes.get(key)
+            if patched_scope is None:
+                continue
+            patched_names = set(patched_scope.get_identifiers())
+            for name in original_scope.get_identifiers():
+                original_symbol = original_scope.lookup(name)
+                if not (
+                    original_symbol.is_local()
+                    and (original_symbol.is_assigned() or original_symbol.is_parameter())
+                    and original_symbol.is_referenced()
+                    and name in patched_names
+                ):
+                    continue
+                patched_symbol = patched_scope.lookup(name)
+                if (
+                    patched_symbol.is_referenced()
+                    and patched_symbol.is_global()
+                    and not patched_symbol.is_local()
+                ):
+                    raise PolicyViolation(
+                        "undefined_name",
+                        f"patch removes the local binding for '{name}' while it is still used",
+                    )
+
     def evaluate(self, draft: RepairCandidateDraft, pinned_source: str) -> PolicyDecision:
         digest = hashlib.sha256(draft.unified_diff.encode()).hexdigest()
         try:
@@ -205,6 +255,7 @@ class RepairPolicy:
             except SyntaxError as error:
                 detail = f"patched Python is invalid: {error.msg}"
                 raise PolicyViolation("syntax", detail) from error
+            self._reject_removed_bindings(pinned_source, patched, parsed.path)
         except PolicyViolation as error:
             return PolicyDecision(False, error.category, error.detail, (), digest)
         return PolicyDecision(

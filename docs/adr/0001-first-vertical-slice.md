@@ -7,7 +7,7 @@
 - Use Python 3.12+ for the sample service and control plane. This keeps the first incident and the later FastAPI control plane in one language.
 - Start with one checkout incident: database pool exhaustion caused by a connection not returned after an out-of-stock request. Use a two-slot pool so the signal is fast and deterministic.
 - Use a local SQLite file for the first service fixture. The explicit pool models acquisition and return; it does not claim to emulate every PostgreSQL behavior. The control plane will use PostgreSQL as specified in the PRD.
-- Select Gemini as the first model provider behind a typed internal adapter. Its free developer tier and Pydantic-backed structured outputs support the local Step 7 demo without a paid account. Keep the provider transport separate from deterministic schema, citation, tool-policy, and budget validation. Keep prompts and ground truth separate.
+- Use OpenAI GPT-5.4 Mini behind a typed internal adapter. Its Responses API and Pydantic-backed Structured Outputs suit the bounded diagnosis and code-repair tasks while keeping per-run cost low. Keep provider transport separate from deterministic schema, citation, tool-policy, and budget validation. Keep prompts and ground truth separate.
 - Use Docker Compose for the later local stack. Verification will run in separate constrained workers and fresh workspaces; the API will not receive the Docker socket.
 
 ## Scenario contract

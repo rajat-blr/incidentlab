@@ -1,7 +1,6 @@
 import {
   Activity,
   AlertTriangle,
-  ArrowLeft,
   Check,
   ChevronRight,
   CircleDot,
@@ -143,20 +142,20 @@ function ErrorState({ error }: { error: unknown }) {
 function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <header className="app-header">
         <Link className="brand" to="/runs">
           <span className="brand-mark">I</span>
           <span>IncidentLab</span>
         </Link>
-        <nav aria-label="Primary navigation">
+        <nav className="primary-nav" aria-label="Primary navigation">
           <Link className="nav-link active" to="/runs">
-            <Activity size={17} /> Runs
+            Runs
           </Link>
         </nav>
-        <div className="sidebar-foot">
+        <div className="environment-label">
           <span className="system-dot" /> Local development
         </div>
-      </aside>
+      </header>
       <main className="main-shell">{children}</main>
     </div>
   );
@@ -171,8 +170,8 @@ function RunsPage() {
   const [scenario, setScenario] = useState("");
 
   const runs = useQuery({
-    queryKey: ["runs", filter],
-    queryFn: () => api.runs(filter === "ALL" ? undefined : filter),
+    queryKey: ["runs"],
+    queryFn: () => api.runs(),
     refetchInterval: (query) =>
       query.state.data?.some((run) => !terminalStates.has(run.state)) ? 2_000 : false,
   });
@@ -188,10 +187,19 @@ function RunsPage() {
       navigate(`/runs/${run.id}`);
     },
   });
-  const visible = (runs.data ?? []).filter((run) => {
+  const allRuns = runs.data ?? [];
+  const visible = allRuns.filter((run) => {
     const value = search.toLowerCase();
-    return run.id.toLowerCase().includes(value) || run.scenario_id.toLowerCase().includes(value);
+    const matchesText = run.id.toLowerCase().includes(value) || run.scenario_id.toLowerCase().includes(value);
+    return matchesText && (filter === "ALL" || run.state === filter);
+  }).sort((left, right) => {
+    const priority = (state: RunState) => state === "AWAITING_REPAIR_APPROVAL" ? 0 : terminalStates.has(state) ? 2 : 1;
+    return priority(left.state) - priority(right.state) || new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime();
   });
+  const needsReview = allRuns.filter((run) => run.state === "AWAITING_REPAIR_APPROVAL").length;
+  const running = allRuns.filter((run) => !terminalStates.has(run.state) && run.state !== "AWAITING_REPAIR_APPROVAL").length;
+  const completed = allRuns.filter((run) => run.state === "COMPLETED").length;
+  const unsuccessful = allRuns.filter((run) => ["FAILED", "NO_VERIFIED_CANDIDATE", "INCONCLUSIVE"].includes(run.state)).length;
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -202,14 +210,20 @@ function RunsPage() {
     <AppShell>
       <header className="topbar">
         <div>
-          <span className="eyebrow">Workspace</span>
           <h1>Incident runs</h1>
+          <p>Investigations, repair decisions, and verification outcomes.</p>
         </div>
         <button className="button button-primary" type="button" onClick={() => setShowCreate(true)}>
           <Play size={16} /> Start investigation
         </button>
       </header>
       <div className="page-content">
+        <section className="queue-summary" aria-label="Run summary">
+          <button type="button" className={filter === "AWAITING_REPAIR_APPROVAL" ? "queue-stat active" : "queue-stat"} onClick={() => setFilter((current) => current === "AWAITING_REPAIR_APPROVAL" ? "ALL" : "AWAITING_REPAIR_APPROVAL")}><strong>{needsReview}</strong><span>Needs review</span></button>
+          <div className="queue-stat"><strong>{running}</strong><span>In progress</span></div>
+          <button type="button" className={filter === "COMPLETED" ? "queue-stat active" : "queue-stat"} onClick={() => setFilter((current) => current === "COMPLETED" ? "ALL" : "COMPLETED")}><strong>{completed}</strong><span>Completed</span></button>
+          <div className="queue-stat"><strong>{unsuccessful}</strong><span>Needs attention</span></div>
+        </section>
         <section className="toolbar" aria-label="Run filters">
           <label className="search-field">
             <Search size={16} />
@@ -246,7 +260,7 @@ function RunsPage() {
         {visible.length ? (
           <div className="table-wrap">
             <table className="runs-table">
-              <thead><tr><th>Scenario</th><th>State</th><th>Pinned commit</th><th>Updated</th><th><span className="sr-only">Open</span></th></tr></thead>
+              <thead><tr><th>Investigation</th><th>Status</th><th>Progress</th><th>Pinned commit</th><th>Updated</th><th><span className="sr-only">Open</span></th></tr></thead>
               <tbody>
                 {visible.map((run) => (
                   <tr key={run.id}>
@@ -255,6 +269,7 @@ function RunsPage() {
                       <span className="cell-secondary">{shortId(run.id)} · v{run.scenario_version}</span>
                     </td>
                     <td><StatusBadge value={run.state} label={stateLabels[run.state]} /></td>
+                    <td><RunProgress state={run.state} /></td>
                     <td><code>{shortId(run.pinned_commit)}</code></td>
                     <td>{formatDate(run.updated_at)}</td>
                     <td><Link className="row-link" to={`/runs/${run.id}`} aria-label={`Open run ${run.id}`}><ChevronRight size={18} /></Link></td>
@@ -296,6 +311,13 @@ function RunsPage() {
       ) : null}
     </AppShell>
   );
+}
+
+function RunProgress({ state }: { state: RunState }) {
+  const index = stages.findIndex((stage) => stage.state === state);
+  const completedWorkflow = state === "COMPLETED" || state === "NO_VERIFIED_CANDIDATE" || state === "INCONCLUSIVE" || state === "CLOSED";
+  const done = completedWorkflow ? stages.length : index >= 0 ? index : 0;
+  return <div className="run-progress" aria-label={`${done} of ${stages.length} stages complete`}><span><i style={{ width: `${(done / stages.length) * 100}%` }} /></span><small>{done} of {stages.length}</small></div>;
 }
 
 function PageLoader({ label }: { label: string }) {
@@ -368,15 +390,13 @@ function RunDetailPage() {
     <AppShell>
       <header className="detail-topbar">
         <div className="detail-title-row">
-          <Link className="back-link" to="/runs"><ArrowLeft size={16} /> Runs</Link>
           <div className="detail-title">
-            <span className="eyebrow">Run {shortId(run.data.id)}</span>
-            <h1>{humanize(run.data.scenario_id)}</h1>
-            <span className="detail-meta">Pinned <code>{shortId(run.data.pinned_commit)}</code> · Started {formatDate(run.data.created_at)}</span>
+            <div className="breadcrumbs"><Link to="/runs">Runs</Link><ChevronRight size={13} /><span>{humanize(run.data.scenario_id)}</span></div>
+            <h1>{humanize(run.data.scenario_id)} <StatusBadge value={run.data.state} label={stateLabels[run.data.state]} /></h1>
+            <span className="detail-meta">Run <code>{shortId(run.data.id)}</code> · commit <code>{shortId(run.data.pinned_commit)}</code> · started {formatDate(run.data.created_at)}</span>
           </div>
         </div>
         <div className="detail-actions">
-          <StatusBadge value={run.data.state} label={stateLabels[run.data.state]} />
           <a className="button" href={api.reportUrl(runId, "markdown")}><Download size={16} /> Export report</a>
           {active ? <button className="button button-danger" type="button" disabled={cancel.isPending || !actor.trim()} onClick={() => cancel.mutate()}><Square size={14} /> Cancel</button> : null}
         </div>
@@ -417,11 +437,12 @@ function RunDetailPage() {
 
 function WorkflowTimeline({ run }: { run: IncidentRun }) {
   const activeIndex = stages.findIndex((stage) => stage.state === run.state);
-  const terminalSuccess = run.state === "COMPLETED";
+  const finished = ["COMPLETED", "NO_VERIFIED_CANDIDATE", "INCONCLUSIVE", "CLOSED"].includes(run.state);
+  const successful = run.state === "COMPLETED";
   return (
-    <section className="workflow-timeline" aria-label="Workflow progress">
+    <section className={`workflow-timeline${successful ? " successful" : ""}`} aria-label="Workflow progress">
       {stages.map((stage, index) => {
-        const complete = terminalSuccess || activeIndex > index || (activeIndex === -1 && terminalStates.has(run.state));
+        const complete = finished || activeIndex > index;
         const current = activeIndex === index;
         return (
           <div className={`workflow-stage${complete ? " complete" : ""}${current ? " current" : ""}`} key={stage.state}>
@@ -454,7 +475,7 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
       {run.state === "AWAITING_REPAIR_APPROVAL" ? (
         <section className="decision-banner span-two">
           <div>
-            <span className="eyebrow">Decision required</span>
+            <span className="section-label">Decision required</span>
             <h2>Review the diagnosis before generating a repair</h2>
             <p>Approval permits one bounded patch proposal. It does not execute, merge, or deploy code.</p>
           </div>
@@ -463,17 +484,19 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
           </button>
         </section>
       ) : null}
-      <section className="panel span-two">
-        <div className="panel-head"><div><span className="eyebrow">Current conclusion</span><h2>{hypothesis?.summary ?? "Diagnosis has not completed"}</h2></div>{hypothesis ? <StatusBadge value={hypothesis.confidence === "high" ? "PASS" : "INCONCLUSIVE"} label={`${humanize(hypothesis.confidence)} confidence`} /> : null}</div>
+      <section className="panel conclusion-panel span-two">
+        <div className="panel-head"><div><span className="section-label">Current conclusion</span><h2>{hypothesis?.summary ?? "Diagnosis has not completed"}</h2></div>{hypothesis ? <span className="confidence-label"><CircleDot size={13} />{humanize(hypothesis.confidence)} confidence</span> : null}</div>
         <div className="panel-body"><p className="lead-copy">{hypothesis?.mechanism ?? "IncidentLab is still collecting facts for this run."}</p></div>
       </section>
-      <section className="stat-panel"><span>Run state</span><strong>{stateLabels[run.state]}</strong><small>{formatDate(run.updated_at)}</small></section>
-      <section className="stat-panel"><span>Evidence</span><strong>{evidence.length}</strong><small>{evidence.filter((item) => item.kind === "gap").length} explicit gaps</small></section>
-      <section className="stat-panel"><span>Repair candidates</span><strong>{candidates.length}</strong><small>{candidates.length ? "Policy accepted" : "None accepted yet"}</small></section>
-      <section className="stat-panel"><span>Best verification</span><strong>{top?.outcome ?? "Pending"}</strong><small>{top?.rank ? `Rank ${top.rank} · ${top.score_version}` : "Waiting for facts"}</small></section>
-      <section className="stat-panel"><span>Model usage</span><strong>{inputTokens + outputTokens} tokens</strong><small>{modelUsage.length} calls · ${estimatedCost.toFixed(6)}</small></section>
+      <section className="summary-strip span-two">
+        <div><span>State</span><strong>{stateLabels[run.state]}</strong><small>Updated {formatDate(run.updated_at)}</small></div>
+        <div><span>Evidence</span><strong>{evidence.length} facts</strong><small>{evidence.filter((item) => item.kind === "gap").length} explicit gaps</small></div>
+        <div><span>Candidates</span><strong>{candidates.length}</strong><small>{candidates.length ? "Policy accepted" : "None accepted"}</small></div>
+        <div><span>Verification</span><strong className={top ? `text-${statusTone(top.outcome)}` : ""}>{top?.outcome ?? "Pending"}</strong><small>{top?.rank ? `Rank ${top.rank} · ${top.score_version}` : "No result yet"}</small></div>
+        <div><span>Model usage</span><strong>{inputTokens + outputTokens} tokens</strong><small>{modelUsage.length} calls · ${estimatedCost.toFixed(6)}</small></div>
+      </section>
       <section className="panel span-two">
-        <div className="panel-head"><div><span className="eyebrow">Reproduction</span><h2>Observed incident facts</h2></div><Route size={18} /></div>
+        <div className="panel-head"><div><span className="section-label">Reproduction</span><h2>Observed incident facts</h2></div><Route size={18} /></div>
         <div className="panel-body fact-row">
           <div><span>Status sequence</span><strong>{Array.isArray(reproduction?.details.statuses) ? reproduction.details.statuses.join(" → ") : "Pending"}</strong></div>
           <div><span>Failure signal</span><strong>{typeof reproduction?.details.failure === "string" ? humanize(reproduction.details.failure) : "Pending"}</strong></div>
@@ -494,21 +517,44 @@ const evidenceIcons: Record<EvidenceItem["kind"], ReactNode> = {
 };
 
 function EvidenceTab({ items, onArtifact }: { items: EvidenceItem[]; onArtifact: (item: EvidenceItem) => void }) {
+  const [kind, setKind] = useState<"all" | EvidenceItem["kind"]>("all");
+  const [selectedId, setSelectedId] = useState("");
   if (!items.length) return <EmptyState icon={<Database size={24} />} title="No evidence recorded" detail="Evidence will appear after collection completes." />;
+  const filtered = kind === "all" ? items : items.filter((item) => item.kind === kind);
+  const selected = filtered.find((item) => item.id === selectedId) ?? filtered[0];
+  const kinds = Array.from(new Set(items.map((item) => item.kind)));
   return (
-    <div className="evidence-grid">
-      {items.map((item) => (
-        <article className={`evidence-card${item.kind === "gap" ? " evidence-gap" : ""}`} key={item.id}>
-          <div className="evidence-icon">{evidenceIcons[item.kind]}</div>
-          <div className="evidence-content">
-            <div className="evidence-title"><span>{humanize(item.kind)}</span><code>{shortId(item.id, 12)}</code></div>
-            <h3>{item.summary}</h3>
-            <p>{item.service} · {item.source}</p>
-            <div className="evidence-meta"><span>{formatDate(item.observed_start)}</span><span>SHA {shortId(item.content_sha256, 12)}</span></div>
+    <div className="evidence-workspace">
+      <aside className="evidence-browser">
+        <div className="evidence-browser-head"><strong>Evidence</strong><span>{filtered.length} facts</span></div>
+        <div className="evidence-filters" aria-label="Evidence type filters">
+          <button type="button" className={kind === "all" ? "active" : ""} onClick={() => setKind("all")}>All</button>
+          {kinds.map((value) => <button type="button" className={kind === value ? "active" : ""} key={value} onClick={() => setKind(value)}>{humanize(value)}</button>)}
+        </div>
+        <div className="evidence-list">
+          {filtered.map((item) => (
+            <button type="button" className={`evidence-list-item${selected?.id === item.id ? " active" : ""}${item.kind === "gap" ? " gap" : ""}`} key={item.id} onClick={() => setSelectedId(item.id)}>
+              <span className="evidence-list-icon">{evidenceIcons[item.kind]}</span>
+              <span><strong>{item.summary}</strong><small>{humanize(item.kind)} · {item.service}</small></span>
+            </button>
+          ))}
+        </div>
+      </aside>
+      {selected ? (
+        <article className="evidence-detail">
+          <div className="evidence-detail-head">
+            <div><span className="section-label">{humanize(selected.kind)} evidence</span><h2>{selected.summary}</h2></div>
+            <button className="button button-small" type="button" onClick={() => onArtifact(selected)}>Open raw artifact</button>
           </div>
-          <button className="button button-small" type="button" onClick={() => onArtifact(item)}>Raw artifact</button>
+          <dl className="evidence-properties">
+            <div><dt>Service</dt><dd>{selected.service}</dd></div>
+            <div><dt>Source</dt><dd>{selected.source}</dd></div>
+            <div><dt>Observed</dt><dd>{formatDate(selected.observed_start)}</dd></div>
+            <div><dt>Retrieval</dt><dd>{humanize(selected.retrieval_method)}</dd></div>
+          </dl>
+          <div className="integrity-block"><ShieldCheck size={16} /><div><strong>Artifact integrity verified</strong><code>sha256:{selected.content_sha256}</code></div></div>
         </article>
-      ))}
+      ) : <EmptyState icon={<Database size={24} />} title="No matching evidence" detail="Choose another evidence type." />}
     </div>
   );
 }
@@ -521,9 +567,9 @@ function DiagnosisTab({ hypotheses, evidence }: {
   return (
     <div className="stack">
       {!hypotheses.length ? <EmptyState icon={<Search size={24} />} title="No validated diagnosis" detail="Hypotheses will appear after the diagnosis stage completes." /> : null}
-      {hypotheses.map((hypothesis) => (
+      {hypotheses.map((hypothesis, index) => (
         <article className="panel" key={hypothesis.id}>
-          <div className="panel-head"><div><span className="eyebrow">Validated hypothesis</span><h2>{hypothesis.summary}</h2></div><StatusBadge value={hypothesis.confidence === "high" ? "PASS" : "INCONCLUSIVE"} label={`${humanize(hypothesis.confidence)} confidence`} /></div>
+          <div className="panel-head"><div><span className="section-label">Hypothesis {index + 1} · {hypothesis.supporting_evidence_ids.length} supporting facts</span><h2>{hypothesis.summary}</h2></div><span className="confidence-label"><CircleDot size={13} />{humanize(hypothesis.confidence)} confidence</span></div>
           <div className="panel-body">
             <p className="lead-copy">{hypothesis.mechanism}</p>
             <div className="citation-columns">
@@ -551,7 +597,7 @@ function ApprovalModal({ actor, setActor, approval, onClose }: {
           <div><span className="eyebrow">Human checkpoint</span><h2 id="approval-title">Generate a bounded repair?</h2></div>
           <button className="icon-button" type="button" aria-label="Close" onClick={onClose}><X size={18} /></button>
         </div>
-        <p className="modal-lead">IncidentLab has completed diagnosis. Approving permits Gemini to propose a small patch against the pinned commit. Deterministic policy and sandbox verification still run before anything is marked successful.</p>
+        <p className="modal-lead">IncidentLab has completed diagnosis. Approving permits the configured OpenAI model to propose a small patch against the pinned commit. Deterministic policy and sandbox verification still run before anything is marked successful.</p>
         <div className="approval-safety"><ShieldCheck size={18} /><span>No merge, deployment, or model-provided command execution.</span></div>
         <label className="actor-field"><span>Decision recorded as</span><input value={actor} maxLength={128} onChange={(event) => setActor(event.target.value)} /></label>
         {approval.error ? <ErrorState error={approval.error} /> : null}
@@ -602,7 +648,7 @@ export function DiffViewer({ diff }: { diff: string }) {
 function VerificationTab({ run, candidates, verifications, onArtifact }: { run: IncidentRun; candidates: RepairCandidate[]; verifications: VerificationRun[]; onArtifact: (check: VerificationCheck) => void }) {
   const ordered = [...verifications].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
   if (!ordered.length) return <EmptyState icon={run.state === "VERIFYING" ? <LoaderCircle className="spin" size={24} /> : <ListChecks size={24} />} title={run.state === "VERIFYING" ? "Sandbox verification is running" : "No verification recorded"} detail={run.state === "VERIFYING" ? "The trusted verifier is checking the baseline, build, tests, and repeated incident replay. This view updates automatically." : "Verification facts appear after a policy-accepted candidate reaches the sandbox."} />;
-  return <div className="stack">{ordered.map((verification) => { const candidate = candidates.find((item) => item.id === verification.candidate_id); return <article className="panel" key={verification.id}><div className="panel-head"><div><span className="eyebrow">Rank {verification.rank ?? "—"} · {candidate ? shortId(candidate.id) : shortId(verification.candidate_id)}</span><h2>{candidate?.explanation ?? "Repair candidate"}</h2></div><StatusBadge value={verification.outcome} /></div><div className="verification-summary"><span>Score version<strong>{verification.score_version}</strong></span><span>Environment<strong><code>{shortId(verification.environment_digest.replace("sha256:", ""), 16)}</code></strong></span><span>Changed lines<strong>{verification.score?.changed_lines ?? "—"}</strong></span></div><div className="check-table"><div className="check-header"><span>Mandatory check</span><span>Duration</span><span>Exit</span><span>Outcome</span><span /></div>{verification.checks.map((check) => <VerificationRow key={check.name} check={check} onArtifact={onArtifact} />)}</div></article>;})}</div>;
+  return <div className="stack">{ordered.map((verification) => { const candidate = candidates.find((item) => item.id === verification.candidate_id); const passed = verification.checks.filter((check) => check.outcome === "PASS").length; return <article className="panel verification-panel" key={verification.id}><div className={`verification-result status-${statusTone(verification.outcome)}`}><span className="verification-result-icon">{verification.outcome === "PASS" ? <Check size={20} /> : verification.outcome === "FAIL" ? <OctagonX size={20} /> : <AlertTriangle size={20} />}</span><div><h2>Verification {humanize(verification.outcome).toLowerCase()}</h2><p>{passed} of {verification.checks.length} mandatory checks passed · candidate rank {verification.rank ?? "—"}</p></div></div><div className="panel-head"><div><span className="section-label">Candidate {candidate ? shortId(candidate.id) : shortId(verification.candidate_id)}</span><h2>{candidate?.explanation ?? "Repair candidate"}</h2></div></div><div className="verification-summary"><span>Score version<strong>{verification.score_version}</strong></span><span>Environment<strong><code>{shortId(verification.environment_digest.replace("sha256:", ""), 16)}</code></strong></span><span>Changed lines<strong>{verification.score?.changed_lines ?? "—"}</strong></span></div><div className="check-table"><div className="check-header"><span>Mandatory check</span><span>Duration</span><span>Exit</span><span>Outcome</span><span /></div>{verification.checks.map((check) => <VerificationRow key={check.name} check={check} onArtifact={onArtifact} />)}</div></article>;})}</div>;
 }
 
 function VerificationRow({ check, onArtifact }: { check: VerificationCheck; onArtifact: (check: VerificationCheck) => void }) {

@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Fixture does not reproduce | Run fails before diagnosis | Reset the fixture, inspect service logs, and start a new idempotency key |
 | Worker stops | Temporal retains the run; UI remains at the last durable state | Restart `worker`; stable effect keys prevent duplicate writes |
-| Gemini timeout or invalid schema | Run fails closed with a categorized rejection event | Retry with a new run after provider recovery; inspect audit history |
+| OpenAI timeout, refusal, or invalid schema | Run fails closed with a categorized rejection event | Retry with a new run after provider recovery; inspect audit history |
 | Empty or delayed telemetry | Explicit `gap` evidence; diagnosis cannot cite it as support | Check Collector/backends and repeat after telemetry is available |
 | Baseline does not fail | Verification is `INCONCLUSIVE`, never `PASS` | Repair the scenario setup and rerun verification |
 | Candidate still reproduces incident | Verification is `FAIL` | Reject the candidate and review raw check logs |

@@ -7,7 +7,7 @@ flowchart LR
     API --> DB[(PostgreSQL)]
     API --> T[Temporal]
     T --> W[Workflow worker]
-    W --> G[Gemini structured-output API]
+    W --> G[OpenAI Responses API with Structured Outputs]
     W --> O[OTel / Jaeger / Prometheus / Loki]
     W --> S[Checkout and inventory fixture]
     H[Trusted verifier service] --> DB
@@ -34,7 +34,7 @@ administration operation.
 1. A run pins a full Git commit and scenario version.
 2. The fixture reproduces an objective failure and emits correlated telemetry.
 3. Exact collector responses are hash-addressed before facts are normalized.
-4. Gemini receives bounded, redacted facts and must return a strict schema.
+4. GPT-5.4 Mini receives bounded, redacted facts and must return a strict schema.
 5. A reviewer approves or rejects repair generation.
 6. Trusted code converts bounded replacements to a diff and applies policy.
 7. The verifier service reproduces the baseline and runs fixed checks in Docker.

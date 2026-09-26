@@ -1,4 +1,4 @@
-"""Live acceptance check for evidence-grounded Gemini diagnosis."""
+"""Live acceptance check for evidence-grounded OpenAI diagnosis."""
 
 import json
 import time

@@ -1,0 +1,210 @@
+<div id="incidentlab-product" aria-label="IncidentLab run review mockup">
+  <style>
+    #incidentlab-product {
+      --il-bg: light-dark(#f4f6f8, #0b0e12);
+      --il-panel: light-dark(#ffffff, #131820);
+      --il-panel-2: light-dark(#f8fafb, #191f28);
+      --il-text: light-dark(#17202a, #edf2f7);
+      --il-muted: light-dark(#667382, #97a4b3);
+      --il-border: light-dark(#dbe1e7, #29313c);
+      --il-accent: light-dark(#3157d5, #7f9cff);
+      --il-accent-soft: light-dark(#e9eeff, #202b4e);
+      --il-green: light-dark(#16794a, #5bd19a);
+      --il-green-soft: light-dark(#e7f6ed, #173a2b);
+      --il-amber: light-dark(#9a5b0a, #f2b65c);
+      --il-amber-soft: light-dark(#fff4dd, #3b2c17);
+      --il-red: light-dark(#b53a3a, #ff8585);
+      --il-code: light-dark(#f5f7fa, #0d1117);
+      color: var(--il-text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--il-bg);
+      border: 1px solid var(--il-border);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 720px;
+    }
+    #incidentlab-product * { box-sizing: border-box; }
+    #incidentlab-product button { font: inherit; }
+    #incidentlab-product .shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); min-height: 720px; }
+    #incidentlab-product .sidebar { background: var(--il-panel); border-right: 1px solid var(--il-border); padding: 18px 12px; }
+    #incidentlab-product .brand { display: flex; align-items: center; gap: 9px; padding: 2px 8px 20px; font-weight: 600; }
+    #incidentlab-product .brand-mark { width: 25px; height: 25px; border-radius: 7px; display: grid; place-items: center; color: light-dark(#fff, #0b0e12); background: var(--il-accent); }
+    #incidentlab-product .nav-label { color: var(--il-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding: 12px 9px 6px; }
+    #incidentlab-product .nav-item { width: 100%; border: 0; color: var(--il-muted); background: transparent; padding: 9px 10px; border-radius: 8px; text-align: left; display: flex; gap: 9px; align-items: center; margin: 2px 0; }
+    #incidentlab-product .nav-item.active { color: var(--il-text); background: var(--il-accent-soft); }
+    #incidentlab-product .nav-item svg { width: 16px; height: 16px; }
+    #incidentlab-product main { min-width: 0; }
+    #incidentlab-product .topbar { height: 58px; background: var(--il-panel); border-bottom: 1px solid var(--il-border); display: flex; align-items: center; justify-content: space-between; padding: 0 22px; }
+    #incidentlab-product .crumb { color: var(--il-muted); font-size: 13px; }
+    #incidentlab-product .crumb strong { color: var(--il-text); font-weight: 500; }
+    #incidentlab-product .top-actions { display: flex; gap: 8px; }
+    #incidentlab-product .button { border: 1px solid var(--il-border); color: var(--il-text); background: var(--il-panel); border-radius: 8px; padding: 7px 11px; }
+    #incidentlab-product .button.primary { border-color: var(--il-accent); background: var(--il-accent); color: light-dark(#fff, #0b0e12); }
+    #incidentlab-product .page { padding: 20px 22px 28px; }
+    #incidentlab-product .run-title { display: flex; gap: 14px; align-items: flex-start; justify-content: space-between; }
+    #incidentlab-product h1 { font-size: 21px; line-height: 1.25; margin: 0 0 5px; font-weight: 600; }
+    #incidentlab-product .subtitle { color: var(--il-muted); font-size: 13px; }
+    #incidentlab-product .status { display: inline-flex; align-items: center; gap: 6px; color: var(--il-green); background: var(--il-green-soft); border-radius: 999px; padding: 5px 9px; font-size: 12px; font-weight: 600; }
+    #incidentlab-product .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    #incidentlab-product .pipeline { margin: 20px 0; padding: 15px 16px; background: var(--il-panel); border: 1px solid var(--il-border); border-radius: 10px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; }
+    #incidentlab-product .stage { position: relative; text-align: center; color: var(--il-muted); font-size: 11px; }
+    #incidentlab-product .stage:not(:last-child)::after { content: ""; position: absolute; height: 2px; background: var(--il-green); left: calc(50% + 12px); right: calc(-50% + 12px); top: 7px; }
+    #incidentlab-product .stage-mark { position: relative; z-index: 1; width: 16px; height: 16px; border-radius: 50%; background: var(--il-green); color: light-dark(#fff, #0b0e12); margin: 0 auto 7px; display: grid; place-items: center; font-size: 10px; }
+    #incidentlab-product .workspace { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); gap: 14px; align-items: start; }
+    #incidentlab-product .panel { background: var(--il-panel); border: 1px solid var(--il-border); border-radius: 10px; overflow: hidden; }
+    #incidentlab-product .panel-head { min-height: 47px; padding: 11px 14px; border-bottom: 1px solid var(--il-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    #incidentlab-product .panel-title { font-size: 13px; font-weight: 600; }
+    #incidentlab-product .meta { color: var(--il-muted); font-size: 11px; }
+    #incidentlab-product .panel-body { padding: 14px; }
+    #incidentlab-product .hypothesis { border-left: 3px solid var(--il-accent); padding-left: 12px; }
+    #incidentlab-product .hypothesis h2 { font-size: 15px; margin: 0 0 7px; font-weight: 600; }
+    #incidentlab-product .hypothesis p { font-size: 13px; line-height: 1.45; margin: 0; color: var(--il-muted); }
+    #incidentlab-product .confidence { color: var(--il-accent); background: var(--il-accent-soft); border-radius: 999px; padding: 4px 8px; font-size: 11px; }
+    #incidentlab-product .evidence-list { margin-top: 14px; display: grid; gap: 8px; }
+    #incidentlab-product .evidence { background: var(--il-panel-2); border-radius: 8px; padding: 10px 11px; display: grid; grid-template-columns: 18px 1fr auto; gap: 9px; align-items: start; }
+    #incidentlab-product .evidence strong { font-size: 12px; font-weight: 500; }
+    #incidentlab-product .evidence p { grid-column: 2 / 4; margin: -2px 0 0; color: var(--il-muted); font-size: 11px; }
+    #incidentlab-product .approval { background: var(--il-green-soft); color: var(--il-green); padding: 10px 12px; border-radius: 8px; font-size: 12px; display: flex; justify-content: space-between; gap: 12px; }
+    #incidentlab-product .approval span:last-child { color: var(--il-muted); }
+    #incidentlab-product .diff { margin-top: 12px; background: var(--il-code); border-radius: 8px; overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+    #incidentlab-product .diff-head { padding: 8px 10px; color: var(--il-muted); border-bottom: 1px solid var(--il-border); display: flex; justify-content: space-between; font-family: inherit; }
+    #incidentlab-product .line { display: grid; grid-template-columns: 30px 30px 1fr; padding: 2px 9px; white-space: pre-wrap; }
+    #incidentlab-product .line .ln { color: var(--il-muted); text-align: right; padding-right: 8px; user-select: none; }
+    #incidentlab-product .line.del { background: light-dark(#ffebeb, #381e22); color: var(--il-red); }
+    #incidentlab-product .line.ctx { color: var(--il-muted); }
+    #incidentlab-product .checks { display: grid; gap: 1px; background: var(--il-border); }
+    #incidentlab-product .check { background: var(--il-panel); display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 10px 14px; font-size: 12px; }
+    #incidentlab-product .check .duration { color: var(--il-muted); font-variant-numeric: tabular-nums; }
+    #incidentlab-product .pass { color: var(--il-green); font-weight: 600; }
+    #incidentlab-product .audit { margin-top: 14px; }
+    #incidentlab-product .event { display: grid; grid-template-columns: 60px 10px 1fr; gap: 8px; font-size: 11px; color: var(--il-muted); padding: 5px 0; }
+    #incidentlab-product .event-dot { width: 7px; height: 7px; margin-top: 4px; border-radius: 50%; background: var(--il-green); }
+    #incidentlab-product .event strong { color: var(--il-text); font-weight: 500; }
+    #incidentlab-product .focus-hidden { display: none; }
+    @media (max-width: 760px) {
+      #incidentlab-product .shell { grid-template-columns: 1fr; }
+      #incidentlab-product .sidebar { display: none; }
+      #incidentlab-product .workspace { grid-template-columns: 1fr; }
+      #incidentlab-product .pipeline { overflow-x: auto; grid-template-columns: repeat(7, minmax(76px, 1fr)); }
+      #incidentlab-product .top-actions .button:first-child { display: none; }
+    }
+  </style>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">I</span> IncidentLab</div>
+      <div class="nav-label">Workspace</div>
+      <button class="nav-item active" type="button"><i data-lucide="activity" aria-hidden="true"></i> Runs</button>
+      <button class="nav-item" type="button"><i data-lucide="flask-conical" aria-hidden="true"></i> Scenarios</button>
+      <button class="nav-item" type="button"><i data-lucide="shield-check" aria-hidden="true"></i> Policies</button>
+      <div class="nav-label">System</div>
+      <button class="nav-item" type="button"><i data-lucide="scroll-text" aria-hidden="true"></i> Audit log</button>
+      <button class="nav-item" type="button"><i data-lucide="settings" aria-hidden="true"></i> Settings</button>
+    </aside>
+    <main>
+      <header class="topbar">
+        <div class="crumb">Runs / <strong>pool-exhaustion · 066e45d7</strong></div>
+        <div class="top-actions">
+          <button class="button" type="button">Export report</button>
+          <button class="button primary" type="button">New run</button>
+        </div>
+      </header>
+      <div class="page">
+        <div class="run-title">
+          <div>
+            <h1>Database connection-pool exhaustion</h1>
+            <div class="subtitle">Pinned commit 5a6200e · Started 10:38 AM · Gemini 3.5 Flash Lite</div>
+          </div>
+          <span class="status"><span class="status-dot"></span> Completed</span>
+        </div>
+        <section class="pipeline" aria-label="Run stages">
+          <div class="stage"><div class="stage-mark">✓</div>Reproduce</div>
+          <div class="stage"><div class="stage-mark">✓</div>Collect</div>
+          <div class="stage"><div class="stage-mark">✓</div>Diagnose</div>
+          <div class="stage"><div class="stage-mark">✓</div>Approval</div>
+          <div class="stage"><div class="stage-mark">✓</div>Generate</div>
+          <div class="stage"><div class="stage-mark">✓</div>Verify</div>
+          <div class="stage"><div class="stage-mark">✓</div>Report</div>
+        </section>
+        <div class="workspace">
+          <div>
+            <section class="panel focus-evidence">
+              <div class="panel-head"><span class="panel-title">Approved diagnosis</span><span class="confidence">High confidence</span></div>
+              <div class="panel-body">
+                <div class="hypothesis">
+                  <h2>Out-of-stock requests leak checked-out connections</h2>
+                  <p>The failure path returns without releasing a pooled SQLite connection. Two rejected requests drain the two-slot pool; the next valid checkout times out.</p>
+                </div>
+                <div class="evidence-list">
+                  <div class="evidence"><i data-lucide="route" aria-hidden="true"></i><strong>Trace</strong><span class="meta">ev-d08f…</span><p>Database acquisition span ended with timeout=true.</p></div>
+                  <div class="evidence"><i data-lucide="gauge" aria-hidden="true"></i><strong>Metric</strong><span class="meta">ev-18ac…</span><p>Available pool connections fell from 2 to 0.</p></div>
+                  <div class="evidence"><i data-lucide="file-code" aria-hidden="true"></i><strong>Repository</strong><span class="meta">app.py:97</span><p>The pool-leak branch disables connection return.</p></div>
+                </div>
+              </div>
+            </section>
+            <section class="panel focus-repair" style="margin-top:14px">
+              <div class="panel-head"><span class="panel-title">Repair candidate 1</span><span class="meta">repair-policy-v1 · SHA-256 verified</span></div>
+              <div class="panel-body">
+                <div class="approval"><strong>Approved by step9-repair-check</strong><span>10:38:15 AM</span></div>
+                <div class="diff" aria-label="Candidate diff">
+                  <div class="diff-head"><span>sample_service/app.py</span><span>−3 +0</span></div>
+                  <div class="line ctx"><span class="ln">95</span><span class="ln">95</span><span>    if row[0] &lt; quantity:</span></div>
+                  <div class="line del"><span class="ln">96</span><span class="ln"></span><span>-       if self.fault_mode == "pool_leak":</span></div>
+                  <div class="line del"><span class="ln">97</span><span class="ln"></span><span>-           # Intentional fixture branch</span></div>
+                  <div class="line del"><span class="ln">98</span><span class="ln"></span><span>-           return_connection = False</span></div>
+                  <div class="line ctx"><span class="ln">99</span><span class="ln">96</span><span>        return 409, {"error": "out_of_stock"}</span></div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div>
+            <section class="panel focus-verification">
+              <div class="panel-head"><span class="panel-title">Verification</span><span class="status"><span class="status-dot"></span> Pass</span></div>
+              <div class="checks">
+                <div class="check"><span>Baseline incident</span><span class="duration">3.2s</span><span class="pass">PASS</span></div>
+                <div class="check"><span>Patch apply</span><span class="duration">0.1s</span><span class="pass">PASS</span></div>
+                <div class="check"><span>Build & static</span><span class="duration">1.4s</span><span class="pass">PASS</span></div>
+                <div class="check"><span>Unit & integration</span><span class="duration">2.3s</span><span class="pass">PASS</span></div>
+                <div class="check"><span>Incident replay ×5</span><span class="duration">8.7s</span><span class="pass">PASS</span></div>
+              </div>
+            </section>
+            <section class="panel audit">
+              <div class="panel-head"><span class="panel-title">Audit trail</span><span class="meta">13 events</span></div>
+              <div class="panel-body">
+                <div class="event"><span>10:38:13</span><span class="event-dot"></span><span><strong>Diagnosis recorded</strong><br>1 hypothesis · 7 evidence items</span></div>
+                <div class="event"><span>10:38:15</span><span class="event-dot"></span><span><strong>Repair approved</strong><br>Actor and policy version retained</span></div>
+                <div class="event"><span>10:38:21</span><span class="event-dot"></span><span><strong>Candidate accepted</strong><br>Path, syntax, secret and apply checks passed</span></div>
+                <div class="event"><span>10:38:37</span><span class="event-dot"></span><span><strong>Verification passed</strong><br>Incident absent in five replays</span></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('incidentlab-product');
+      const state = { focus: 'full', density: 'comfortable' };
+      function render() {
+        root.querySelectorAll('[class*="focus-"]').forEach(el => el.classList.remove('focus-hidden'));
+        if (state.focus !== 'full') {
+          root.querySelectorAll('[class*="focus-"]').forEach(el => {
+            if (!el.classList.contains(`focus-${state.focus}`)) el.classList.add('focus-hidden');
+          });
+        }
+        root.style.setProperty('--il-row-pad', state.density === 'compact' ? '7px' : '10px');
+      }
+      render();
+      if (globalThis.Tweak) {
+        const tweak = new Tweak({ container: root, onChange: render });
+        tweak.addSelect(state, 'focus', { label: 'Review focus', options: [
+          { label: 'Full run review', value: 'full' },
+          { label: 'Evidence first', value: 'evidence' },
+          { label: 'Repair first', value: 'repair' },
+          { label: 'Verification first', value: 'verification' }
+        ], reference: 'review.focus' });
+        tweak.addSelect(state, 'density', { label: 'Information density', options: ['comfortable', 'compact'], reference: 'layout.density' });
+      }
+    })();
+  </script>
+</div>

@@ -17,7 +17,7 @@ Run it with:
 
 Metrics are reproduction rate, diagnosis-label accuracy, citation validity, and
 verified-repair rate. The offline `incidentlab` row is deliberately an upper-bound
-oracle used for regression detection; it is not a claim about live Gemini accuracy.
+oracle used for regression detection; it is not a claim about live model accuracy.
 Live model runs vary with model version, quota, and provider behavior and should be
 reported separately with the pinned model and prompt IDs already stored per run.
 

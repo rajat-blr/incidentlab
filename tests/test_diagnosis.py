@@ -1,5 +1,4 @@
 import hashlib
-import json
 import os
 import unittest
 from datetime import UTC, datetime
@@ -20,9 +19,9 @@ from incidentlab.model_adapter.diagnosis import (
     Usage,
     diagnose,
 )
-from incidentlab.model_adapter.gemini_adapter import (
-    GeminiDiagnosisAdapter,
-    GeminiDiagnosisSchema,
+from incidentlab.model_adapter.openai_adapter import (
+    OpenAIDiagnosisAdapter,
+    OpenAIDiagnosisSchema,
 )
 
 
@@ -62,8 +61,15 @@ class FakeAdapter:
         self.outputs = list(outputs)
         self.calls = []
 
-    def generate(self, evidence, *, tool_results=None, allow_follow_ups=True):
-        self.calls.append((evidence, tool_results, allow_follow_ups))
+    def generate(
+        self,
+        evidence,
+        *,
+        tool_results=None,
+        allow_follow_ups=True,
+        validation_feedback=None,
+    ):
+        self.calls.append((evidence, tool_results, allow_follow_ups, validation_feedback))
         return ModelResult(self.outputs.pop(0), Usage(10, 5, 1))
 
 
@@ -74,13 +80,28 @@ class DiagnosisBoundaryTests(unittest.TestCase):
         result = diagnose(uuid4(), [item], adapter, lambda _: None)
         self.assertEqual(len(result.hypotheses), 1)
         self.assertEqual(result.hypotheses[0].model_id, "fake-model")
-        self.assertEqual(result.hypotheses[0].prompt_version, "diagnosis-v1")
+        self.assertEqual(result.hypotheses[0].prompt_version, "diagnosis-v2")
 
     def test_nonexistent_citation_is_rejected(self) -> None:
         item = evidence("metric", "ev-metric")
-        adapter = FakeAdapter([DiagnosisDraft(hypotheses=[hypothesis("ev-invented")])])
+        invalid = DiagnosisDraft(hypotheses=[hypothesis("ev-invented")])
+        adapter = FakeAdapter([invalid, invalid])
         with self.assertRaisesRegex(DiagnosisError, "nonexistent evidence"):
             diagnose(uuid4(), [item], adapter, lambda _: None)
+
+    def test_nonexistent_citation_gets_one_bounded_correction(self) -> None:
+        item = evidence("metric", "ev-metric")
+        invalid = DiagnosisDraft(hypotheses=[hypothesis("ev-invented")])
+        valid = DiagnosisDraft(hypotheses=[hypothesis(item.id)])
+        adapter = FakeAdapter([invalid, valid])
+
+        result = diagnose(uuid4(), [item], adapter, lambda _: None)
+
+        self.assertEqual(result.hypotheses[0].supporting_evidence_ids, [item.id])
+        self.assertEqual(len(adapter.calls), 2)
+        self.assertFalse(adapter.calls[1][2])
+        self.assertIn("nonexistent evidence", adapter.calls[1][3]["error"])
+        self.assertEqual(adapter.calls[1][3]["allowed_evidence_ids"], [item.id])
 
     def test_prompt_injection_cannot_authorize_an_unknown_tool(self) -> None:
         item = evidence("log", "ev-log")
@@ -148,30 +169,32 @@ class DiagnosisBoundaryTests(unittest.TestCase):
             diagnose(uuid4(), [item], adapter, lambda _: None)
 
 
-class GeminiAdapterTests(unittest.TestCase):
+class OpenAIAdapterTests(unittest.TestCase):
     def test_adapter_fails_closed_without_api_key(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
-            with self.assertRaisesRegex(DiagnosisError, "GEMINI_API_KEY"):
-                GeminiDiagnosisAdapter()
+            with self.assertRaisesRegex(DiagnosisError, "OPENAI_API_KEY"):
+                OpenAIDiagnosisAdapter()
 
     def test_adapter_uses_structured_response_schema(self) -> None:
         draft = DiagnosisDraft(hypotheses=[hypothesis("ev-1")])
         response = SimpleNamespace(
-            parsed=draft,
-            usage_metadata=SimpleNamespace(prompt_token_count=7, candidates_token_count=3),
+            output_parsed=draft,
+            usage=SimpleNamespace(input_tokens=7, output_tokens=3),
         )
         calls = []
-        models = SimpleNamespace(generate_content=lambda **kwargs: calls.append(kwargs) or response)
-        client = SimpleNamespace(models=models)
-        adapter = GeminiDiagnosisAdapter(client=client, model_id="test-model")
+        responses = SimpleNamespace(parse=lambda **kwargs: calls.append(kwargs) or response)
+        client = SimpleNamespace(responses=responses)
+        adapter = OpenAIDiagnosisAdapter(client=client, model_id="test-model")
         result = adapter.generate([{"id": "ev-1"}])
         self.assertIs(result.draft, draft)
-        self.assertEqual(calls[0]["config"].response_schema, GeminiDiagnosisSchema)
-        self.assertNotIn(
-            "additionalProperties", json.dumps(GeminiDiagnosisSchema.model_json_schema())
-        )
-        self.assertEqual(calls[0]["config"].response_mime_type, "application/json")
+        self.assertEqual(calls[0]["text_format"], OpenAIDiagnosisSchema)
+        self.assertEqual(calls[0]["text"], {"verbosity": "low"})
+        self.assertEqual(calls[0]["reasoning"], {"effort": "none"})
+        self.assertFalse(calls[0]["store"])
         self.assertEqual(calls[0]["model"], "test-model")
+        payload = __import__("json").loads(calls[0]["input"])
+        self.assertEqual(payload["allowed_evidence_ids"], ["ev-1"])
+        self.assertEqual(result.usage, Usage(7, 3, result.usage.latency_ms))
 
 
 if __name__ == "__main__":

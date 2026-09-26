@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from typing import Protocol
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -16,7 +17,16 @@ from incidentlab.contracts.models import (
 from incidentlab.model_adapter.diagnosis import Usage
 from incidentlab.policy.repair import POLICY_VERSION, PolicyDecision, RepairPolicy
 
-PROMPT_VERSION = "repair-v5"
+PROMPT_VERSION = "repair-v7"
+
+SCENARIO_FAULT_MODES = {
+    "pool-exhaustion": "pool_leak",
+    "inventory-underflow": "inventory_underflow",
+}
+SCENARIO_CHANGED_SOURCE_MARKERS = {
+    "pool-exhaustion": ('"pool_leak"', "return_connection"),
+    "inventory-underflow": ('"inventory_underflow"', "row[0] < quantity"),
+}
 
 
 class RepairError(RuntimeError):
@@ -51,12 +61,22 @@ def generate_repairs(
     pinned_source: str,
     adapter: RepairAdapter,
     policy: RepairPolicy | None = None,
+    scenario_id: str | None = None,
 ) -> RepairGenerationResult:
     if len(pinned_source.encode()) > 32 * 1024:
         raise RepairError("repository context exceeds the byte limit")
     repair_policy = policy or RepairPolicy()
     payload = {
-        "task": "Propose a minimal repair for the approved root-cause hypothesis.",
+        "task": (
+            "Propose a minimal repair for the approved root-cause hypothesis and active "
+            "incident scenario. Make the active scenario replay healthy without changing other "
+            "scenario fixtures."
+        ),
+        "active_scenario_id": scenario_id,
+        "active_fault_mode": SCENARIO_FAULT_MODES.get(scenario_id or ""),
+        "allowed_changed_source_markers": list(
+            SCENARIO_CHANGED_SOURCE_MARKERS.get(scenario_id or "", ())
+        ),
         "target_commit": target_commit,
         "approved_hypothesis": hypothesis.model_dump(mode="json"),
         "failing_reproduction": reproduction,
@@ -84,6 +104,24 @@ def generate_repairs(
             raise RepairError(f"repair schema validation failed: {error}") from error
         for index, proposed in enumerate(draft.candidates):
             decision = repair_policy.evaluate(proposed, pinned_source)
+            markers = SCENARIO_CHANGED_SOURCE_MARKERS.get(scenario_id or "", ())
+            changed_lines = [
+                line
+                for line in proposed.unified_diff.splitlines()
+                if line.startswith(("+", "-")) and not line.startswith(("+++", "---"))
+            ]
+            if (
+                decision.accepted
+                and markers
+                and not any(marker in line for marker in markers for line in changed_lines)
+            ):
+                decision = PolicyDecision(
+                    False,
+                    "scenario_scope",
+                    f"candidate does not change the active {scenario_id} fault mechanism",
+                    (),
+                    hashlib.sha256(proposed.unified_diff.encode()).hexdigest(),
+                )
             if decision.accepted and decision.diff_sha256 in seen_digests:
                 decision = PolicyDecision(
                     False,
@@ -126,6 +164,9 @@ def generate_repairs(
                 ),
                 "policy_categories": [decision.category for decision in decisions],
                 "policy_details": [decision.detail for decision in decisions],
+                "allowed_changed_source_markers": list(
+                    SCENARIO_CHANGED_SOURCE_MARKERS.get(scenario_id or "", ())
+                ),
             },
         }
     return RepairGenerationResult(tuple(candidates), tuple(decisions), usage)

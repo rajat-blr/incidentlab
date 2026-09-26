@@ -2,7 +2,7 @@
 
 IncidentLab is a local, evidence-backed incident diagnosis and repair-verification
 lab. It reproduces a deterministic service failure, collects attributable
-telemetry and repository evidence, asks Gemini for structured root-cause
+telemetry and repository evidence, asks OpenAI for structured root-cause
 hypotheses, and enforces a human approval gate before repair work proceeds.
 
 > [!IMPORTANT]
@@ -20,9 +20,9 @@ Steps 1–14 of the [build plan](incidentlab-prd-and-build-plan.md) are complete
   OpenTelemetry Collector.
 - Immutable raw evidence artifacts with SHA-256 verification and normalized
   evidence records.
-- Gemini diagnosis with structured output, validated citations, bounded follow-up
+- GPT-5.4 Mini diagnosis with Structured Outputs, validated citations, bounded follow-up
   lookups, secret redaction, and prompt-injection defenses.
-- Approval-gated Gemini repair generation with bounded line replacements,
+- Approval-gated GPT-5.4 Mini repair generation with bounded line replacements,
   deterministic unified diffs, and a fail-closed patch policy.
 - Persisted baseline and post-patch checks with hash-addressed raw logs,
   fact-derived outcomes, explicit inconclusive handling, and deterministic ranking.
@@ -54,7 +54,7 @@ Checkout gateway -> Inventory service -> SQLite fixture
                                                \     |     /
                                                 Evidence collector
                                                         |
-FastAPI -> PostgreSQL <- Temporal workflow/worker -> Gemini adapters
+FastAPI -> PostgreSQL <- Temporal workflow/worker -> OpenAI adapters
                                                         |
                        Approved diagnosis -> patch policy -> candidate diff
                                                         |
@@ -75,7 +75,7 @@ the stock guard and commits a negative quantity; the healthy control rejects it.
 - Python 3.12 or newer
 - [`uv`](https://docs.astral.sh/uv/)
 - Docker Desktop with Compose
-- A Gemini Developer API key for the live diagnosis check
+- An OpenAI API key with available credit for the live diagnosis check
 
 ## Quick start
 
@@ -85,15 +85,15 @@ the stock guard and commits a negative quantity; the healthy control rejects it.
    uv sync --frozen
    ```
 
-2. Create a local environment file and add a newly generated Gemini key:
+2. Create a local environment file and add a newly generated OpenAI key:
 
    ```sh
    cp .env.example .env
    ```
 
    ```dotenv
-   GEMINI_API_KEY=your-key
-   GEMINI_MODEL=gemini-3.5-flash-lite
+   OPENAI_API_KEY=your-key
+   OPENAI_MODEL=gpt-5.4-mini
    ```
 
    `.env` is ignored by Git. Never commit or paste an active API key into an
@@ -128,7 +128,7 @@ the stock guard and commits a negative quantity; the healthy control rejects it.
    .venv/bin/python scripts/demo_release.py
    ```
 
-The Step 7 and Step 9 checks make live Gemini requests. Step 9 records approval,
+The Step 7 and Step 9 checks make live OpenAI requests. Step 9 records approval,
 validates the generated candidate, and sends only a policy-accepted diff to the
 independent sandbox verifier. The Compose verifier automatically drains runs in
 `VERIFYING`, persists every check log, signals Temporal, and lets the workflow

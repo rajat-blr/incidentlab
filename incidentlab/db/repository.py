@@ -35,6 +35,7 @@ from incidentlab.db.tables import (
 )
 from incidentlab.evidence.collection import EvidenceBundle
 from incidentlab.model_adapter.diagnosis import DiagnosisResult
+from incidentlab.model_adapter.pricing import estimated_cost_usd
 from incidentlab.model_adapter.repair import RepairGenerationResult
 from incidentlab.sandbox.runner import SandboxRunResult
 from incidentlab.verification import (
@@ -500,7 +501,7 @@ def record_diagnosis(
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
                 latency_ms=usage.latency_ms,
-                estimated_cost_usd=0,
+                estimated_cost_usd=estimated_cost_usd(model_id, usage),
             )
             .on_conflict_do_nothing(index_elements=[model_usage.c.id])
         )
@@ -597,7 +598,7 @@ def record_repair_generation(
                 input_tokens=generation.usage.input_tokens,
                 output_tokens=generation.usage.output_tokens,
                 latency_ms=generation.usage.latency_ms,
-                estimated_cost_usd=0,
+                estimated_cost_usd=estimated_cost_usd(model_id, generation.usage),
             )
             .on_conflict_do_nothing(index_elements=[model_usage.c.id])
         )

@@ -1,4 +1,4 @@
-"""Live acceptance: approved Gemini repair passes policy and reaches the verifier."""
+"""Live acceptance: approved OpenAI repair passes policy and reaches the verifier."""
 
 import hashlib
 import json
@@ -76,7 +76,9 @@ def main() -> None:
     if not isinstance(created, dict):
         raise AssertionError(f"Unexpected create response: {created}")
     run_id = created["id"]
-    wait_for_state(run_id, {"AWAITING_REPAIR_APPROVAL", "FAILED"})
+    reached = wait_for_state(run_id, {"AWAITING_REPAIR_APPROVAL", "FAILED"})
+    if reached["state"] != "AWAITING_REPAIR_APPROVAL":
+        raise AssertionError(f"Diagnosis failed before repair approval: {reached}")
     before = request("GET", f"/runs/{run_id}/candidates")
     if before != []:
         raise AssertionError("Repair candidate existed before human approval")

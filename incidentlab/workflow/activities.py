@@ -14,8 +14,8 @@ from incidentlab.contracts.models import RunState
 from incidentlab.db import repository
 from incidentlab.evidence.collection import collect_git_metadata, collect_telemetry, combine
 from incidentlab.model_adapter.diagnosis import PROMPT_VERSION, DiagnosisError, diagnose
-from incidentlab.model_adapter.gemini_adapter import GeminiDiagnosisAdapter
-from incidentlab.model_adapter.gemini_repair_adapter import GeminiRepairAdapter
+from incidentlab.model_adapter.openai_adapter import OpenAIDiagnosisAdapter
+from incidentlab.model_adapter.openai_repair_adapter import OpenAIRepairAdapter
 from incidentlab.model_adapter.repair import PROMPT_VERSION as REPAIR_PROMPT_VERSION
 from incidentlab.model_adapter.repair import RepairError, generate_repairs
 from incidentlab.policy.context import RepositoryContextError, read_pinned_source
@@ -121,7 +121,7 @@ async def diagnose_placeholder(data: dict) -> dict:
     run_id = UUID(data["run_id"])
     evidence = await asyncio.to_thread(repository.list_evidence, run_id)
     try:
-        adapter = GeminiDiagnosisAdapter()
+        adapter = OpenAIDiagnosisAdapter()
         try:
             result = await asyncio.to_thread(
                 diagnose,
@@ -199,7 +199,7 @@ async def generate_repair_placeholder(data: dict) -> dict:
             run.pinned_commit,
             "sample_service/app.py",
         )
-        adapter = GeminiRepairAdapter()
+        adapter = OpenAIRepairAdapter()
         try:
             result = await asyncio.to_thread(
                 generate_repairs,
@@ -209,6 +209,7 @@ async def generate_repair_placeholder(data: dict) -> dict:
                 reproduction,
                 source,
                 adapter,
+                scenario_id=run.scenario_id,
             )
         finally:
             adapter.close()

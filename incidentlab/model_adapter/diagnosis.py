@@ -20,7 +20,7 @@ from incidentlab.contracts.models import (
     Hypothesis,
 )
 
-PROMPT_VERSION = "diagnosis-v1"
+PROMPT_VERSION = "diagnosis-v2"
 MAX_FOLLOW_UP_QUERIES = 2
 MAX_TOOL_RESULT_BYTES = 32_000
 
@@ -80,6 +80,7 @@ class DiagnosisAdapter(Protocol):
         *,
         tool_results: list[dict] | None = None,
         allow_follow_ups: bool = True,
+        validation_feedback: dict | None = None,
     ) -> ModelResult: ...
 
 
@@ -209,7 +210,23 @@ def diagnose(
         usage += final.usage
         if draft.follow_up_queries:
             raise DiagnosisError("follow-up query budget exhausted")
-    _validate_hypotheses(draft, evidence_by_id)
+    try:
+        _validate_hypotheses(draft, evidence_by_id)
+    except DiagnosisError as error:
+        correction = adapter.generate(
+            model_evidence,
+            tool_results=tool_results,
+            allow_follow_ups=False,
+            validation_feedback={
+                "error": str(error),
+                "allowed_evidence_ids": sorted(evidence_by_id),
+            },
+        )
+        draft = _validated_draft(correction.draft)
+        usage += correction.usage
+        if draft.follow_up_queries:
+            raise DiagnosisError("correction cannot request follow-up queries")
+        _validate_hypotheses(draft, evidence_by_id)
     hypotheses = []
     for index, candidate in enumerate(draft.hypotheses):
         serialized = json.dumps(candidate.model_dump(mode="json"), sort_keys=True)

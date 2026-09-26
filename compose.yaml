@@ -81,8 +81,8 @@ services:
       PROMETHEUS_URL: http://prometheus:9090
       LOKI_URL: http://loki:3100
       REPOSITORY_GIT_DIR: /repository/.git
-      GEMINI_API_KEY:
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      OPENAI_API_KEY:
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-mini}
     volumes:
       - ./.git:/repository/.git:ro
     depends_on:
@@ -129,7 +129,7 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/api/ready"]
       interval: 2s
       timeout: 3s
       retries: 30
