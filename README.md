@@ -13,6 +13,13 @@ IncidentLab keeps collection, approval, policy enforcement, and verification
 outside the model. The model can explain evidence and propose a bounded change;
 deterministic controls decide what is accepted.
 
+## Live demo
+
+### [Launch IncidentLab →](https://incidentlab-flax.vercel.app/runs)
+
+The deployed experience runs entirely from curated saved investigation data. It
+does not require an account, backend service, or API key.
+
 ## What the demo shows
 
 The browser-only demo contains seven investigation histories with successful,
@@ -26,15 +33,6 @@ start a guided replay for either supported incident:
 
 A guided replay moves through reproduction, evidence collection, diagnosis,
 human approval, repair generation, and verification using curated saved data.
-It does not require Docker, a backend, or an API key.
-
-```sh
-cd frontend
-npm ci
-npm run dev:demo
-```
-
-Open `http://localhost:5173`.
 
 ## Investigation pipeline
 
@@ -130,56 +128,6 @@ trail exposed by the review console.
 | Model integration | OpenAI Structured Outputs |
 | Verification | Docker sandbox with fixed checks |
 | Local environment | Docker Compose, uv |
-
-## Run the complete system
-
-The full workflow requires Python 3.12+, `uv`, Docker Desktop, and an OpenAI API
-key with available credit.
-
-```sh
-uv sync --frozen
-cp .env.example .env
-```
-
-Set the key in `.env`:
-
-```dotenv
-OPENAI_API_KEY=your-key
-OPENAI_MODEL=gpt-5.4-mini
-```
-
-Start the stack:
-
-```sh
-docker compose up -d --build --wait
-```
-
-The review console is available at `http://127.0.0.1:5173` and the API at
-`http://127.0.0.1:8000`.
-
-> [!CAUTION]
-> Never commit `.env` or expose an active API key in logs, screenshots, issues,
-> or pull requests.
-
-## Development checks
-
-Backend:
-
-```sh
-.venv/bin/ruff check incidentlab sample_service tests migrations scripts
-.venv/bin/ruff format --check incidentlab sample_service tests migrations scripts
-.venv/bin/python -m unittest discover -s tests -v
-```
-
-Frontend:
-
-```sh
-cd frontend
-npm run typecheck
-npm test
-npm run build
-npm run build:demo
-```
 
 ## Repository map
 
