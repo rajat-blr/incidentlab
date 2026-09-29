@@ -1,156 +1,67 @@
 # IncidentLab
 
-IncidentLab is a local, evidence-backed incident diagnosis and repair-verification
-lab. It reproduces a deterministic service failure, collects attributable
-telemetry and repository evidence, asks OpenAI for structured root-cause
-hypotheses, and enforces a human approval gate before repair work proceeds.
+IncidentLab is an evidence-backed incident investigation and repair-verification
+system. It reproduces deterministic failures in a sample distributed service,
+collects telemetry and repository evidence, generates structured diagnoses with
+OpenAI, and verifies proposed repairs inside an isolated Docker sandbox.
 
-> [!IMPORTANT]
-> IncidentLab is an educational development project, not a production incident
-> response system. Its optional GitHub integration creates draft PRs only; it cannot
-> mark them ready, merge code, or deploy changes.
+The repository includes two ways to explore the project:
 
-Steps 1–14 of the [build plan](incidentlab-prd-and-build-plan.md) are complete.
+- **Read-only demo:** a static React application with saved investigation data.
+  It runs without Docker, a backend, or an API key and can be deployed to Vercel.
+- **Full local stack:** the complete workflow with live telemetry, durable
+  orchestration, model-assisted diagnosis, human approval, and sandboxed repair
+  verification.
 
-## What works today
+> [!NOTE]
+> IncidentLab is a portfolio and educational project, not a production incident
+> response platform. It operates on controlled scenarios and does not deploy or
+> merge code automatically.
 
-- Deterministic database connection-pool exhaustion and inventory-underflow scenarios.
-- Durable, idempotent Temporal workflow with retries, cancellation, and approval.
-- OpenTelemetry traces, Prometheus metrics, and Loki logs collected through an
-  OpenTelemetry Collector.
-- Immutable raw evidence artifacts with SHA-256 verification and normalized
-  evidence records.
-- GPT-5.4 Mini diagnosis with Structured Outputs, validated citations, bounded follow-up
-  lookups, secret redaction, and prompt-injection defenses.
-- Approval-gated GPT-5.4 Mini repair generation with bounded line replacements,
-  deterministic unified diffs, and a fail-closed patch policy.
-- Persisted baseline and post-patch checks with hash-addressed raw logs,
-  fact-derived outcomes, explicit inconclusive handling, and deterministic ranking.
-- A responsive React review console with live run status, evidence and diagnosis
-  review, approval controls, safe diff rendering, verification logs, audit history,
-  and deterministic Markdown report export.
-- PostgreSQL persistence, Alembic migrations, audit events, model-usage records,
-  and REST endpoints for runs, evidence, hypotheses, approval, and cancellation.
-- Repeatable acceptance checks for workflow durability, evidence integrity, live
-  diagnosis, repair policy, and candidate verification.
-- An automatic trusted verifier backed by an independent Docker sandbox, with
-  pinned inputs, fixed checks, resource limits, hashed artifacts, and hostile-code
-  containment.
-- A versioned repeated-run evaluation harness with deterministic and uncited
-  baselines, adversarial probes, CSV metrics, and explicit failure reports.
-- An opt-in GitHub App boundary that validates webhook signatures and installation
-  permissions and creates or reuses verified draft PRs idempotently.
+## Highlights
 
-## Architecture
+- Deterministic connection-pool exhaustion and inventory-underflow incidents
+- OpenTelemetry traces, Prometheus metrics, and Loki logs
+- Durable, retry-safe orchestration with Temporal
+- Evidence artifacts and proposed diffs protected by SHA-256 integrity checks
+- Structured GPT-5.4 Mini diagnosis with validated evidence citations
+- Human approval before repair generation
+- Fail-closed repair policy with path, size, secret, syntax, and patch checks
+- Network-disabled, non-root Docker sandbox for independent verification
+- React review console for evidence, diagnoses, diffs, verification, and audit history
+- Static portfolio mode containing no API keys or runtime backend requests
+
+## How it works
 
 ```text
-Checkout gateway -> Inventory service -> SQLite fixture
-        |                  |
-        +---- OpenTelemetry traces, metrics, and logs ----+
-                                                          v
-                                              OTel Collector
-                                               /     |     \
-                                          Jaeger Prometheus Loki
-                                               \     |     /
-                                                Evidence collector
-                                                        |
-FastAPI -> PostgreSQL <- Temporal workflow/worker -> OpenAI adapters
-                                                        |
-                       Approved diagnosis -> patch policy -> candidate diff
-                                                        |
-                                                        v
-Trusted verifier service ---------------> Constrained verification container
-        |
-        +-- explicit second approval --> Optional GitHub draft PR
+Fault-injected service
+        │
+        ├── traces ─── Jaeger ──────┐
+        ├── metrics ─ Prometheus ───┼── Evidence collector
+        └── logs ──── Loki ─────────┘          │
+                                               ▼
+React console ── FastAPI ── PostgreSQL ── Temporal workflow
+                                               │
+                                      OpenAI diagnosis
+                                               │
+                                      Human approval gate
+                                               │
+                                       Repair policy
+                                               │
+                                               ▼
+                                Trusted verifier ── Docker sandbox
 ```
 
-The sample inventory service owns a two-connection pool. In `pool_leak` mode,
-failed checkout requests leak connections; a later valid request receives HTTP
-503. With the fault disabled, connections are returned and the same valid
-request succeeds. In `inventory_underflow` mode, an oversized checkout bypasses
-the stock guard and commits a negative quantity; the healthy control rejects it.
+The model proposes a diagnosis and a bounded source change, but it does not
+decide whether verification passed. Verification outcomes are derived from fixed
+checks and persisted artifacts. A separate trusted verifier controls the Docker
+sandbox; the API and model worker do not receive the Docker socket.
 
-## Prerequisites
+## Static demo
 
-- Python 3.12 or newer
-- [`uv`](https://docs.astral.sh/uv/)
-- Docker Desktop with Compose
-- An OpenAI API key with available credit for the live diagnosis check
-
-## Quick start
-
-1. Install the locked Python environment:
-
-   ```sh
-   uv sync --frozen
-   ```
-
-2. Create a local environment file and add a newly generated OpenAI key:
-
-   ```sh
-   cp .env.example .env
-   ```
-
-   ```dotenv
-   OPENAI_API_KEY=your-key
-   OPENAI_MODEL=gpt-5.4-mini
-   ```
-
-   `.env` is ignored by Git. Never commit or paste an active API key into an
-   issue, log, or pull request.
-
-3. Start the stack:
-
-   ```sh
-   docker compose up -d --build --wait
-   ```
-
-4. Confirm the API is ready:
-
-   ```sh
-   curl http://127.0.0.1:8000/ready
-   ```
-
-   Then open the review console at `http://127.0.0.1:5173`.
-
-5. Run the acceptance checks:
-
-   ```sh
-   .venv/bin/python -m sample_service.telemetry_check
-   .venv/bin/python -m sample_service.demo --trials 20
-   .venv/bin/python scripts/step5_restart_check.py
-   .venv/bin/python scripts/step6_evidence_check.py
-   .venv/bin/python scripts/step7_diagnosis_check.py
-   .venv/bin/python scripts/step8_sandbox_check.py
-   .venv/bin/python scripts/step9_repair_check.py
-   .venv/bin/python scripts/step10_verification_check.py
-   .venv/bin/python scripts/evaluate.py --trials 5 --output evaluation-results/latest
-   .venv/bin/python scripts/demo_release.py
-   ```
-
-The Step 7 and Step 9 checks make live OpenAI requests. Step 9 records approval,
-validates the generated candidate, and sends only a policy-accepted diff to the
-independent sandbox verifier. The Compose verifier automatically drains runs in
-`VERIFYING`, persists every check log, signals Temporal, and lets the workflow
-derive its terminal state from mandatory facts. The evaluation and release demo
-are offline and do not require a model API key.
-
-The UI updates while verification runs; no manual command is required. For
-recovery or isolated debugging, an individual waiting run can still be verified
-with:
-
-```sh
-.venv/bin/python scripts/verify_run.py <run-id>
-```
-
-## Read-only portfolio demo
-
-The existing frontend also has a static demonstration mode. It bundles two
-curated, sanitized run snapshots and makes no backend, database, Docker, model,
-or API-key request. Mutating controls are removed while evidence artifacts,
-diffs, verification logs, audit history, and report downloads remain usable.
-
-Run it locally:
+The static demo is the quickest way to explore the interface. It includes two
+curated, sanitized investigations with evidence, diagnoses, proposed repairs,
+verification logs, audit events, and downloadable reports.
 
 ```sh
 cd frontend
@@ -158,134 +69,177 @@ npm ci
 npm run dev:demo
 ```
 
-Build the exact Vercel artifact:
+Open `http://localhost:5173`. No environment variables are required.
+
+To create a production build:
 
 ```sh
 npm run build:demo
 ```
 
-For Vercel, import this repository and set the project root directory to
-`frontend`. The checked-in `frontend/vercel.json` selects the demo build, adds
-SPA fallback routing, and applies static security headers. Do not configure an
-OpenAI key or backend URL for this project. Saved data is kept in
-`frontend/src/demo-data/dataset.json`; tests verify its citations, artifact
-hashes, diff hashes, and read-only boundary.
+### Deploy the demo to Vercel
 
-## Development checks
+Import this repository into Vercel and use the following settings:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `frontend` |
+| Framework Preset | Vite |
+| Build Command | `npm run build:demo` |
+| Output Directory | `dist` |
+
+Do not add an OpenAI key or backend URL to the demo deployment. The checked-in
+[`frontend/vercel.json`](frontend/vercel.json) defines the build, SPA routing,
+and security headers. Saved data lives in
+[`frontend/src/demo-data/dataset.json`](frontend/src/demo-data/dataset.json).
+
+## Run the full stack locally
+
+### Requirements
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/)
+- Docker Desktop with Docker Compose
+- An OpenAI API key with available credits
+
+### Setup
+
+Install the locked Python environment:
+
+```sh
+uv sync --frozen
+```
+
+Create the local configuration file:
+
+```sh
+cp .env.example .env
+```
+
+Add your key to `.env`:
+
+```dotenv
+OPENAI_API_KEY=your-key
+OPENAI_MODEL=gpt-5.4-mini
+```
+
+Never commit `.env` or expose an active key in logs, screenshots, issues, or
+pull requests.
+
+Start the application:
+
+```sh
+docker compose up -d --build --wait
+```
+
+Then open:
+
+| Service | URL |
+| --- | --- |
+| IncidentLab console | `http://127.0.0.1:5173` |
+| API | `http://127.0.0.1:8000` |
+| Temporal UI | `http://127.0.0.1:8233` |
+| Jaeger | `http://127.0.0.1:16686` |
+| Prometheus | `http://127.0.0.1:9090` |
+
+Confirm that the API is ready:
+
+```sh
+curl http://127.0.0.1:8000/ready
+```
+
+Stop the stack while preserving its volumes:
+
+```sh
+docker compose down
+```
+
+## Investigation lifecycle
+
+1. A scenario starts an idempotent Temporal workflow.
+2. The sample service reproduces a known failure.
+3. IncidentLab gathers traces, metrics, logs, and repository context.
+4. GPT-5.4 Mini produces structured hypotheses with evidence citations.
+5. A reviewer approves or rejects repair generation in the console.
+6. A bounded model response is converted into a deterministic unified diff.
+7. The repair policy rejects unsafe or out-of-scope changes.
+8. The trusted verifier applies accepted candidates in an isolated container.
+9. Fixed checks produce the final result and a deterministic report.
+
+## Development
+
+Run backend checks:
 
 ```sh
 .venv/bin/ruff check incidentlab sample_service tests migrations scripts
 .venv/bin/ruff format --check incidentlab sample_service tests migrations scripts
 TEST_DATABASE_ADMIN_URL=postgresql://incidentlab:incidentlab-local@127.0.0.1:55432/postgres \
-.venv/bin/python -m unittest discover -s tests -v
-cd frontend && npm ci && npm run typecheck && npm test && npm run build
+  .venv/bin/python -m unittest discover -s tests -v
 ```
 
-The migration test creates and removes a temporary PostgreSQL database. The
-Compose PostgreSQL service must be running.
+The migration tests require the Compose PostgreSQL service.
 
-## Evaluation
+Run frontend checks:
 
-The single release-evaluation command exports `report.json`, `metrics.csv`, and
-`failures.json`. It compares IncidentLab with a deterministic keyword baseline and
-an uncited one-shot baseline across both scenarios. See
-[evaluation methodology](docs/evaluation.md) for metric definitions and limitations.
+```sh
+cd frontend
+npm ci
+npm run typecheck
+npm test
+npm run build
+npm run build:demo
+```
 
-## Optional GitHub draft PR
+Run the complete offline release demonstration:
 
-The core product needs no GitHub credentials. To enable the optional integration,
-create a private GitHub App from [the minimal manifest](docs/github-app.yml), expose
-the signed webhook endpoint, and set the opt-in variables in `.env`. After a run has
-a `PASS` candidate, record the separate approval and create or reuse its draft:
+```sh
+.venv/bin/python scripts/demo_release.py
+```
+
+## Project structure
+
+```text
+incidentlab/       API, workflows, persistence, evidence, policy, and verification
+frontend/          React review console and static demo data
+sample_service/    Fault-injected checkout service and replay utilities
+scenarios/         Public scenario definitions and private evaluation truth
+telemetry/         OpenTelemetry Collector, Prometheus, and Loki configuration
+migrations/        Alembic database migrations
+scripts/           Verification, evaluation, and operational utilities
+tests/             Backend test suite
+docs/              Architecture, security, sandbox, and evaluation documentation
+```
+
+## Security model
+
+- Telemetry, repository content, and model output are treated as untrusted input.
+- Every diagnosis citation must resolve to stored evidence.
+- Raw artifacts are size-limited and hash-verified.
+- Model-requested evidence lookups are typed, allowlisted, and capped.
+- Repair generation requires explicit human approval.
+- Proposed changes must target allowlisted files and apply cleanly to a pinned commit.
+- Verification runs without network access, as a non-root user, with resource limits.
+- GitHub integration is optional, disabled by default, and limited to draft pull requests.
+
+For more detail, see the [architecture](docs/architecture.md),
+[threat model](docs/threat-model.md), [sandbox design](docs/sandbox.md), and
+[evaluation methodology](docs/evaluation.md).
+
+## Optional GitHub draft pull requests
+
+Verified repairs can be published as draft pull requests through an opt-in
+GitHub App integration. It is disabled by default and cannot merge or deploy.
+Configuration details are documented in [`docs/github-app.yml`](docs/github-app.yml).
+
+After configuring the integration, a passing candidate can be published with:
 
 ```sh
 .venv/bin/python scripts/create_draft_pr.py RUN_ID --approved-by YOUR_NAME
 ```
 
-The deterministic `incidentlab/run-RUN_ID` branch and remote PR lookup make retries
-idempotent. The integration has no merge, deployment, workflow, or administration
-operation.
+## Limitations
 
-## Local services
-
-| Service | Address | Purpose |
-| --- | --- | --- |
-| IncidentLab review console | `http://127.0.0.1:5173` | Review runs, evidence, repairs, verification, and audit history |
-| IncidentLab API | `http://127.0.0.1:8000` | Runs, evidence, hypotheses, and approvals |
-| Trusted verifier | background service | Automatically verifies policy-accepted candidates in the sandbox |
-| Temporal UI | `http://127.0.0.1:8233` | Workflow history and activity attempts |
-| Jaeger | `http://127.0.0.1:16686` | Distributed traces |
-| Prometheus | `http://127.0.0.1:9090` | Pool and request metrics |
-| PostgreSQL | `127.0.0.1:55432` | Durable application state |
-
-Useful API routes include:
-
-| Method | Route | Purpose |
-| --- | --- | --- |
-| `GET` | `/scenarios` | List public scenario metadata |
-| `POST` | `/runs` | Start or retrieve an idempotent run |
-| `GET` | `/runs` | List runs, optionally filtered by state |
-| `GET` | `/runs/{id}` | Read current run state |
-| `GET` | `/runs/{id}/events` | Read the audit trail |
-| `GET` | `/runs/{id}/evidence` | Read normalized evidence |
-| `GET` | `/runs/{id}/hypotheses` | Read validated diagnosis results |
-| `GET` | `/runs/{id}/candidates` | Read policy-accepted repair candidates |
-| `GET` | `/runs/{id}/verifications` | Read checks, outcomes, and candidate ranking |
-| `GET` | `/runs/{id}/model-usage` | Read provider, token, latency, and recorded cost facts |
-| `GET` | `/runs/{id}/report` | Download the deterministic JSON or Markdown report |
-| `GET` | `/verification/artifacts/{id}` | Read a hash-verified raw check log |
-| `POST` | `/runs/{id}/repair-approval` | Approve or reject repair generation |
-| `POST` | `/runs/{id}/cancel` | Request durable cancellation |
-| `POST` | `/integrations/github/webhook` | Validate signed GitHub App lifecycle events |
-
-## Trust boundaries
-
-- Telemetry, repository content, and model output are treated as untrusted.
-- Model-proposed tool calls are allowlisted, typed, evidence-kind-specific, and
-  capped at two lookups.
-- Every hypothesis citation must resolve to stored evidence; `gap` records cannot
-  support a hypothesis.
-- Raw artifacts are size-bounded and hash-checked before use.
-- The model cannot supply shell commands or determine verification outcomes.
-- Human approval is required before repair generation.
-- Model line replacements are converted to diffs against the exact pinned blob;
-  allowlist, size, secret, syntax, and clean-apply checks run before persistence.
-- Verification uses a read-only, network-disabled, non-root container without the
-  Docker socket or private evaluation inputs.
-- The API and model worker never receive the Docker socket; a separate trusted
-  verifier service persists sandbox facts before signaling the durable workflow.
-- GitHub writes require a separate recorded approval, a `PASS` verification, and
-  an explicitly enabled installation token; only draft PRs can be created.
-
-Start with the [architecture](docs/architecture.md), [threat model](docs/threat-model.md),
-[failure modes](docs/failure-modes.md), and [release demo](docs/demo.md). The ADRs
-record the [initial scope](docs/adr/0001-first-vertical-slice.md) and
-[evaluation/GitHub tradeoffs](docs/adr/0002-evaluation-and-draft-pr.md). The
-[sandbox boundary](docs/sandbox.md) documents isolation controls and limitations.
-
-## Project layout
-
-```text
-incidentlab/       API, contracts, persistence, evidence, model, and workflow code
-frontend/          React and TypeScript review console served by nginx
-sample_service/    Fault-injected checkout fixture and replay tools
-scenarios/         Public scenario contract and private evaluation truth
-telemetry/         Collector, Prometheus, Loki, and query configuration
-migrations/        Alembic database migrations
-scripts/           Repeatable acceptance checks
-evaluation-results/ Generated local evaluation output (ignored by Git)
-tests/             Contract, migration, evidence, diagnosis, and fixture tests
-docs/               Architecture, security, operations, evaluation, and ADRs
-```
-
-## Release status
-
-The first-release definition of done is met. Future work is intentionally outside
-the PRD: stronger isolation, arbitrary repository onboarding, additional providers,
-and hosted multi-user operation.
-
-Stop the local stack without deleting its volumes:
-
-```sh
-docker compose down
-```
+- Scenarios are intentionally controlled and deterministic.
+- Arbitrary repository onboarding and hosted multi-user operation are out of scope.
+- Model quality and cost depend on the configured provider and model.
+- The sandbox reduces risk but should not be treated as a hardened production boundary.
