@@ -7,8 +7,9 @@ OpenAI, and verifies proposed repairs inside an isolated Docker sandbox.
 
 The repository includes two ways to explore the project:
 
-- **Read-only demo:** a static React application with saved investigation data.
-  It runs without Docker, a backend, or an API key and can be deployed to Vercel.
+- **Guided static demo:** a React application that can replay both incident
+  scenarios from saved investigation data. It runs without Docker, a backend,
+  or an API key and can be deployed to Vercel.
 - **Full local stack:** the complete workflow with live telemetry, durable
   orchestration, model-assisted diagnosis, human approval, and sandboxed repair
   verification.
@@ -59,9 +60,12 @@ sandbox; the API and model worker do not receive the Docker socket.
 
 ## Static demo
 
-The static demo is the quickest way to explore the interface. It includes two
-curated, sanitized investigations with evidence, diagnoses, proposed repairs,
-verification logs, audit events, and downloadable reports.
+The static demo is the quickest way to explore the interface. A visitor can
+start either the pool-exhaustion or inventory-underflow investigation, watch a
+timed browser-only replay, approve its saved repair, and inspect the resulting
+verification. It also includes seven curated historical investigations spanning
+successful, failed, inconclusive, closed, and cancelled outcomes, with evidence,
+diagnoses, proposed repairs, verification logs, audit events, and reports.
 
 ```sh
 cd frontend

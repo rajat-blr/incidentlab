@@ -37,7 +37,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
-import { api, ApiError, isDemoMode } from "./api";
+import { api, ApiError, isDemoMode, isDemoReplayRun } from "./api";
 import type {
   AuditEvent,
   EvidenceItem,
@@ -76,6 +76,9 @@ const stateLabels: Record<RunState, string> = {
   FAILED: "Failed",
   CANCELLED: "Cancelled",
 };
+
+type RunFilter = "ALL" | "NEEDS_ATTENTION" | RunState;
+const attentionStates = new Set<RunState>(["FAILED", "NO_VERIFIED_CANDIDATE", "INCONCLUSIVE"]);
 
 function statusTone(state: RunState | string) {
   if (state === "COMPLETED" || state === "PASS" || state === "accepted") return "success";
@@ -153,14 +156,14 @@ function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </nav>
         <div className="environment-label">
-          <span className="system-dot" /> {isDemoMode ? "Read-only demo" : "Local development"}
+          <span className="system-dot" /> {isDemoMode ? "Guided demo" : "Local development"}
         </div>
       </header>
       {isDemoMode ? (
         <aside className="demo-banner" aria-label="Demonstration mode">
           <div>
-            <strong>Curated product demonstration</strong>
-            <span>Explore two saved investigations. This deployment makes no API or model requests.</span>
+            <strong>Browser-only product demonstration</strong>
+            <span>Start a guided replay or explore seven saved outcomes. No backend, API, or model requests are made.</span>
           </div>
           <a href="https://github.com/rajat-blr/incidentlab" target="_blank" rel="noreferrer">
             <Code2 size={15} /> View source
@@ -175,7 +178,7 @@ function AppShell({ children }: { children: ReactNode }) {
 function RunsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"ALL" | RunState>("ALL");
+  const [filter, setFilter] = useState<RunFilter>("ALL");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [scenario, setScenario] = useState("");
@@ -184,8 +187,8 @@ function RunsPage() {
     queryKey: ["runs"],
     queryFn: () => api.runs(),
     refetchInterval: (query) =>
-      !isDemoMode && query.state.data?.some((run) => !terminalStates.has(run.state))
-        ? 2_000
+      query.state.data?.some((run) => !terminalStates.has(run.state))
+        ? isDemoMode ? 750 : 2_000
         : false,
   });
   const scenarios = useQuery({ queryKey: ["scenarios"], queryFn: api.scenarios });
@@ -204,7 +207,10 @@ function RunsPage() {
   const visible = allRuns.filter((run) => {
     const value = search.toLowerCase();
     const matchesText = run.id.toLowerCase().includes(value) || run.scenario_id.toLowerCase().includes(value);
-    return matchesText && (filter === "ALL" || run.state === filter);
+    const matchesState =
+      filter === "ALL" ||
+      (filter === "NEEDS_ATTENTION" ? attentionStates.has(run.state) : run.state === filter);
+    return matchesText && matchesState;
   }).sort((left, right) => {
     const priority = (state: RunState) => state === "AWAITING_REPAIR_APPROVAL" ? 0 : terminalStates.has(state) ? 2 : 1;
     return priority(left.state) - priority(right.state) || new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime();
@@ -212,7 +218,7 @@ function RunsPage() {
   const needsReview = allRuns.filter((run) => run.state === "AWAITING_REPAIR_APPROVAL").length;
   const running = allRuns.filter((run) => !terminalStates.has(run.state) && run.state !== "AWAITING_REPAIR_APPROVAL").length;
   const completed = allRuns.filter((run) => run.state === "COMPLETED").length;
-  const unsuccessful = allRuns.filter((run) => ["FAILED", "NO_VERIFIED_CANDIDATE", "INCONCLUSIVE"].includes(run.state)).length;
+  const unsuccessful = allRuns.filter((run) => attentionStates.has(run.state)).length;
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -226,20 +232,16 @@ function RunsPage() {
           <h1>Incident runs</h1>
           <p>Investigations, repair decisions, and verification outcomes.</p>
         </div>
-        {isDemoMode ? (
-          <span className="read-only-label"><ShieldCheck size={15} /> Saved run data</span>
-        ) : (
-          <button className="button button-primary" type="button" onClick={() => setShowCreate(true)}>
-            <Play size={16} /> Start investigation
-          </button>
-        )}
+        <button className="button button-primary" type="button" onClick={() => setShowCreate(true)}>
+          <Play size={16} /> {isDemoMode ? "Start demo investigation" : "Start investigation"}
+        </button>
       </header>
       <div className="page-content">
         <section className="queue-summary" aria-label="Run summary">
           <button type="button" className={filter === "AWAITING_REPAIR_APPROVAL" ? "queue-stat active" : "queue-stat"} onClick={() => setFilter((current) => current === "AWAITING_REPAIR_APPROVAL" ? "ALL" : "AWAITING_REPAIR_APPROVAL")}><strong>{needsReview}</strong><span>Needs review</span></button>
           <div className="queue-stat"><strong>{running}</strong><span>In progress</span></div>
           <button type="button" className={filter === "COMPLETED" ? "queue-stat active" : "queue-stat"} onClick={() => setFilter((current) => current === "COMPLETED" ? "ALL" : "COMPLETED")}><strong>{completed}</strong><span>Completed</span></button>
-          <div className="queue-stat"><strong>{unsuccessful}</strong><span>Needs attention</span></div>
+          <button type="button" className={filter === "NEEDS_ATTENTION" ? "queue-stat active" : "queue-stat"} onClick={() => setFilter((current) => current === "NEEDS_ATTENTION" ? "ALL" : "NEEDS_ATTENTION")}><strong>{unsuccessful}</strong><span>Needs attention</span></button>
         </section>
         <section className="toolbar" aria-label="Run filters">
           <label className="search-field">
@@ -253,8 +255,9 @@ function RunsPage() {
           </label>
           <label className="select-field">
             <span>State</span>
-            <select value={filter} onChange={(event) => setFilter(event.target.value as "ALL" | RunState)}>
+            <select value={filter} onChange={(event) => setFilter(event.target.value as RunFilter)}>
               <option value="ALL">All states</option>
+              <option value="NEEDS_ATTENTION">Needs attention</option>
               {Object.entries(stateLabels).map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
               ))}
@@ -283,7 +286,7 @@ function RunsPage() {
                   <tr key={run.id}>
                     <td>
                       <Link className="run-name" to={`/runs/${run.id}`}>{humanize(run.scenario_id)}</Link>
-                      <span className="cell-secondary">{shortId(run.id)} · v{run.scenario_version}</span>
+                      <span className="cell-secondary">{shortId(run.id)} · v{run.scenario_version}{isDemoReplayRun(run.id) ? " · guided replay" : ""}</span>
                     </td>
                     <td><StatusBadge value={run.state} label={stateLabels[run.state]} /></td>
                     <td><RunProgress state={run.state} /></td>
@@ -298,11 +301,11 @@ function RunsPage() {
         ) : null}
       </div>
 
-      {!isDemoMode && showCreate ? (
+      {showCreate ? (
         <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowCreate(false)}>
           <section className="modal" role="dialog" aria-modal="true" aria-labelledby="create-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="modal-head">
-              <div><span className="eyebrow">New run</span><h2 id="create-title">Start an investigation</h2></div>
+              <div><span className="eyebrow">{isDemoMode ? "Guided replay" : "New run"}</span><h2 id="create-title">{isDemoMode ? "Start a demo investigation" : "Start an investigation"}</h2></div>
               <button className="icon-button" type="button" aria-label="Close" onClick={() => setShowCreate(false)}><X size={18} /></button>
             </div>
             <form onSubmit={submit}>
@@ -314,12 +317,13 @@ function RunsPage() {
                 </select>
               </label>
               {scenario ? <p className="scenario-description">{scenarios.data?.find((item) => item.id === scenario)?.description}</p> : null}
+              {isDemoMode ? <div className="approval-safety"><ShieldCheck size={18} /><span>This replays curated saved data in your browser. It does not call a backend or model.</span></div> : null}
               {createRun.error ? <ErrorState error={createRun.error} /> : null}
               <div className="modal-actions">
                 <button className="button" type="button" onClick={() => setShowCreate(false)}>Cancel</button>
                 <button className="button button-primary" disabled={createRun.isPending || !scenario} type="submit">
                   {createRun.isPending ? <LoaderCircle className="spin" size={16} /> : <Play size={16} />}
-                  Start run
+                  {isDemoMode ? "Start guided replay" : "Start run"}
                 </button>
               </div>
             </form>
@@ -364,15 +368,15 @@ function RunDetailPage() {
     queryKey: ["run", runId],
     queryFn: () => api.run(runId),
     refetchInterval: (query) =>
-      !isDemoMode && query.state.data && !terminalStates.has(query.state.data.state)
-        ? 1_500
+      query.state.data && !terminalStates.has(query.state.data.state)
+        ? isDemoMode ? 750 : 1_500
         : false,
   });
   const evidence = useQuery({ queryKey: ["evidence", runId], queryFn: () => api.evidence(runId) });
   const hypotheses = useQuery({ queryKey: ["hypotheses", runId], queryFn: () => api.hypotheses(runId) });
-  const candidates = useQuery({ queryKey: ["candidates", runId], queryFn: () => api.candidates(runId), refetchInterval: !isDemoMode && run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
-  const verifications = useQuery({ queryKey: ["verifications", runId], queryFn: () => api.verifications(runId), refetchInterval: !isDemoMode && run.data?.state === "VERIFYING" ? 2_000 : false });
-  const events = useQuery({ queryKey: ["events", runId], queryFn: () => api.events(runId), refetchInterval: !isDemoMode && run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
+  const candidates = useQuery({ queryKey: ["candidates", runId], queryFn: () => api.candidates(runId), refetchInterval: run.data && !terminalStates.has(run.data.state) ? isDemoMode ? 750 : 2_000 : false });
+  const verifications = useQuery({ queryKey: ["verifications", runId], queryFn: () => api.verifications(runId), refetchInterval: run.data?.state === "VERIFYING" ? isDemoMode ? 750 : 2_000 : false });
+  const events = useQuery({ queryKey: ["events", runId], queryFn: () => api.events(runId), refetchInterval: run.data && !terminalStates.has(run.data.state) ? isDemoMode ? 750 : 2_000 : false });
   const modelUsage = useQuery({ queryKey: ["model-usage", runId], queryFn: () => api.modelUsage(runId) });
 
   useEffect(() => {
@@ -413,12 +417,12 @@ function RunDetailPage() {
           <div className="detail-title">
             <div className="breadcrumbs"><Link to="/runs">Runs</Link><ChevronRight size={13} /><span>{humanize(run.data.scenario_id)}</span></div>
             <h1>{humanize(run.data.scenario_id)} <StatusBadge value={run.data.state} label={stateLabels[run.data.state]} /></h1>
-            <span className="detail-meta">Run <code>{shortId(run.data.id)}</code> · commit <code>{shortId(run.data.pinned_commit)}</code> · started {formatDate(run.data.created_at)}</span>
+            <span className="detail-meta">Run <code>{shortId(run.data.id)}</code>{isDemoReplayRun(runId) ? " · guided replay" : ""} · commit <code>{shortId(run.data.pinned_commit)}</code> · started {formatDate(run.data.created_at)}</span>
           </div>
         </div>
         <div className="detail-actions">
           <a className="button" href={api.reportUrl(runId, "markdown")} download={isDemoMode ? `incidentlab-${run.data.scenario_id}.md` : undefined}><Download size={16} /> Export report</a>
-          {!isDemoMode && active ? <button className="button button-danger" type="button" disabled={cancel.isPending || !actor.trim()} onClick={() => cancel.mutate()}><Square size={14} /> Cancel</button> : null}
+          {active && (!isDemoMode || isDemoReplayRun(runId)) ? <button className="button button-danger" type="button" disabled={cancel.isPending || !actor.trim()} onClick={() => cancel.mutate()}><Square size={14} /> Cancel</button> : null}
         </div>
       </header>
       <div className="detail-body">
@@ -443,7 +447,7 @@ function RunDetailPage() {
         </div>
       </div>
       {artifact ? <ArtifactModal title={artifact.title} artifactRef={artifact.ref} onClose={() => setArtifact(null)} /> : null}
-      {!isDemoMode && run.data.state === "AWAITING_REPAIR_APPROVAL" && !approvalDismissed ? (
+      {run.data.state === "AWAITING_REPAIR_APPROVAL" && (!isDemoMode || isDemoReplayRun(runId)) && !approvalDismissed ? (
         <ApprovalModal
           actor={actor}
           setActor={setActor}
@@ -490,6 +494,20 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
   const inputTokens = modelUsage.reduce((total, item) => total + item.input_tokens, 0);
   const outputTokens = modelUsage.reduce((total, item) => total + item.output_tokens, 0);
   const estimatedCost = modelUsage.reduce((total, item) => total + Number(item.estimated_cost_usd), 0);
+  const emptyConclusion = run.state === "FAILED"
+    ? {
+        title: "Investigation stopped before diagnosis",
+        detail: "The workflow failed before enough attributable evidence was collected. The audit trail records the terminal cause and retry history.",
+      }
+    : run.state === "CANCELLED"
+      ? {
+          title: "Investigation was cancelled",
+          detail: "An operator stopped this run before a validated diagnosis or repair candidate was produced.",
+        }
+      : {
+          title: "Diagnosis has not completed",
+          detail: "IncidentLab is still collecting facts for this run.",
+        };
   return (
     <div className="overview-grid">
       {run.state === "AWAITING_REPAIR_APPROVAL" ? (
@@ -505,8 +523,8 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
         </section>
       ) : null}
       <section className="panel conclusion-panel span-two">
-        <div className="panel-head"><div><span className="section-label">Current conclusion</span><h2>{hypothesis?.summary ?? "Diagnosis has not completed"}</h2></div>{hypothesis ? <span className="confidence-label"><CircleDot size={13} />{humanize(hypothesis.confidence)} confidence</span> : null}</div>
-        <div className="panel-body"><p className="lead-copy">{hypothesis?.mechanism ?? "IncidentLab is still collecting facts for this run."}</p></div>
+        <div className="panel-head"><div><span className="section-label">Current conclusion</span><h2>{hypothesis?.summary ?? emptyConclusion.title}</h2></div>{hypothesis ? <span className="confidence-label"><CircleDot size={13} />{humanize(hypothesis.confidence)} confidence</span> : null}</div>
+        <div className="panel-body"><p className="lead-copy">{hypothesis?.mechanism ?? emptyConclusion.detail}</p></div>
       </section>
       <section className="summary-strip span-two">
         <div><span>State</span><strong>{stateLabels[run.state]}</strong><small>Updated {formatDate(run.updated_at)}</small></div>
@@ -617,14 +635,14 @@ function ApprovalModal({ actor, setActor, approval, onClose }: {
           <div><span className="eyebrow">Human checkpoint</span><h2 id="approval-title">Generate a bounded repair?</h2></div>
           <button className="icon-button" type="button" aria-label="Close" onClick={onClose}><X size={18} /></button>
         </div>
-        <p className="modal-lead">IncidentLab has completed diagnosis. Approving permits the configured OpenAI model to propose a small patch against the pinned commit. Deterministic policy and sandbox verification still run before anything is marked successful.</p>
+        <p className="modal-lead">{isDemoMode ? "IncidentLab has completed the saved diagnosis. Approving continues the browser-only replay and reveals the curated repair and verification facts. No model request is made." : "IncidentLab has completed diagnosis. Approving permits the configured OpenAI model to propose a small patch against the pinned commit. Deterministic policy and sandbox verification still run before anything is marked successful."}</p>
         <div className="approval-safety"><ShieldCheck size={18} /><span>No merge, deployment, or model-provided command execution.</span></div>
         <label className="actor-field"><span>Decision recorded as</span><input value={actor} maxLength={128} onChange={(event) => setActor(event.target.value)} /></label>
         {approval.error ? <ErrorState error={approval.error} /> : null}
         <div className="modal-actions approval-modal-actions">
           <button className="button" type="button" disabled={approval.isPending || !actor.trim()} onClick={() => approval.mutate("rejected")}>Reject and close run</button>
           <button className="button button-primary" type="button" disabled={approval.isPending || !actor.trim()} onClick={() => approval.mutate("approved")}>
-            {approval.isPending ? <LoaderCircle className="spin" size={16} /> : <ShieldCheck size={16} />} Approve repair generation
+            {approval.isPending ? <LoaderCircle className="spin" size={16} /> : <ShieldCheck size={16} />} {isDemoMode ? "Continue saved replay" : "Approve repair generation"}
           </button>
         </div>
       </section>
@@ -668,7 +686,7 @@ export function DiffViewer({ diff }: { diff: string }) {
 function VerificationTab({ run, candidates, verifications, onArtifact }: { run: IncidentRun; candidates: RepairCandidate[]; verifications: VerificationRun[]; onArtifact: (check: VerificationCheck) => void }) {
   const ordered = [...verifications].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
   if (!ordered.length) return <EmptyState icon={run.state === "VERIFYING" ? <LoaderCircle className="spin" size={24} /> : <ListChecks size={24} />} title={run.state === "VERIFYING" ? "Sandbox verification is running" : "No verification recorded"} detail={run.state === "VERIFYING" ? "The trusted verifier is checking the baseline, build, tests, and repeated incident replay. This view updates automatically." : "Verification facts appear after a policy-accepted candidate reaches the sandbox."} />;
-  return <div className="stack">{ordered.map((verification) => { const candidate = candidates.find((item) => item.id === verification.candidate_id); const passed = verification.checks.filter((check) => check.outcome === "PASS").length; return <article className="panel verification-panel" key={verification.id}><div className={`verification-result status-${statusTone(verification.outcome)}`}><span className="verification-result-icon">{verification.outcome === "PASS" ? <Check size={20} /> : verification.outcome === "FAIL" ? <OctagonX size={20} /> : <AlertTriangle size={20} />}</span><div><h2>Verification {humanize(verification.outcome).toLowerCase()}</h2><p>{passed} of {verification.checks.length} mandatory checks passed · candidate rank {verification.rank ?? "—"}</p></div></div><div className="panel-head"><div><span className="section-label">Candidate {candidate ? shortId(candidate.id) : shortId(verification.candidate_id)}</span><h2>{candidate?.explanation ?? "Repair candidate"}</h2></div></div><div className="verification-summary"><span>Score version<strong>{verification.score_version}</strong></span><span>Environment<strong><code>{shortId(verification.environment_digest.replace("sha256:", ""), 16)}</code></strong></span><span>Changed lines<strong>{verification.score?.changed_lines ?? "—"}</strong></span></div><div className="check-table"><div className="check-header"><span>Mandatory check</span><span>Duration</span><span>Exit</span><span>Outcome</span><span /></div>{verification.checks.map((check) => <VerificationRow key={check.name} check={check} onArtifact={onArtifact} />)}</div></article>;})}</div>;
+  return <div className="stack">{ordered.map((verification) => { const candidate = candidates.find((item) => item.id === verification.candidate_id); const passed = verification.checks.filter((check) => check.outcome === "PASS").length; const resultLabel = verification.outcome === "PASS" ? "passed" : verification.outcome === "FAIL" ? "failed" : "inconclusive"; return <article className="panel verification-panel" key={verification.id}><div className={`verification-result status-${statusTone(verification.outcome)}`}><span className="verification-result-icon">{verification.outcome === "PASS" ? <Check size={20} /> : verification.outcome === "FAIL" ? <OctagonX size={20} /> : <AlertTriangle size={20} />}</span><div><h2>Verification {resultLabel}</h2><p>{passed} of {verification.checks.length} mandatory checks passed · candidate rank {verification.rank ?? "—"}</p></div></div><div className="panel-head"><div><span className="section-label">Candidate {candidate ? shortId(candidate.id) : shortId(verification.candidate_id)}</span><h2>{candidate?.explanation ?? "Repair candidate"}</h2></div></div><div className="verification-summary"><span>Score version<strong>{verification.score_version}</strong></span><span>Environment<strong><code>{shortId(verification.environment_digest.replace("sha256:", ""), 16)}</code></strong></span><span>Changed lines<strong>{verification.score?.changed_lines ?? "—"}</strong></span></div><div className="check-table"><div className="check-header"><span>Mandatory check</span><span>Duration</span><span>Exit</span><span>Outcome</span><span /></div>{verification.checks.map((check) => <VerificationRow key={check.name} check={check} onArtifact={onArtifact} />)}</div></article>;})}</div>;
 }
 
 function VerificationRow({ check, onArtifact }: { check: VerificationCheck; onArtifact: (check: VerificationCheck) => void }) {

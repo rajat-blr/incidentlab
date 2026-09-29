@@ -37,6 +37,61 @@
       "state": "COMPLETED",
       "created_at": "2026-09-26T10:04:12Z",
       "updated_at": "2026-09-26T10:04:37Z"
+    },
+    {
+      "schema_version": 1,
+      "id": "33333333-3333-5333-8333-333333333333",
+      "scenario_id": "pool-exhaustion",
+      "scenario_version": 1,
+      "pinned_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+      "workflow_id": "incidentlab-run-33333333-3333-5333-8333-333333333333",
+      "state": "NO_VERIFIED_CANDIDATE",
+      "created_at": "2026-09-28T15:10:03Z",
+      "updated_at": "2026-09-28T15:10:41Z"
+    },
+    {
+      "schema_version": 1,
+      "id": "44444444-4444-5444-8444-444444444444",
+      "scenario_id": "inventory-underflow",
+      "scenario_version": 1,
+      "pinned_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+      "workflow_id": "incidentlab-run-44444444-4444-5444-8444-444444444444",
+      "state": "INCONCLUSIVE",
+      "created_at": "2026-09-28T11:32:18Z",
+      "updated_at": "2026-09-28T11:32:46Z"
+    },
+    {
+      "schema_version": 1,
+      "id": "55555555-5555-5555-8555-555555555555",
+      "scenario_id": "pool-exhaustion",
+      "scenario_version": 1,
+      "pinned_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+      "workflow_id": "incidentlab-run-55555555-5555-5555-8555-555555555555",
+      "state": "FAILED",
+      "created_at": "2026-09-27T18:42:06Z",
+      "updated_at": "2026-09-27T18:42:19Z"
+    },
+    {
+      "schema_version": 1,
+      "id": "66666666-6666-5666-8666-666666666666",
+      "scenario_id": "inventory-underflow",
+      "scenario_version": 1,
+      "pinned_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+      "workflow_id": "incidentlab-run-66666666-6666-5666-8666-666666666666",
+      "state": "CLOSED",
+      "created_at": "2026-09-27T13:16:22Z",
+      "updated_at": "2026-09-27T13:16:51Z"
+    },
+    {
+      "schema_version": 1,
+      "id": "77777777-7777-5777-8777-777777777777",
+      "scenario_id": "pool-exhaustion",
+      "scenario_version": 1,
+      "pinned_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+      "workflow_id": "incidentlab-run-77777777-7777-5777-8777-777777777777",
+      "state": "CANCELLED",
+      "created_at": "2026-09-26T16:08:44Z",
+      "updated_at": "2026-09-26T16:09:02Z"
     }
   ],
   "run_data": {
@@ -304,6 +359,157 @@
         "/verification/artifacts/stock-replay": "Incident replay: 5/5 oversized checkouts rejected; inventory remained 10\n"
       },
       "report_markdown": "# IncidentLab report: inventory-underflow\n\n- State: **COMPLETED**\n- Pinned commit: `d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02`\n\n## Diagnosis\n\n### The fault mode bypasses the stock sufficiency guard\n\nThe oversized checkout commits a negative inventory quantity.\n\n## Repair\n\nApply the stock guard regardless of fixture mode.\n\n## Verification\n\nAll seven mandatory checks passed, including five repeated incident replays.\n\n## Model usage\n\nRecorded estimated cost: $0.012186\n"
+    },
+    "33333333-3333-5333-8333-333333333333": {
+      "evidence": [
+        {"schema_version": 1, "id": "ev-regression-trace", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "trace", "source": "jaeger", "retrieval_method": "bounded_trace_query", "observed_start": "2026-09-28T15:10:04Z", "observed_end": "2026-09-28T15:10:09Z", "service": "checkout", "summary": "Two rejected checkouts exhausted the pool and the following valid request returned HTTP 503.", "artifact_ref": "/evidence/artifacts/regression-trace", "content_sha256": "8ccec1b165b8e53010c7bea97317df12c3775d445a4ab26d51a2682130d52972"},
+        {"schema_version": 1, "id": "ev-regression-metric", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "metric", "source": "prometheus", "retrieval_method": "bounded_range_query", "observed_start": "2026-09-28T15:10:04Z", "observed_end": "2026-09-28T15:10:09Z", "service": "inventory", "summary": "Pool availability reached zero before the timeout counter increased.", "artifact_ref": "/evidence/artifacts/regression-metric", "content_sha256": "4ef4c7bba0d15467b155633030304ed42d77a05b310b2d6743bb487eb68c82c9"},
+        {"schema_version": 1, "id": "ev-regression-source", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "source", "source": "git", "retrieval_method": "pinned_blob_lookup", "observed_start": "2026-09-28T15:10:03Z", "observed_end": "2026-09-28T15:10:03Z", "service": "repository", "summary": "The rejected-checkout branch disables the finally-block connection release.", "artifact_ref": "/evidence/artifacts/regression-source", "content_sha256": "817139784677137e480d3400bca50522d0a4904e093e0311458d4095d53d81ac"}
+      ],
+      "hypotheses": [
+        {"schema_version": 1, "id": "hyp-regression-primary", "run_id": "33333333-3333-5333-8333-333333333333", "summary": "Rejected checkouts leak pool slots", "mechanism": "The pool-leak branch marks the checked-out connection as ineligible for the finally-block release. Repeated rejected requests therefore consume the complete pool.", "supporting_evidence_ids": ["ev-regression-trace", "ev-regression-metric", "ev-regression-source"], "contradicting_evidence_ids": [], "confidence": "high", "proposed_checks": [], "model_id": "gpt-5.4-mini", "prompt_version": "diagnosis-v2"}
+      ],
+      "candidates": [
+        {"schema_version": 1, "id": "33333333-aaaa-5333-8333-333333333333", "run_id": "33333333-3333-5333-8333-333333333333", "target_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02", "unified_diff": "diff --git a/sample_service/app.py b/sample_service/app.py\n--- a/sample_service/app.py\n+++ b/sample_service/app.py\n@@ -96,6 +96,7 @@\n                 if row is None:\n                     return 404, {\"error\": \"unknown_sku\"}\n                 if row[0] < quantity and self.fault_mode != \"inventory_underflow\":\n+                    self.pool.release(connection)\n                     if self.fault_mode == \"pool_leak\":\n                         # Intentional incident fixture: this branch leaves its slot checked out.\n                         return_connection = False\n", "explanation": "Release the connection immediately when rejecting an insufficient-stock checkout.", "expected_behavior": "Rejected checkouts retain pool capacity without changing successful checkout behavior.", "changed_paths": ["sample_service/app.py"], "generator_id": "gpt-5.4-mini", "diff_sha256": "967aecebf9e57c3ae445c2005c9987c069630d5d90d7e254424ec83a45ad2eee", "policy_status": "accepted", "policy_version": "repair-policy-v2"}
+      ],
+      "verifications": [
+        {
+          "schema_version": 1,
+          "id": "verification-regression-failed",
+          "candidate_id": "33333333-aaaa-5333-8333-333333333333",
+          "environment_digest": "sha256:50b64edc69633af3397e917fafd4024a4d353998d26ee8b335c198962d92661b",
+          "checks": [
+            {"schema_version": 1, "name": "baseline_reproduction", "outcome": "PASS", "started_at": "2026-09-28T15:10:26Z", "finished_at": "2026-09-28T15:10:28Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/regression-baseline", "content_sha256": "e50216957dc5a165e38c85de5e4aa6eff9101c4539401fc8f2604cd6eb779005"},
+            {"schema_version": 1, "name": "patch_apply", "outcome": "PASS", "started_at": "2026-09-28T15:10:28Z", "finished_at": "2026-09-28T15:10:29Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/regression-patch", "content_sha256": "9ae07c79f613122a2b6e9ee7805acd8136a4cf9c0c0731153bd486849b26b383"},
+            {"schema_version": 1, "name": "compile", "outcome": "PASS", "started_at": "2026-09-28T15:10:29Z", "finished_at": "2026-09-28T15:10:30Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/regression-compile", "content_sha256": "b5a0771f2d9ed24f46014d503b66a97d7207666bbc5544ce61586f321b4321d3"},
+            {"schema_version": 1, "name": "static_checks", "outcome": "PASS", "started_at": "2026-09-28T15:10:30Z", "finished_at": "2026-09-28T15:10:31Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/regression-static", "content_sha256": "1284f8bd712bb49cc1c2937040e39933f849eb8ad4cf64b8c12a195edaeea300"},
+            {"schema_version": 1, "name": "unit_tests", "outcome": "FAIL", "started_at": "2026-09-28T15:10:31Z", "finished_at": "2026-09-28T15:10:34Z", "exit_code": 1, "failure_reason": "pool_capacity_exceeded", "artifact_ref": "/verification/artifacts/regression-unit", "content_sha256": "3709cbe0a784d299213fddaaf7c0c79c25a70e623c9cf157dfc062034f53f3ac"},
+            {"schema_version": 1, "name": "integration_tests", "outcome": "FAIL", "started_at": "2026-09-28T15:10:34Z", "finished_at": "2026-09-28T15:10:38Z", "exit_code": 1, "failure_reason": "double_release_detected", "artifact_ref": "/verification/artifacts/regression-integration", "content_sha256": "e82e2f885a69214444c0f9268e12772950309d8251b762975b202e15a7a07201"},
+            {"schema_version": 1, "name": "incident_replay", "outcome": "FAIL", "started_at": "2026-09-28T15:10:38Z", "finished_at": "2026-09-28T15:10:41Z", "exit_code": 1, "failure_reason": "healthy_control_regressed", "artifact_ref": "/verification/artifacts/regression-replay", "content_sha256": "b5047a3e04a594a46223081336f46ed2321166086308be2894cca62ccf7baf41"}
+          ],
+          "outcome": "FAIL",
+          "score_version": "verification-score-v1",
+          "rank": null,
+          "score": {"mandatory_passes": 4, "changed_lines": 1},
+          "started_at": "2026-09-28T15:10:26Z",
+          "finished_at": "2026-09-28T15:10:41Z"
+        }
+      ],
+      "events": [
+        {"id": "event-regression-1", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "run_created", "actor": "incidentlab-api", "correlation_id": "regression-demo", "created_at": "2026-09-28T15:10:03Z", "details": {"scenario_id": "pool-exhaustion"}},
+        {"id": "event-regression-2", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "reproduction_recorded", "actor": "workflow-worker", "correlation_id": "regression-reproduction", "created_at": "2026-09-28T15:10:09Z", "details": {"statuses": [409, 409, 503], "failure": "database_pool_timeout"}},
+        {"id": "event-regression-3", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "diagnosis_recorded", "actor": "workflow-worker", "correlation_id": "regression-diagnosis", "created_at": "2026-09-28T15:10:17Z", "details": {"hypothesis_count": 1, "citation_validation": "passed"}},
+        {"id": "event-regression-4", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "repair_approval", "actor": "portfolio-reviewer", "correlation_id": "regression-approval", "created_at": "2026-09-28T15:10:20Z", "details": {"decision": "approved"}},
+        {"id": "event-regression-5", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "repair_policy_decision", "actor": "repair-policy", "correlation_id": "regression-policy", "created_at": "2026-09-28T15:10:24Z", "details": {"accepted": true, "category": "accepted", "detail": "bounded diff passed deterministic policy"}},
+        {"id": "event-regression-6", "run_id": "33333333-3333-5333-8333-333333333333", "kind": "verification_recorded", "actor": "trusted-verifier", "correlation_id": "regression-verification", "created_at": "2026-09-28T15:10:41Z", "details": {"outcome": "FAIL", "failed_checks": ["unit_tests", "integration_tests", "incident_replay"]}}
+      ],
+      "model_usage": [
+        {"schema_version": 1, "id": "usage-regression-diagnosis", "run_id": "33333333-3333-5333-8333-333333333333", "provider": "openai", "model_id": "gpt-5.4-mini", "prompt_version": "diagnosis-v2", "input_tokens": 5742, "output_tokens": 906, "latency_ms": 5920, "estimated_cost_usd": 0.008471},
+        {"schema_version": 1, "id": "usage-regression-repair", "run_id": "33333333-3333-5333-8333-333333333333", "provider": "openai", "model_id": "gpt-5.4-mini", "prompt_version": "repair-v7", "input_tokens": 5108, "output_tokens": 184, "latency_ms": 1810, "estimated_cost_usd": 0.004631}
+      ],
+      "artifacts": {
+        "/evidence/artifacts/regression-trace": "trace_id=63ba874c2e044f68\ncheckout statuses=409,409,503\ndatabase.acquire outcome=timeout\n",
+        "/evidence/artifacts/regression-metric": "incidentlab_database_pool_available 0\nincidentlab_database_pool_timeouts_total 1\n",
+        "/evidence/artifacts/regression-source": "sample_service/app.py: rejected checkout sets return_connection=False in pool_leak mode\n",
+        "/verification/artifacts/regression-baseline": "Baseline reproduced: statuses=[409, 409, 503]\n",
+        "/verification/artifacts/regression-patch": "Patch applied cleanly to sample_service/app.py\n",
+        "/verification/artifacts/regression-compile": "Python compilation passed\n",
+        "/verification/artifacts/regression-static": "Ruff checks passed\n",
+        "/verification/artifacts/regression-unit": "FAIL: pool capacity expected 2, observed 3 after normal rejected checkout\n",
+        "/verification/artifacts/regression-integration": "FAIL: connection returned once in handler and again in finally block\n",
+        "/verification/artifacts/regression-replay": "FAIL: healthy control regressed in 5/5 trials; pool capacity increased unexpectedly\n"
+      },
+      "report_markdown": "# IncidentLab report: pool-exhaustion\n\n- State: **NO VERIFIED CANDIDATE**\n\n## Diagnosis\n\nRejected checkouts leak pool slots.\n\n## Candidate outcome\n\nThe proposed repair passed deterministic policy but failed sandbox verification. Normal insufficient-stock requests double-released their connection, causing pool capacity to exceed its configured maximum.\n"
+    },
+    "44444444-4444-5444-8444-444444444444": {
+      "evidence": [
+        {"schema_version": 1, "id": "ev-inconclusive-trace", "run_id": "44444444-4444-5444-8444-444444444444", "kind": "trace", "source": "jaeger", "retrieval_method": "bounded_trace_query", "observed_start": "2026-09-28T11:32:20Z", "observed_end": "2026-09-28T11:32:27Z", "service": "checkout", "summary": "The first oversized checkout returned HTTP 200, while an automatic retry returned HTTP 409.", "artifact_ref": "/evidence/artifacts/inconclusive-trace", "content_sha256": "d0dc03480898f17b3e4638575ec0699c9bfe034dcf29bf73dbd991c368c2ade7"},
+        {"schema_version": 1, "id": "ev-inconclusive-metric", "run_id": "44444444-4444-5444-8444-444444444444", "kind": "metric", "source": "prometheus", "retrieval_method": "bounded_range_query", "observed_start": "2026-09-28T11:32:20Z", "observed_end": "2026-09-28T11:32:27Z", "service": "inventory", "summary": "Inventory briefly reported -1 before returning to 10 during the same observation window.", "artifact_ref": "/evidence/artifacts/inconclusive-metric", "content_sha256": "486deadece900f76b1b10b19572ae7269b3cb4aaf081c57780fe7f136710d402"},
+        {"schema_version": 1, "id": "ev-inconclusive-gap", "run_id": "44444444-4444-5444-8444-444444444444", "kind": "gap", "source": "loki", "retrieval_method": "bounded_log_query", "observed_start": "2026-09-28T11:32:20Z", "observed_end": "2026-09-28T11:32:27Z", "service": "inventory", "summary": "Inventory logs expired before collection, so the write and reset operations cannot be ordered.", "artifact_ref": "/evidence/artifacts/inconclusive-gap", "content_sha256": "ca4dbf6008e8b55726a63b5ec33483de9b8fccef28918a6308372ef1c436b8b0"}
+      ],
+      "hypotheses": [
+        {"schema_version": 1, "id": "hyp-inconclusive-primary", "run_id": "44444444-4444-5444-8444-444444444444", "summary": "A concurrent reset may have masked an inventory underflow", "mechanism": "The trace and metric series indicate a transient negative quantity, but missing logs prevent IncidentLab from distinguishing a committed underflow from a fixture reset racing the observation.", "supporting_evidence_ids": ["ev-inconclusive-trace", "ev-inconclusive-metric"], "contradicting_evidence_ids": ["ev-inconclusive-gap"], "confidence": "low", "proposed_checks": [], "model_id": "gpt-5.4-mini", "prompt_version": "diagnosis-v2"}
+      ],
+      "candidates": [],
+      "verifications": [],
+      "events": [
+        {"id": "event-inconclusive-1", "run_id": "44444444-4444-5444-8444-444444444444", "kind": "run_created", "actor": "incidentlab-api", "correlation_id": "inconclusive-demo", "created_at": "2026-09-28T11:32:18Z", "details": {"scenario_id": "inventory-underflow"}},
+        {"id": "event-inconclusive-2", "run_id": "44444444-4444-5444-8444-444444444444", "kind": "reproduction_recorded", "actor": "workflow-worker", "correlation_id": "inconclusive-reproduction", "created_at": "2026-09-28T11:32:27Z", "details": {"statuses": [200, 409], "failure": "conflicting_reproduction"}},
+        {"id": "event-inconclusive-3", "run_id": "44444444-4444-5444-8444-444444444444", "kind": "evidence_gap_recorded", "actor": "evidence-collector", "correlation_id": "inconclusive-gap", "created_at": "2026-09-28T11:32:34Z", "details": {"source": "loki", "reason": "retention_window_expired"}},
+        {"id": "event-inconclusive-4", "run_id": "44444444-4444-5444-8444-444444444444", "kind": "run_inconclusive", "actor": "workflow-worker", "correlation_id": "inconclusive-terminal", "created_at": "2026-09-28T11:32:46Z", "details": {"reason": "insufficient_attributable_evidence", "repair_generated": false}}
+      ],
+      "model_usage": [
+        {"schema_version": 1, "id": "usage-inconclusive-diagnosis", "run_id": "44444444-4444-5444-8444-444444444444", "provider": "openai", "model_id": "gpt-5.4-mini", "prompt_version": "diagnosis-v2", "input_tokens": 3984, "output_tokens": 622, "latency_ms": 4680, "estimated_cost_usd": 0.005842}
+      ],
+      "artifacts": {
+        "/evidence/artifacts/inconclusive-trace": "trace_id=c0bc7c7dcad04d45\nattempt=1 quantity=11 status=200\nattempt=2 quantity=11 status=409\n",
+        "/evidence/artifacts/inconclusive-metric": "inventory_quantity{sku=\"widget\"} -1 1790595142000\ninventory_quantity{sku=\"widget\"} 10 1790595146000\n",
+        "/evidence/artifacts/inconclusive-gap": "source=loki\nresult=gap\nreason=retention_window_expired\n"
+      },
+      "report_markdown": "# IncidentLab report: inventory-underflow\n\n- State: **INCONCLUSIVE**\n\n## Finding\n\nA transient negative inventory value was observed, but conflicting request outcomes and expired logs prevent a defensible root-cause conclusion. No repair was generated.\n"
+    },
+    "55555555-5555-5555-8555-555555555555": {
+      "evidence": [
+        {"schema_version": 1, "id": "ev-failed-gap", "run_id": "55555555-5555-5555-8555-555555555555", "kind": "gap", "source": "fixture-control", "retrieval_method": "scenario_reset", "observed_start": "2026-09-27T18:42:08Z", "observed_end": "2026-09-27T18:42:18Z", "service": "inventory", "summary": "The fixture reset endpoint timed out before a clean baseline could be established.", "artifact_ref": "/evidence/artifacts/failed-gap", "content_sha256": "83eb64f1ee42917a5b330180445ffeaf03f90a7ea989a0726ef2921ade25fc0f"}
+      ],
+      "hypotheses": [],
+      "candidates": [],
+      "verifications": [],
+      "events": [
+        {"id": "event-failed-1", "run_id": "55555555-5555-5555-8555-555555555555", "kind": "run_created", "actor": "incidentlab-api", "correlation_id": "failed-demo", "created_at": "2026-09-27T18:42:06Z", "details": {"scenario_id": "pool-exhaustion"}},
+        {"id": "event-failed-2", "run_id": "55555555-5555-5555-8555-555555555555", "kind": "reproduction_failed", "actor": "workflow-worker", "correlation_id": "failed-reproduction", "created_at": "2026-09-27T18:42:18Z", "details": {"reason": "fixture_reset_timeout", "attempts": 3}},
+        {"id": "event-failed-3", "run_id": "55555555-5555-5555-8555-555555555555", "kind": "workflow_failed", "actor": "temporal", "correlation_id": "failed-terminal", "created_at": "2026-09-27T18:42:19Z", "details": {"stage": "reproduction", "retryable": false}}
+      ],
+      "model_usage": [],
+      "artifacts": {
+        "/evidence/artifacts/failed-gap": "fixture reset failed after 3 attempts\nlast_error=TimeoutError: inventory service did not become ready within 10s\n"
+      },
+      "report_markdown": "# IncidentLab report: pool-exhaustion\n\n- State: **FAILED**\n\n## Failure\n\nThe controlled fixture could not establish a clean baseline after three reset attempts. Diagnosis and repair generation were not started.\n"
+    },
+    "66666666-6666-5666-8666-666666666666": {
+      "evidence": [
+        {"schema_version": 1, "id": "ev-closed-trace", "run_id": "66666666-6666-5666-8666-666666666666", "kind": "trace", "source": "jaeger", "retrieval_method": "bounded_trace_query", "observed_start": "2026-09-27T13:16:24Z", "observed_end": "2026-09-27T13:16:29Z", "service": "checkout", "summary": "An oversized checkout returned HTTP 200 and wrote a negative remaining quantity.", "artifact_ref": "/evidence/artifacts/closed-trace", "content_sha256": "4f66a0c02ec616b15b0c26c5d011349bc05f40e26f88b9c846acb3592d2cf9c8"},
+        {"schema_version": 1, "id": "ev-closed-source", "run_id": "66666666-6666-5666-8666-666666666666", "kind": "source", "source": "git", "retrieval_method": "pinned_blob_lookup", "observed_start": "2026-09-27T13:16:22Z", "observed_end": "2026-09-27T13:16:22Z", "service": "repository", "summary": "The active fixture mode bypasses the normal insufficient-stock guard.", "artifact_ref": "/evidence/artifacts/closed-source", "content_sha256": "513b0af583496ddb22f122004cb74d7ebd2c41341bb53502c2d7a2565b945950"}
+      ],
+      "hypotheses": [
+        {"schema_version": 1, "id": "hyp-closed-primary", "run_id": "66666666-6666-5666-8666-666666666666", "summary": "The stock sufficiency guard is conditionally bypassed", "mechanism": "The inventory-underflow fixture excludes oversized requests from the normal rejection path, allowing a negative quantity to be committed.", "supporting_evidence_ids": ["ev-closed-trace", "ev-closed-source"], "contradicting_evidence_ids": [], "confidence": "high", "proposed_checks": [], "model_id": "gpt-5.4-mini", "prompt_version": "diagnosis-v2"}
+      ],
+      "candidates": [],
+      "verifications": [],
+      "events": [
+        {"id": "event-closed-1", "run_id": "66666666-6666-5666-8666-666666666666", "kind": "run_created", "actor": "incidentlab-api", "correlation_id": "closed-demo", "created_at": "2026-09-27T13:16:22Z", "details": {"scenario_id": "inventory-underflow"}},
+        {"id": "event-closed-2", "run_id": "66666666-6666-5666-8666-666666666666", "kind": "reproduction_recorded", "actor": "workflow-worker", "correlation_id": "closed-reproduction", "created_at": "2026-09-27T13:16:29Z", "details": {"statuses": [200], "failure": "negative_inventory_committed"}},
+        {"id": "event-closed-3", "run_id": "66666666-6666-5666-8666-666666666666", "kind": "diagnosis_recorded", "actor": "workflow-worker", "correlation_id": "closed-diagnosis", "created_at": "2026-09-27T13:16:45Z", "details": {"hypothesis_count": 1, "citation_validation": "passed"}},
+        {"id": "event-closed-4", "run_id": "66666666-6666-5666-8666-666666666666", "kind": "repair_approval", "actor": "on-call-reviewer", "correlation_id": "closed-approval", "created_at": "2026-09-27T13:16:50Z", "details": {"decision": "rejected", "reason": "fixture behavior accepted for this exercise"}},
+        {"id": "event-closed-5", "run_id": "66666666-6666-5666-8666-666666666666", "kind": "run_closed", "actor": "workflow-worker", "correlation_id": "closed-terminal", "created_at": "2026-09-27T13:16:51Z", "details": {"repair_generated": false}}
+      ],
+      "model_usage": [
+        {"schema_version": 1, "id": "usage-closed-diagnosis", "run_id": "66666666-6666-5666-8666-666666666666", "provider": "openai", "model_id": "gpt-5.4-mini", "prompt_version": "diagnosis-v2", "input_tokens": 4452, "output_tokens": 701, "latency_ms": 5012, "estimated_cost_usd": 0.006521}
+      ],
+      "artifacts": {
+        "/evidence/artifacts/closed-trace": "trace_id=7370ab0e77864d6c\ncheckout quantity=11 status=200\ninventory remaining=-1\n",
+        "/evidence/artifacts/closed-source": "sample_service/app.py: stock guard is skipped when inventory_underflow fixture mode is active\n"
+      },
+      "report_markdown": "# IncidentLab report: inventory-underflow\n\n- State: **CLOSED**\n\n## Decision\n\nThe diagnosis was supported by evidence, but the reviewer rejected repair generation. The run closed without producing or executing a patch.\n"
+    },
+    "77777777-7777-5777-8777-777777777777": {
+      "evidence": [
+        {"schema_version": 1, "id": "ev-cancelled-trace", "run_id": "77777777-7777-5777-8777-777777777777", "kind": "trace", "source": "jaeger", "retrieval_method": "bounded_trace_query", "observed_start": "2026-09-26T16:08:46Z", "observed_end": "2026-09-26T16:08:52Z", "service": "checkout", "summary": "The pool-exhaustion request sequence was reproduced before the operator stopped the investigation.", "artifact_ref": "/evidence/artifacts/cancelled-trace", "content_sha256": "3f386f5f147fa07ea160200a44727babb582b633f8fafc2cd7921ed8a00c0b50"}
+      ],
+      "hypotheses": [],
+      "candidates": [],
+      "verifications": [],
+      "events": [
+        {"id": "event-cancelled-1", "run_id": "77777777-7777-5777-8777-777777777777", "kind": "run_created", "actor": "incidentlab-api", "correlation_id": "cancelled-demo", "created_at": "2026-09-26T16:08:44Z", "details": {"scenario_id": "pool-exhaustion"}},
+        {"id": "event-cancelled-2", "run_id": "77777777-7777-5777-8777-777777777777", "kind": "reproduction_recorded", "actor": "workflow-worker", "correlation_id": "cancelled-reproduction", "created_at": "2026-09-26T16:08:52Z", "details": {"statuses": [409, 409, 503], "failure": "database_pool_timeout"}},
+        {"id": "event-cancelled-3", "run_id": "77777777-7777-5777-8777-777777777777", "kind": "cancellation_requested", "actor": "on-call-reviewer", "correlation_id": "cancelled-request", "created_at": "2026-09-26T16:09:00Z", "details": {"reason": "duplicate investigation"}},
+        {"id": "event-cancelled-4", "run_id": "77777777-7777-5777-8777-777777777777", "kind": "workflow_cancelled", "actor": "temporal", "correlation_id": "cancelled-terminal", "created_at": "2026-09-26T16:09:02Z", "details": {"stage": "collecting"}}
+      ],
+      "model_usage": [],
+      "artifacts": {
+        "/evidence/artifacts/cancelled-trace": "trace_id=52c2f23d453a41be\ncheckout statuses=409,409,503\ncollection stopped by operator\n"
+      },
+      "report_markdown": "# IncidentLab report: pool-exhaustion\n\n- State: **CANCELLED**\n\n## Summary\n\nThe incident was reproduced, but the operator cancelled the run during evidence collection because it duplicated an active investigation.\n"
     }
   }
 }

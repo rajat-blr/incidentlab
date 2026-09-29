@@ -9,21 +9,60 @@ async function sha256(value: string) {
 }
 
 describe("saved demonstration data", () => {
-  it("serves complete runs without network access", async () => {
+  it("serves a varied investigation history without network access", async () => {
     const fetch = vi.spyOn(globalThis, "fetch");
     const runs = await demoApi.runs();
 
-    expect(runs).toHaveLength(2);
-    expect(runs.every((run) => run.state === "COMPLETED")).toBe(true);
+    expect(runs).toHaveLength(7);
+    expect(new Set(runs.map((run) => run.state))).toEqual(
+      new Set([
+        "COMPLETED",
+        "NO_VERIFIED_CANDIDATE",
+        "INCONCLUSIVE",
+        "FAILED",
+        "CLOSED",
+        "CANCELLED",
+      ]),
+    );
+    expect(Object.keys(dataset.run_data).sort()).toEqual(runs.map((run) => run.id).sort());
     expect(await demoApi.hypotheses(runs[0]!.id)).toHaveLength(1);
     expect(await demoApi.verifications(runs[0]!.id)).toHaveLength(1);
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("fails closed for mutation attempts", async () => {
-    await expect(demoApi.createRun("pool-exhaustion", "test")).rejects.toEqual(
-      expect.objectContaining({ status: 405 }),
-    );
+  it("runs both guided scenario replays without network access", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-29T10:00:00Z"));
+    const fetch = vi.spyOn(globalThis, "fetch");
+    try {
+      for (const scenario of ["pool-exhaustion", "inventory-underflow"]) {
+        const run = await demoApi.createRun(scenario, `guided-${scenario}`);
+        expect(run.state).toBe("CREATED");
+
+        vi.advanceTimersByTime(7_500);
+        expect((await demoApi.run(run.id)).state).toBe("AWAITING_REPAIR_APPROVAL");
+        expect(await demoApi.evidence(run.id)).not.toHaveLength(0);
+        expect(await demoApi.hypotheses(run.id)).not.toHaveLength(0);
+
+        await demoApi.approve(run.id, "demo-reviewer", "approved");
+        vi.advanceTimersByTime(2_100);
+        expect((await demoApi.run(run.id)).state).toBe("VERIFYING");
+        expect(await demoApi.candidates(run.id)).toHaveLength(1);
+
+        vi.advanceTimersByTime(6_000);
+        expect((await demoApi.run(run.id)).state).toBe("COMPLETED");
+        expect(await demoApi.verifications(run.id)).toHaveLength(1);
+      }
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps saved historical runs immutable", async () => {
+    await expect(
+      demoApi.approve("11111111-1111-5111-8111-111111111111", "test", "approved"),
+    ).rejects.toEqual(expect.objectContaining({ status: 405 }));
   });
 
   it("keeps every displayed integrity hash truthful", async () => {
