@@ -1,71 +1,32 @@
 # IncidentLab
 
 IncidentLab is an evidence-backed incident investigation and repair-verification
-system. It reproduces deterministic failures in a sample distributed service,
-collects telemetry and repository evidence, generates structured diagnoses with
-OpenAI, and verifies proposed repairs inside an isolated Docker sandbox.
+system. It reproduces a failure, gathers attributable telemetry and source
+context, produces a structured diagnosis, and verifies a proposed repair inside
+an isolated sandbox.
 
-The repository includes two ways to explore the project:
+The project explores a practical question: **how can an AI-assisted incident
+workflow remain useful without allowing the model to become the source of
+truth?**
 
-- **Guided static demo:** a React application that can replay both incident
-  scenarios from saved investigation data. It runs without Docker, a backend,
-  or an API key and can be deployed to Vercel.
-- **Full local stack:** the complete workflow with live telemetry, durable
-  orchestration, model-assisted diagnosis, human approval, and sandboxed repair
-  verification.
+IncidentLab keeps collection, approval, policy enforcement, and verification
+outside the model. The model can explain evidence and propose a bounded change;
+deterministic controls decide what is accepted.
 
-> [!NOTE]
-> IncidentLab is a portfolio and educational project, not a production incident
-> response platform. It operates on controlled scenarios and does not deploy or
-> merge code automatically.
+## What the demo shows
 
-## Highlights
+The browser-only demo contains seven investigation histories with successful,
+failed, inconclusive, closed, and cancelled outcomes. It also lets a visitor
+start a guided replay for either supported incident:
 
-- Deterministic connection-pool exhaustion and inventory-underflow incidents
-- OpenTelemetry traces, Prometheus metrics, and Loki logs
-- Durable, retry-safe orchestration with Temporal
-- Evidence artifacts and proposed diffs protected by SHA-256 integrity checks
-- Structured GPT-5.4 Mini diagnosis with validated evidence citations
-- Human approval before repair generation
-- Fail-closed repair policy with path, size, secret, syntax, and patch checks
-- Network-disabled, non-root Docker sandbox for independent verification
-- React review console for evidence, diagnoses, diffs, verification, and audit history
-- Static portfolio mode containing no API keys or runtime backend requests
+- **Pool exhaustion** — rejected checkout requests leak database connections
+  until a valid request times out.
+- **Inventory underflow** — an oversized checkout bypasses the stock guard and
+  commits a negative inventory quantity.
 
-## How it works
-
-```text
-Fault-injected service
-        │
-        ├── traces ─── Jaeger ──────┐
-        ├── metrics ─ Prometheus ───┼── Evidence collector
-        └── logs ──── Loki ─────────┘          │
-                                               ▼
-React console ── FastAPI ── PostgreSQL ── Temporal workflow
-                                               │
-                                      OpenAI diagnosis
-                                               │
-                                      Human approval gate
-                                               │
-                                       Repair policy
-                                               │
-                                               ▼
-                                Trusted verifier ── Docker sandbox
-```
-
-The model proposes a diagnosis and a bounded source change, but it does not
-decide whether verification passed. Verification outcomes are derived from fixed
-checks and persisted artifacts. A separate trusted verifier controls the Docker
-sandbox; the API and model worker do not receive the Docker socket.
-
-## Static demo
-
-The static demo is the quickest way to explore the interface. A visitor can
-start either the pool-exhaustion or inventory-underflow investigation, watch a
-timed browser-only replay, approve its saved repair, and inspect the resulting
-verification. It also includes seven curated historical investigations spanning
-successful, failed, inconclusive, closed, and cancelled outcomes, with evidence,
-diagnoses, proposed repairs, verification logs, audit events, and reports.
+A guided replay moves through reproduction, evidence collection, diagnosis,
+human approval, repair generation, and verification using curated saved data.
+It does not require Docker, a backend, or an API key.
 
 ```sh
 cd frontend
@@ -73,177 +34,178 @@ npm ci
 npm run dev:demo
 ```
 
-Open `http://localhost:5173`. No environment variables are required.
+Open `http://localhost:5173`.
 
-To create a production build:
+## Investigation pipeline
 
-```sh
-npm run build:demo
+```text
+Reproduce incident
+       │
+       ▼
+Collect traces, metrics, logs, and pinned source
+       │
+       ▼
+Generate evidence-cited diagnosis
+       │
+       ▼
+Human approval checkpoint
+       │
+       ▼
+Generate bounded repair candidate
+       │
+       ▼
+Apply deterministic repair policy
+       │
+       ▼
+Verify in an isolated Docker sandbox
+       │
+       ▼
+Persist facts, audit history, and report
 ```
 
-### Deploy the demo to Vercel
+The final result is derived from fixed verification checks—not from a model
+claiming that its own repair worked.
 
-Import this repository into Vercel and use the following settings:
+## System architecture
 
-| Setting | Value |
+```text
+Sample checkout service
+   ├── traces ─── Jaeger ──────┐
+   ├── metrics ─ Prometheus ───┼── Evidence collector
+   └── logs ──── Loki ─────────┘          │
+                                          ▼
+React console ─ FastAPI ─ PostgreSQL ─ Temporal workflow
+                                          │
+                                   OpenAI adapters
+                                          │
+                                   Repair policy
+                                          │
+                                          ▼
+                           Trusted verifier ─ Docker sandbox
+```
+
+The API and model worker never receive the Docker socket. A separate trusted
+verifier owns sandbox execution and records check results before the workflow
+derives its terminal state.
+
+## Core design choices
+
+### Evidence before explanation
+
+Every diagnosis citation must resolve to stored evidence. Missing telemetry is
+recorded as an explicit gap rather than silently ignored.
+
+### Human-controlled repair generation
+
+Diagnosis is separated from repair. A reviewer must explicitly approve repair
+generation, and rejection closes the investigation without producing a patch.
+
+### Fail-closed repair policy
+
+Model output is converted into a deterministic unified diff against a pinned
+commit. Path, size, secret, syntax, and clean-application checks run before a
+candidate can reach verification.
+
+### Independent verification
+
+Candidates run in a network-disabled, non-root container with resource limits.
+Baseline reproduction, compilation, static analysis, unit tests, integration
+tests, and repeated incident replay are stored as hash-verified facts.
+
+### Durable and inspectable execution
+
+Temporal provides retry-safe orchestration. PostgreSQL stores investigation
+state, evidence, model usage, decisions, verification results, and the audit
+trail exposed by the review console.
+
+## Technology
+
+| Area | Technology |
 | --- | --- |
-| Root Directory | `frontend` |
-| Framework Preset | Vite |
-| Build Command | `npm run build:demo` |
-| Output Directory | `dist` |
+| Frontend | React, TypeScript, Vite, TanStack Query |
+| API | FastAPI, SQLAlchemy, Alembic |
+| Workflow | Temporal |
+| Storage | PostgreSQL |
+| Observability | OpenTelemetry, Jaeger, Prometheus, Loki |
+| Model integration | OpenAI Structured Outputs |
+| Verification | Docker sandbox with fixed checks |
+| Local environment | Docker Compose, uv |
 
-Do not add an OpenAI key or backend URL to the demo deployment. The checked-in
-[`frontend/vercel.json`](frontend/vercel.json) defines the build, SPA routing,
-and security headers. Saved data lives in
-[`frontend/src/demo-data/dataset.json`](frontend/src/demo-data/dataset.json).
+## Run the complete system
 
-## Run the full stack locally
-
-### Requirements
-
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/)
-- Docker Desktop with Docker Compose
-- An OpenAI API key with available credits
-
-### Setup
-
-Install the locked Python environment:
+The full workflow requires Python 3.12+, `uv`, Docker Desktop, and an OpenAI API
+key with available credit.
 
 ```sh
 uv sync --frozen
-```
-
-Create the local configuration file:
-
-```sh
 cp .env.example .env
 ```
 
-Add your key to `.env`:
+Set the key in `.env`:
 
 ```dotenv
 OPENAI_API_KEY=your-key
 OPENAI_MODEL=gpt-5.4-mini
 ```
 
-Never commit `.env` or expose an active key in logs, screenshots, issues, or
-pull requests.
-
-Start the application:
+Start the stack:
 
 ```sh
 docker compose up -d --build --wait
 ```
 
-Then open:
+The review console is available at `http://127.0.0.1:5173` and the API at
+`http://127.0.0.1:8000`.
 
-| Service | URL |
-| --- | --- |
-| IncidentLab console | `http://127.0.0.1:5173` |
-| API | `http://127.0.0.1:8000` |
-| Temporal UI | `http://127.0.0.1:8233` |
-| Jaeger | `http://127.0.0.1:16686` |
-| Prometheus | `http://127.0.0.1:9090` |
+> [!CAUTION]
+> Never commit `.env` or expose an active API key in logs, screenshots, issues,
+> or pull requests.
 
-Confirm that the API is ready:
+## Development checks
 
-```sh
-curl http://127.0.0.1:8000/ready
-```
-
-Stop the stack while preserving its volumes:
-
-```sh
-docker compose down
-```
-
-## Investigation lifecycle
-
-1. A scenario starts an idempotent Temporal workflow.
-2. The sample service reproduces a known failure.
-3. IncidentLab gathers traces, metrics, logs, and repository context.
-4. GPT-5.4 Mini produces structured hypotheses with evidence citations.
-5. A reviewer approves or rejects repair generation in the console.
-6. A bounded model response is converted into a deterministic unified diff.
-7. The repair policy rejects unsafe or out-of-scope changes.
-8. The trusted verifier applies accepted candidates in an isolated container.
-9. Fixed checks produce the final result and a deterministic report.
-
-## Development
-
-Run backend checks:
+Backend:
 
 ```sh
 .venv/bin/ruff check incidentlab sample_service tests migrations scripts
 .venv/bin/ruff format --check incidentlab sample_service tests migrations scripts
-TEST_DATABASE_ADMIN_URL=postgresql://incidentlab:incidentlab-local@127.0.0.1:55432/postgres \
-  .venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m unittest discover -s tests -v
 ```
 
-The migration tests require the Compose PostgreSQL service.
-
-Run frontend checks:
+Frontend:
 
 ```sh
 cd frontend
-npm ci
 npm run typecheck
 npm test
 npm run build
 npm run build:demo
 ```
 
-Run the complete offline release demonstration:
-
-```sh
-.venv/bin/python scripts/demo_release.py
-```
-
-## Project structure
+## Repository map
 
 ```text
 incidentlab/       API, workflows, persistence, evidence, policy, and verification
-frontend/          React review console and static demo data
+frontend/          React review console, guided replay, and saved demo data
 sample_service/    Fault-injected checkout service and replay utilities
 scenarios/         Public scenario definitions and private evaluation truth
-telemetry/         OpenTelemetry Collector, Prometheus, and Loki configuration
-migrations/        Alembic database migrations
-scripts/           Verification, evaluation, and operational utilities
+telemetry/         Collector, Prometheus, and Loki configuration
+migrations/        Database migrations
+scripts/           Evaluation and operational utilities
 tests/             Backend test suite
-docs/              Architecture, security, sandbox, and evaluation documentation
+docs/              Architecture, threat model, sandbox, and evaluation notes
 ```
 
-## Security model
+## Further reading
 
-- Telemetry, repository content, and model output are treated as untrusted input.
-- Every diagnosis citation must resolve to stored evidence.
-- Raw artifacts are size-limited and hash-verified.
-- Model-requested evidence lookups are typed, allowlisted, and capped.
-- Repair generation requires explicit human approval.
-- Proposed changes must target allowlisted files and apply cleanly to a pinned commit.
-- Verification runs without network access, as a non-root user, with resource limits.
-- GitHub integration is optional, disabled by default, and limited to draft pull requests.
+- [Architecture](docs/architecture.md)
+- [Threat model](docs/threat-model.md)
+- [Sandbox boundary](docs/sandbox.md)
+- [Evaluation methodology](docs/evaluation.md)
+- [Failure modes](docs/failure-modes.md)
 
-For more detail, see the [architecture](docs/architecture.md),
-[threat model](docs/threat-model.md), [sandbox design](docs/sandbox.md), and
-[evaluation methodology](docs/evaluation.md).
+## Scope
 
-## Optional GitHub draft pull requests
-
-Verified repairs can be published as draft pull requests through an opt-in
-GitHub App integration. It is disabled by default and cannot merge or deploy.
-Configuration details are documented in [`docs/github-app.yml`](docs/github-app.yml).
-
-After configuring the integration, a passing candidate can be published with:
-
-```sh
-.venv/bin/python scripts/create_draft_pr.py RUN_ID --approved-by YOUR_NAME
-```
-
-## Limitations
-
-- Scenarios are intentionally controlled and deterministic.
-- Arbitrary repository onboarding and hosted multi-user operation are out of scope.
-- Model quality and cost depend on the configured provider and model.
-- The sandbox reduces risk but should not be treated as a hardened production boundary.
+IncidentLab is a portfolio and educational system built around controlled,
+deterministic scenarios. It is not a production incident-response platform, and
+the sandbox should not be treated as a hardened boundary for arbitrary untrusted
+repositories.
