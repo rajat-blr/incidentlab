@@ -143,6 +143,34 @@ with:
 .venv/bin/python scripts/verify_run.py <run-id>
 ```
 
+## Read-only portfolio demo
+
+The existing frontend also has a static demonstration mode. It bundles two
+curated, sanitized run snapshots and makes no backend, database, Docker, model,
+or API-key request. Mutating controls are removed while evidence artifacts,
+diffs, verification logs, audit history, and report downloads remain usable.
+
+Run it locally:
+
+```sh
+cd frontend
+npm ci
+npm run dev:demo
+```
+
+Build the exact Vercel artifact:
+
+```sh
+npm run build:demo
+```
+
+For Vercel, import this repository and set the project root directory to
+`frontend`. The checked-in `frontend/vercel.json` selects the demo build, adds
+SPA fallback routing, and applies static security headers. Do not configure an
+OpenAI key or backend URL for this project. Saved data is kept in
+`frontend/src/demo-data/dataset.json`; tests verify its citations, artifact
+hashes, diff hashes, and read-only boundary.
+
 ## Development checks
 
 ```sh

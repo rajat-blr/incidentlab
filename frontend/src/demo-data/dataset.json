@@ -1,0 +1,309 @@
+{
+  "scenarios": [
+    {
+      "schema_version": 1,
+      "id": "pool-exhaustion",
+      "version": 1,
+      "service": "checkout",
+      "description": "Rejected checkout requests leak database connections until a later valid request fails with HTTP 503."
+    },
+    {
+      "schema_version": 1,
+      "id": "inventory-underflow",
+      "version": 1,
+      "service": "checkout",
+      "description": "An oversized checkout bypasses the stock guard and commits a negative inventory quantity."
+    }
+  ],
+  "runs": [
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-5111-8111-111111111111",
+      "scenario_id": "pool-exhaustion",
+      "scenario_version": 1,
+      "pinned_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+      "workflow_id": "incidentlab-run-11111111-1111-5111-8111-111111111111",
+      "state": "COMPLETED",
+      "created_at": "2026-09-26T09:51:39Z",
+      "updated_at": "2026-09-26T09:52:08Z"
+    },
+    {
+      "schema_version": 1,
+      "id": "22222222-2222-5222-8222-222222222222",
+      "scenario_id": "inventory-underflow",
+      "scenario_version": 1,
+      "pinned_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+      "workflow_id": "incidentlab-run-22222222-2222-5222-8222-222222222222",
+      "state": "COMPLETED",
+      "created_at": "2026-09-26T10:04:12Z",
+      "updated_at": "2026-09-26T10:04:37Z"
+    }
+  ],
+  "run_data": {
+    "11111111-1111-5111-8111-111111111111": {
+      "evidence": [
+        {
+          "schema_version": 1,
+          "id": "ev-pool-trace",
+          "run_id": "11111111-1111-5111-8111-111111111111",
+          "kind": "trace",
+          "source": "jaeger",
+          "retrieval_method": "bounded_trace_query",
+          "observed_start": "2026-09-26T09:51:40Z",
+          "observed_end": "2026-09-26T09:51:44Z",
+          "service": "checkout",
+          "summary": "The third checkout returned HTTP 503 after database acquisition timed out.",
+          "artifact_ref": "/evidence/artifacts/pool-trace",
+          "content_sha256": "8fd0d0b548bfb22d28dc72e1e6359342886bb1eacc54cc1337ab1fc539f09337"
+        },
+        {
+          "schema_version": 1,
+          "id": "ev-pool-metric",
+          "run_id": "11111111-1111-5111-8111-111111111111",
+          "kind": "metric",
+          "source": "prometheus",
+          "retrieval_method": "bounded_range_query",
+          "observed_start": "2026-09-26T09:51:40Z",
+          "observed_end": "2026-09-26T09:51:44Z",
+          "service": "inventory",
+          "summary": "Available database connections fell from two to zero after two rejected checkouts.",
+          "artifact_ref": "/evidence/artifacts/pool-metric",
+          "content_sha256": "aa73d375ae3781b75457a480f961e11fdff13b25fbe4277fb904d042d67ac2fa"
+        },
+        {
+          "schema_version": 1,
+          "id": "ev-pool-log",
+          "run_id": "11111111-1111-5111-8111-111111111111",
+          "kind": "log",
+          "source": "loki",
+          "retrieval_method": "bounded_log_query",
+          "observed_start": "2026-09-26T09:51:40Z",
+          "observed_end": "2026-09-26T09:51:44Z",
+          "service": "inventory",
+          "summary": "Inventory logged database_pool_timeout with pool_available=0.",
+          "artifact_ref": "/evidence/artifacts/pool-log",
+          "content_sha256": "e93b52708e73fba661d2e1f185f65f95eba9d485fd22f4def5985c602111533a"
+        },
+        {
+          "schema_version": 1,
+          "id": "ev-pool-commit",
+          "run_id": "11111111-1111-5111-8111-111111111111",
+          "kind": "commit",
+          "source": "git",
+          "retrieval_method": "pinned_commit_lookup",
+          "observed_start": "2026-09-26T09:51:39Z",
+          "observed_end": "2026-09-26T09:51:39Z",
+          "service": "repository",
+          "summary": "The run is pinned to commit d6cd064 and sample_service/app.py is inside the repair allowlist.",
+          "artifact_ref": "/evidence/artifacts/pool-commit",
+          "content_sha256": "02fa32fc6b43c2e88f47a4d534deb8adbe08315e3ae548f58464cc464ef4cc8f"
+        }
+      ],
+      "hypotheses": [
+        {
+          "schema_version": 1,
+          "id": "hyp-pool-primary",
+          "run_id": "11111111-1111-5111-8111-111111111111",
+          "summary": "Rejected checkouts leak database connections",
+          "mechanism": "The inventory service returns from the insufficient-stock branch without returning the checked-out connection. Two rejected requests consume the two-connection pool, so the following valid request times out and returns HTTP 503.",
+          "supporting_evidence_ids": ["ev-pool-trace", "ev-pool-metric", "ev-pool-log"],
+          "contradicting_evidence_ids": [],
+          "confidence": "high",
+          "proposed_checks": [],
+          "model_id": "gpt-5.4-mini",
+          "prompt_version": "diagnosis-v2"
+        }
+      ],
+      "candidates": [
+        {
+          "schema_version": 1,
+          "id": "31111111-1111-5111-8111-111111111111",
+          "run_id": "11111111-1111-5111-8111-111111111111",
+          "target_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+          "unified_diff": "diff --git a/sample_service/app.py b/sample_service/app.py\n--- a/sample_service/app.py\n+++ b/sample_service/app.py\n@@ -96,10 +96,6 @@\n                 if row is None:\n                     return 404, {\"error\": \"unknown_sku\"}\n                 if row[0] < quantity and self.fault_mode != \"inventory_underflow\":\n-                    if self.fault_mode == \"pool_leak\":\n-                        # Intentional incident fixture: this branch leaves its slot checked out.\n-                        return_connection = False\n                     return 409, {\"error\": \"out_of_stock\"}\n                 remaining = row[0] - quantity\n",
+          "explanation": "Keep the checked-out connection eligible for release when an insufficient-stock request is rejected.",
+          "expected_behavior": "Rejected checkouts no longer reduce pool capacity, and the subsequent valid checkout completes successfully.",
+          "changed_paths": ["sample_service/app.py"],
+          "generator_id": "gpt-5.4-mini",
+          "diff_sha256": "4161a140c91515566b578e301e8f4039969e276b5a4b9d9658d7e9fb6fcc9ff2",
+          "policy_status": "accepted",
+          "policy_version": "repair-policy-v2"
+        }
+      ],
+      "verifications": [
+        {
+          "schema_version": 1,
+          "id": "verification-pool-primary",
+          "candidate_id": "31111111-1111-5111-8111-111111111111",
+          "environment_digest": "sha256:50b64edc69633af3397e917fafd4024a4d353998d26ee8b335c198962d92661b",
+          "checks": [
+            {"schema_version": 1, "name": "baseline_reproduction", "outcome": "PASS", "started_at": "2026-09-26T09:51:57Z", "finished_at": "2026-09-26T09:51:59Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/pool-baseline", "content_sha256": "1db35606117f94d500d6e860f99f00039630d12b4c0dd9c53490b1024a336c1f"},
+            {"schema_version": 1, "name": "patch_apply", "outcome": "PASS", "started_at": "2026-09-26T09:51:59Z", "finished_at": "2026-09-26T09:52:00Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/pool-patch", "content_sha256": "9ae07c79f613122a2b6e9ee7805acd8136a4cf9c0c0731153bd486849b26b383"},
+            {"schema_version": 1, "name": "compile", "outcome": "PASS", "started_at": "2026-09-26T09:52:00Z", "finished_at": "2026-09-26T09:52:01Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/pool-compile", "content_sha256": "b5a0771f2d9ed24f46014d503b66a97d7207666bbc5544ce61586f321b4321d3"},
+            {"schema_version": 1, "name": "static_checks", "outcome": "PASS", "started_at": "2026-09-26T09:52:01Z", "finished_at": "2026-09-26T09:52:02Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/pool-static", "content_sha256": "1284f8bd712bb49cc1c2937040e39933f849eb8ad4cf64b8c12a195edaeea300"},
+            {"schema_version": 1, "name": "unit_tests", "outcome": "PASS", "started_at": "2026-09-26T09:52:02Z", "finished_at": "2026-09-26T09:52:04Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/pool-unit", "content_sha256": "ec586c512c3dbbefcf0604e4db47b015427d2297ac439e09898359a57cb9dda1"},
+            {"schema_version": 1, "name": "integration_tests", "outcome": "PASS", "started_at": "2026-09-26T09:52:04Z", "finished_at": "2026-09-26T09:52:06Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/pool-integration", "content_sha256": "7b960e5d4d127c1feae9479c19d81ff6f9d4d18ff8937b30314d2caf6d2fdf6e"},
+            {"schema_version": 1, "name": "incident_replay", "outcome": "PASS", "started_at": "2026-09-26T09:52:06Z", "finished_at": "2026-09-26T09:52:08Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/pool-replay", "content_sha256": "17721cc2e0fdf10e1ccd0cbf8aee74d98d3b810301a2d4b212468310250e1400"}
+          ],
+          "outcome": "PASS",
+          "score_version": "verification-score-v1",
+          "rank": 1,
+          "score": {"mandatory_passes": 7, "changed_lines": 3},
+          "started_at": "2026-09-26T09:51:57Z",
+          "finished_at": "2026-09-26T09:52:08Z"
+        }
+      ],
+      "events": [
+        {"id": "event-pool-1", "run_id": "11111111-1111-5111-8111-111111111111", "kind": "run_created", "actor": "incidentlab-api", "correlation_id": "pool-demo-run", "created_at": "2026-09-26T09:51:39Z", "details": {"scenario_id": "pool-exhaustion"}},
+        {"id": "event-pool-2", "run_id": "11111111-1111-5111-8111-111111111111", "kind": "reproduction_recorded", "actor": "workflow-worker", "correlation_id": "pool-reproduction", "created_at": "2026-09-26T09:51:44Z", "details": {"statuses": [409, 409, 503], "failure": "database_pool_timeout"}},
+        {"id": "event-pool-3", "run_id": "11111111-1111-5111-8111-111111111111", "kind": "diagnosis_recorded", "actor": "workflow-worker", "correlation_id": "pool-diagnosis", "created_at": "2026-09-26T09:51:51Z", "details": {"hypothesis_count": 1, "citation_validation": "passed"}},
+        {"id": "event-pool-4", "run_id": "11111111-1111-5111-8111-111111111111", "kind": "repair_approval", "actor": "portfolio-reviewer", "correlation_id": "pool-approval", "created_at": "2026-09-26T09:51:54Z", "details": {"decision": "approved"}},
+        {"id": "event-pool-5", "run_id": "11111111-1111-5111-8111-111111111111", "kind": "repair_policy_decision", "actor": "repair-policy", "correlation_id": "pool-policy", "created_at": "2026-09-26T09:51:56Z", "details": {"accepted": true, "category": "accepted", "detail": "bounded diff passed deterministic policy"}},
+        {"id": "event-pool-6", "run_id": "11111111-1111-5111-8111-111111111111", "kind": "verification_recorded", "actor": "trusted-verifier", "correlation_id": "pool-verification", "created_at": "2026-09-26T09:52:08Z", "details": {"outcome": "PASS", "mandatory_checks": 7}}
+      ],
+      "model_usage": [
+        {"schema_version": 1, "id": "usage-pool-diagnosis", "run_id": "11111111-1111-5111-8111-111111111111", "provider": "openai", "model_id": "gpt-5.4-mini", "prompt_version": "diagnosis-v2", "input_tokens": 6097, "output_tokens": 1290, "latency_ms": 7058, "estimated_cost_usd": 0.010378},
+        {"schema_version": 1, "id": "usage-pool-repair", "run_id": "11111111-1111-5111-8111-111111111111", "provider": "openai", "model_id": "gpt-5.4-mini", "prompt_version": "repair-v7", "input_tokens": 5885, "output_tokens": 167, "latency_ms": 1674, "estimated_cost_usd": 0.005165}
+      ],
+      "artifacts": {
+        "/evidence/artifacts/pool-trace": "trace_id=4b327ac9f5d34e65\ncheckout POST /checkout status=503\ninventory database.acquire outcome=timeout\n",
+        "/evidence/artifacts/pool-metric": "incidentlab_database_pool_available{service=\"inventory\"} 0\nincidentlab_database_pool_timeouts_total{service=\"inventory\"} 1\n",
+        "/evidence/artifacts/pool-log": "{\"event\":\"database_pool_timeout\",\"pool_available\":0,\"service\":\"inventory\"}\n",
+        "/evidence/artifacts/pool-commit": "commit d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02\npath sample_service/app.py\n",
+        "/verification/artifacts/pool-baseline": "Baseline reproduced: statuses=[409, 409, 503], pool_available=0\n",
+        "/verification/artifacts/pool-patch": "Patch applied cleanly to sample_service/app.py\n",
+        "/verification/artifacts/pool-compile": "Python compilation passed\n",
+        "/verification/artifacts/pool-static": "Ruff checks passed\n",
+        "/verification/artifacts/pool-unit": "Unit test suite passed\n",
+        "/verification/artifacts/pool-integration": "Checkout integration tests passed\n",
+        "/verification/artifacts/pool-replay": "Incident replay: 5/5 healthy controls passed; pool capacity remained 2\n"
+      },
+      "report_markdown": "# IncidentLab report: pool-exhaustion\n\n- State: **COMPLETED**\n- Pinned commit: `d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02`\n\n## Diagnosis\n\n### Rejected checkouts leak database connections\n\nThe insufficient-stock branch returns without releasing its checked-out connection.\n\n## Repair\n\nReturn the connection before leaving the rejected checkout branch.\n\n## Verification\n\nAll seven mandatory checks passed, including five repeated incident replays.\n\n## Model usage\n\nRecorded estimated cost: $0.015543\n"
+    },
+    "22222222-2222-5222-8222-222222222222": {
+      "evidence": [
+        {
+          "schema_version": 1,
+          "id": "ev-stock-trace",
+          "run_id": "22222222-2222-5222-8222-222222222222",
+          "kind": "trace",
+          "source": "jaeger",
+          "retrieval_method": "bounded_trace_query",
+          "observed_start": "2026-09-26T10:04:13Z",
+          "observed_end": "2026-09-26T10:04:16Z",
+          "service": "checkout",
+          "summary": "A request for eleven widgets returned HTTP 200 while only ten were in stock.",
+          "artifact_ref": "/evidence/artifacts/stock-trace",
+          "content_sha256": "839a8a8916242661fe51fa48a7ae392fd7c49ec4590e3825c3db9b485516b8e4"
+        },
+        {
+          "schema_version": 1,
+          "id": "ev-stock-log",
+          "run_id": "22222222-2222-5222-8222-222222222222",
+          "kind": "log",
+          "source": "loki",
+          "retrieval_method": "bounded_log_query",
+          "observed_start": "2026-09-26T10:04:13Z",
+          "observed_end": "2026-09-26T10:04:16Z",
+          "service": "inventory",
+          "summary": "The committed checkout left widget inventory at -1.",
+          "artifact_ref": "/evidence/artifacts/stock-log",
+          "content_sha256": "f97021b1d751c91bfa03b270c0768a2a9ee5471c0828d5122b8c0122c229553c"
+        },
+        {
+          "schema_version": 1,
+          "id": "ev-stock-source",
+          "run_id": "22222222-2222-5222-8222-222222222222",
+          "kind": "source",
+          "source": "git",
+          "retrieval_method": "pinned_blob_lookup",
+          "observed_start": "2026-09-26T10:04:12Z",
+          "observed_end": "2026-09-26T10:04:12Z",
+          "service": "repository",
+          "summary": "The inventory-underflow branch bypasses the insufficient-stock guard.",
+          "artifact_ref": "/evidence/artifacts/stock-source",
+          "content_sha256": "7150af34cdf3411ae5f5fc840a500bb1a3136c6a7549146311fb25c2b2260713"
+        }
+      ],
+      "hypotheses": [
+        {
+          "schema_version": 1,
+          "id": "hyp-stock-primary",
+          "run_id": "22222222-2222-5222-8222-222222222222",
+          "summary": "The fault mode bypasses the stock sufficiency guard",
+          "mechanism": "The inventory-underflow path permits the update even when requested quantity exceeds current stock, committing a negative value instead of returning HTTP 409.",
+          "supporting_evidence_ids": ["ev-stock-trace", "ev-stock-log", "ev-stock-source"],
+          "contradicting_evidence_ids": [],
+          "confidence": "high",
+          "proposed_checks": [],
+          "model_id": "gpt-5.4-mini",
+          "prompt_version": "diagnosis-v2"
+        }
+      ],
+      "candidates": [
+        {
+          "schema_version": 1,
+          "id": "32222222-2222-5222-8222-222222222222",
+          "run_id": "22222222-2222-5222-8222-222222222222",
+          "target_commit": "d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02",
+          "unified_diff": "diff --git a/sample_service/app.py b/sample_service/app.py\n--- a/sample_service/app.py\n+++ b/sample_service/app.py\n@@ -95,7 +95,7 @@\n                     ).fetchone()\n                 if row is None:\n                     return 404, {\"error\": \"unknown_sku\"}\n-                if row[0] < quantity and self.fault_mode != \"inventory_underflow\":\n+                if row[0] < quantity:\n                     if self.fault_mode == \"pool_leak\":\n                         # Intentional incident fixture: this branch leaves its slot checked out.\n",
+          "explanation": "Apply the stock sufficiency guard regardless of the active fixture mode.",
+          "expected_behavior": "An oversized checkout is rejected with HTTP 409 and inventory remains unchanged.",
+          "changed_paths": ["sample_service/app.py"],
+          "generator_id": "gpt-5.4-mini",
+          "diff_sha256": "e09b2c621dff05d0043361513ce9dfdbec95edf49986b211069dcdc5b679d6c0",
+          "policy_status": "accepted",
+          "policy_version": "repair-policy-v2"
+        }
+      ],
+      "verifications": [
+        {
+          "schema_version": 1,
+          "id": "verification-stock-primary",
+          "candidate_id": "32222222-2222-5222-8222-222222222222",
+          "environment_digest": "sha256:50b64edc69633af3397e917fafd4024a4d353998d26ee8b335c198962d92661b",
+          "checks": [
+            {"schema_version": 1, "name": "baseline_reproduction", "outcome": "PASS", "started_at": "2026-09-26T10:04:25Z", "finished_at": "2026-09-26T10:04:27Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/stock-baseline", "content_sha256": "fcfc59d5b24e199967459e20d91babb8b5b97701fe44af39a18fafd7d7f293d8"},
+            {"schema_version": 1, "name": "patch_apply", "outcome": "PASS", "started_at": "2026-09-26T10:04:27Z", "finished_at": "2026-09-26T10:04:28Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/stock-patch", "content_sha256": "9ae07c79f613122a2b6e9ee7805acd8136a4cf9c0c0731153bd486849b26b383"},
+            {"schema_version": 1, "name": "compile", "outcome": "PASS", "started_at": "2026-09-26T10:04:28Z", "finished_at": "2026-09-26T10:04:29Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/stock-compile", "content_sha256": "b5a0771f2d9ed24f46014d503b66a97d7207666bbc5544ce61586f321b4321d3"},
+            {"schema_version": 1, "name": "static_checks", "outcome": "PASS", "started_at": "2026-09-26T10:04:29Z", "finished_at": "2026-09-26T10:04:30Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/stock-static", "content_sha256": "1284f8bd712bb49cc1c2937040e39933f849eb8ad4cf64b8c12a195edaeea300"},
+            {"schema_version": 1, "name": "unit_tests", "outcome": "PASS", "started_at": "2026-09-26T10:04:30Z", "finished_at": "2026-09-26T10:04:32Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/stock-unit", "content_sha256": "ec586c512c3dbbefcf0604e4db47b015427d2297ac439e09898359a57cb9dda1"},
+            {"schema_version": 1, "name": "integration_tests", "outcome": "PASS", "started_at": "2026-09-26T10:04:32Z", "finished_at": "2026-09-26T10:04:34Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/stock-integration", "content_sha256": "7b960e5d4d127c1feae9479c19d81ff6f9d4d18ff8937b30314d2caf6d2fdf6e"},
+            {"schema_version": 1, "name": "incident_replay", "outcome": "PASS", "started_at": "2026-09-26T10:04:34Z", "finished_at": "2026-09-26T10:04:37Z", "exit_code": 0, "failure_reason": null, "artifact_ref": "/verification/artifacts/stock-replay", "content_sha256": "1cabfa3664848427186d4c69104d84446e31bab2a297cf9f8eefd76af2b6fa3f"}
+          ],
+          "outcome": "PASS",
+          "score_version": "verification-score-v1",
+          "rank": 1,
+          "score": {"mandatory_passes": 7, "changed_lines": 1},
+          "started_at": "2026-09-26T10:04:25Z",
+          "finished_at": "2026-09-26T10:04:37Z"
+        }
+      ],
+      "events": [
+        {"id": "event-stock-1", "run_id": "22222222-2222-5222-8222-222222222222", "kind": "run_created", "actor": "incidentlab-api", "correlation_id": "stock-demo-run", "created_at": "2026-09-26T10:04:12Z", "details": {"scenario_id": "inventory-underflow"}},
+        {"id": "event-stock-2", "run_id": "22222222-2222-5222-8222-222222222222", "kind": "reproduction_recorded", "actor": "workflow-worker", "correlation_id": "stock-reproduction", "created_at": "2026-09-26T10:04:16Z", "details": {"statuses": [200], "failure": "negative_inventory_committed"}},
+        {"id": "event-stock-3", "run_id": "22222222-2222-5222-8222-222222222222", "kind": "diagnosis_recorded", "actor": "workflow-worker", "correlation_id": "stock-diagnosis", "created_at": "2026-09-26T10:04:21Z", "details": {"hypothesis_count": 1, "citation_validation": "passed"}},
+        {"id": "event-stock-4", "run_id": "22222222-2222-5222-8222-222222222222", "kind": "repair_approval", "actor": "portfolio-reviewer", "correlation_id": "stock-approval", "created_at": "2026-09-26T10:04:22Z", "details": {"decision": "approved"}},
+        {"id": "event-stock-5", "run_id": "22222222-2222-5222-8222-222222222222", "kind": "repair_policy_decision", "actor": "repair-policy", "correlation_id": "stock-policy", "created_at": "2026-09-26T10:04:24Z", "details": {"accepted": true, "category": "accepted", "detail": "bounded diff passed deterministic policy"}},
+        {"id": "event-stock-6", "run_id": "22222222-2222-5222-8222-222222222222", "kind": "verification_recorded", "actor": "trusted-verifier", "correlation_id": "stock-verification", "created_at": "2026-09-26T10:04:37Z", "details": {"outcome": "PASS", "mandatory_checks": 7}}
+      ],
+      "model_usage": [
+        {"schema_version": 1, "id": "usage-stock-diagnosis", "run_id": "22222222-2222-5222-8222-222222222222", "provider": "openai", "model_id": "gpt-5.4-mini", "prompt_version": "diagnosis-v2", "input_tokens": 5312, "output_tokens": 842, "latency_ms": 5410, "estimated_cost_usd": 0.007773},
+        {"schema_version": 1, "id": "usage-stock-repair", "run_id": "22222222-2222-5222-8222-222222222222", "provider": "openai", "model_id": "gpt-5.4-mini", "prompt_version": "repair-v7", "input_tokens": 4978, "output_tokens": 151, "latency_ms": 1482, "estimated_cost_usd": 0.004413}
+      ],
+      "artifacts": {
+        "/evidence/artifacts/stock-trace": "trace_id=09e85877df3141fb\ncheckout POST /checkout quantity=11 status=200\ninventory update resulting_quantity=-1\n",
+        "/evidence/artifacts/stock-log": "{\"event\":\"checkout_committed\",\"sku\":\"widget\",\"quantity\":11,\"remaining\":-1}\n",
+        "/evidence/artifacts/stock-source": "sample_service/app.py\nFault fixture bypassed the row[0] < quantity guard when inventory_underflow was active.\n",
+        "/verification/artifacts/stock-baseline": "Baseline reproduced: oversized checkout status=200, resulting_inventory=-1\n",
+        "/verification/artifacts/stock-patch": "Patch applied cleanly to sample_service/app.py\n",
+        "/verification/artifacts/stock-compile": "Python compilation passed\n",
+        "/verification/artifacts/stock-static": "Ruff checks passed\n",
+        "/verification/artifacts/stock-unit": "Unit test suite passed\n",
+        "/verification/artifacts/stock-integration": "Checkout integration tests passed\n",
+        "/verification/artifacts/stock-replay": "Incident replay: 5/5 oversized checkouts rejected; inventory remained 10\n"
+      },
+      "report_markdown": "# IncidentLab report: inventory-underflow\n\n- State: **COMPLETED**\n- Pinned commit: `d6cd064b2ab2f577f01d7c324a2d6ffe8fe93b02`\n\n## Diagnosis\n\n### The fault mode bypasses the stock sufficiency guard\n\nThe oversized checkout commits a negative inventory quantity.\n\n## Repair\n\nApply the stock guard regardless of fixture mode.\n\n## Verification\n\nAll seven mandatory checks passed, including five repeated incident replays.\n\n## Model usage\n\nRecorded estimated cost: $0.012186\n"
+    }
+  }
+}

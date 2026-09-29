@@ -44,6 +44,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .environment-label { margin-left: auto; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
 .system-dot { width: 7px; height: 7px; border-radius: 50%; background: #43a66f; }
 .main-shell { min-width: 0; }
+.demo-banner { min-height: 48px; padding: 8px 32px; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #604819; background: #fbf6e9; border-bottom: 1px solid #eadcb9; }
+.demo-banner div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+.demo-banner strong { font-size: 12px; font-weight: 600; }
+.demo-banner span { color: #75633f; font-size: 11px; }
+.demo-banner a { display: inline-flex; align-items: center; gap: 6px; color: #604819; font-size: 11px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.demo-banner a:hover { text-decoration: underline; }
+.read-only-label { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; color: var(--green); background: var(--green-soft); border: 1px solid #cfe5d8; border-radius: 6px; font-size: 12px; font-weight: 500; }
 
 .topbar, .detail-topbar { min-height: 108px; padding: 25px 36px 22px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .topbar h1, .detail-topbar h1 { margin: 0; font-size: 26px; line-height: 1.2; letter-spacing: -.025em; font-weight: 600; }
@@ -272,6 +279,9 @@ button.queue-stat { cursor: pointer; }
   .app-header { height: 54px; padding: 0 16px; }
   .primary-nav { margin-left: 22px; }
   .environment-label { display: none; }
+  .demo-banner { padding: 9px 16px; align-items: flex-start; }
+  .demo-banner div { display: grid; gap: 1px; }
+  .demo-banner span { max-width: 240px; }
   .topbar, .detail-topbar { min-height: 0; padding: 18px 16px; align-items: flex-start; flex-direction: column; }
   .topbar h1, .detail-topbar h1 { font-size: 22px; }
   .page-content, .detail-body { padding: 18px 14px 36px; }

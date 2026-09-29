@@ -37,7 +37,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
-import { api, ApiError } from "./api";
+import { api, ApiError, isDemoMode } from "./api";
 import type {
   AuditEvent,
   EvidenceItem,
@@ -153,9 +153,20 @@ function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </nav>
         <div className="environment-label">
-          <span className="system-dot" /> Local development
+          <span className="system-dot" /> {isDemoMode ? "Read-only demo" : "Local development"}
         </div>
       </header>
+      {isDemoMode ? (
+        <aside className="demo-banner" aria-label="Demonstration mode">
+          <div>
+            <strong>Curated product demonstration</strong>
+            <span>Explore two saved investigations. This deployment makes no API or model requests.</span>
+          </div>
+          <a href="https://github.com/rajat-blr/incidentlab" target="_blank" rel="noreferrer">
+            <Code2 size={15} /> View source
+          </a>
+        </aside>
+      ) : null}
       <main className="main-shell">{children}</main>
     </div>
   );
@@ -173,7 +184,9 @@ function RunsPage() {
     queryKey: ["runs"],
     queryFn: () => api.runs(),
     refetchInterval: (query) =>
-      query.state.data?.some((run) => !terminalStates.has(run.state)) ? 2_000 : false,
+      !isDemoMode && query.state.data?.some((run) => !terminalStates.has(run.state))
+        ? 2_000
+        : false,
   });
   const scenarios = useQuery({ queryKey: ["scenarios"], queryFn: api.scenarios });
   const createRun = useMutation({
@@ -213,9 +226,13 @@ function RunsPage() {
           <h1>Incident runs</h1>
           <p>Investigations, repair decisions, and verification outcomes.</p>
         </div>
-        <button className="button button-primary" type="button" onClick={() => setShowCreate(true)}>
-          <Play size={16} /> Start investigation
-        </button>
+        {isDemoMode ? (
+          <span className="read-only-label"><ShieldCheck size={15} /> Saved run data</span>
+        ) : (
+          <button className="button button-primary" type="button" onClick={() => setShowCreate(true)}>
+            <Play size={16} /> Start investigation
+          </button>
+        )}
       </header>
       <div className="page-content">
         <section className="queue-summary" aria-label="Run summary">
@@ -281,7 +298,7 @@ function RunsPage() {
         ) : null}
       </div>
 
-      {showCreate ? (
+      {!isDemoMode && showCreate ? (
         <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowCreate(false)}>
           <section className="modal" role="dialog" aria-modal="true" aria-labelledby="create-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="modal-head">
@@ -346,13 +363,16 @@ function RunDetailPage() {
   const run = useQuery({
     queryKey: ["run", runId],
     queryFn: () => api.run(runId),
-    refetchInterval: (query) => query.state.data && !terminalStates.has(query.state.data.state) ? 1_500 : false,
+    refetchInterval: (query) =>
+      !isDemoMode && query.state.data && !terminalStates.has(query.state.data.state)
+        ? 1_500
+        : false,
   });
   const evidence = useQuery({ queryKey: ["evidence", runId], queryFn: () => api.evidence(runId) });
   const hypotheses = useQuery({ queryKey: ["hypotheses", runId], queryFn: () => api.hypotheses(runId) });
-  const candidates = useQuery({ queryKey: ["candidates", runId], queryFn: () => api.candidates(runId), refetchInterval: run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
-  const verifications = useQuery({ queryKey: ["verifications", runId], queryFn: () => api.verifications(runId), refetchInterval: run.data?.state === "VERIFYING" ? 2_000 : false });
-  const events = useQuery({ queryKey: ["events", runId], queryFn: () => api.events(runId), refetchInterval: run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
+  const candidates = useQuery({ queryKey: ["candidates", runId], queryFn: () => api.candidates(runId), refetchInterval: !isDemoMode && run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
+  const verifications = useQuery({ queryKey: ["verifications", runId], queryFn: () => api.verifications(runId), refetchInterval: !isDemoMode && run.data?.state === "VERIFYING" ? 2_000 : false });
+  const events = useQuery({ queryKey: ["events", runId], queryFn: () => api.events(runId), refetchInterval: !isDemoMode && run.data && !terminalStates.has(run.data.state) ? 2_000 : false });
   const modelUsage = useQuery({ queryKey: ["model-usage", runId], queryFn: () => api.modelUsage(runId) });
 
   useEffect(() => {
@@ -397,8 +417,8 @@ function RunDetailPage() {
           </div>
         </div>
         <div className="detail-actions">
-          <a className="button" href={api.reportUrl(runId, "markdown")}><Download size={16} /> Export report</a>
-          {active ? <button className="button button-danger" type="button" disabled={cancel.isPending || !actor.trim()} onClick={() => cancel.mutate()}><Square size={14} /> Cancel</button> : null}
+          <a className="button" href={api.reportUrl(runId, "markdown")} download={isDemoMode ? `incidentlab-${run.data.scenario_id}.md` : undefined}><Download size={16} /> Export report</a>
+          {!isDemoMode && active ? <button className="button button-danger" type="button" disabled={cancel.isPending || !actor.trim()} onClick={() => cancel.mutate()}><Square size={14} /> Cancel</button> : null}
         </div>
       </header>
       <div className="detail-body">
@@ -423,7 +443,7 @@ function RunDetailPage() {
         </div>
       </div>
       {artifact ? <ArtifactModal title={artifact.title} artifactRef={artifact.ref} onClose={() => setArtifact(null)} /> : null}
-      {run.data.state === "AWAITING_REPAIR_APPROVAL" && !approvalDismissed ? (
+      {!isDemoMode && run.data.state === "AWAITING_REPAIR_APPROVAL" && !approvalDismissed ? (
         <ApprovalModal
           actor={actor}
           setActor={setActor}
