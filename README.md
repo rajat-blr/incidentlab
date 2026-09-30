@@ -129,6 +129,60 @@ trail exposed by the review console.
 | Verification | Docker sandbox with fixed checks |
 | Local environment | Docker Compose, uv |
 
+## Build and run from source
+
+### Prerequisites
+
+- Docker Desktop with Docker Compose v2
+- Git
+- An OpenAI API key
+
+Clone the repository and enter its root directory:
+
+```sh
+git clone https://github.com/rajat-blr/incidentlab.git
+cd incidentlab
+```
+
+Cloning is preferred because IncidentLab uses the repository's `.git` metadata
+to pin each investigation to an exact commit. If you downloaded a GitHub source
+archive instead, initialize it once before continuing:
+
+```sh
+git init
+git add .
+git commit -m "Initialize local IncidentLab source"
+```
+
+Create the local environment file:
+
+```sh
+cp .env.example .env
+```
+
+Set `OPENAI_API_KEY` in `.env`. Keep this file private; it is ignored by Git.
+The default model is already configured as `gpt-5.4-mini`.
+
+With Docker Desktop running, build and start the complete application:
+
+```sh
+docker compose up --build -d --wait
+```
+
+This builds the API, workflow worker, frontend, verifier, and verification
+sandbox; starts PostgreSQL, Temporal, and the telemetry services; and applies
+the database migrations. Open `http://localhost:5173` to use the application.
+
+Useful lifecycle commands:
+
+```sh
+# Follow application and verification logs
+docker compose logs -f api worker verifier
+
+# Stop the stack while preserving its database volumes
+docker compose down
+```
+
 ## Repository map
 
 ```text
