@@ -150,6 +150,7 @@ docs/              Architecture, threat model, sandbox, and evaluation notes
 - [Sandbox boundary](docs/sandbox.md)
 - [Evaluation methodology](docs/evaluation.md)
 - [Failure modes](docs/failure-modes.md)
+- [Container releases](docs/container-release.md)
 
 ## Scope
 

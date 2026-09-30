@@ -16,7 +16,19 @@ from incidentlab.verification.host import signal_verification_complete, verify_r
 LOGGER = logging.getLogger("incidentlab.verifier")
 
 
-def ensure_sandbox_image(repository_path: Path, image: str) -> None:
+def ensure_sandbox_image(repository_path: Path, image: str, *, pull: bool = False) -> None:
+    inspect = subprocess.run(
+        ["docker", "image", "inspect", image],
+        capture_output=True,
+        check=False,
+    )
+    if inspect.returncode == 0:
+        return
+    if pull:
+        result = subprocess.run(["docker", "pull", image], check=False)
+        if result.returncode:
+            raise RuntimeError("could not pull the trusted sandbox image")
+        return
     result = subprocess.run(
         [
             "docker",
@@ -63,8 +75,9 @@ def main() -> None:
     repository_path = Path(os.environ["HOST_REPOSITORY_PATH"]).resolve()
     runtime_root = Path(os.environ["VERIFIER_RUNTIME_ROOT"]).resolve()
     image = os.environ.get("SANDBOX_IMAGE", "incidentlab-sandbox:step8")
+    pull_image = os.environ.get("SANDBOX_IMAGE_PULL", "false").lower() in {"1", "true", "yes"}
     interval = max(1.0, float(os.environ.get("VERIFIER_POLL_SECONDS", "2")))
-    ensure_sandbox_image(repository_path, image)
+    ensure_sandbox_image(repository_path, image, pull=pull_image)
     LOGGER.info("trusted verifier ready")
     while True:
         try:

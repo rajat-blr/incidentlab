@@ -5,10 +5,50 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-from incidentlab.verification.agent import drain_once
+from incidentlab.verification.agent import drain_once, ensure_sandbox_image
 
 
 class VerifierAgentTests(unittest.TestCase):
+    @patch("incidentlab.verification.agent.subprocess.run")
+    def test_existing_sandbox_image_is_reused(self, run) -> None:
+        run.return_value.returncode = 0
+        ensure_sandbox_image(Path("/repository"), "incidentlab-sandbox:test")
+        run.assert_called_once_with(
+            ["docker", "image", "inspect", "incidentlab-sandbox:test"],
+            capture_output=True,
+            check=False,
+        )
+
+    @patch("incidentlab.verification.agent.subprocess.run")
+    def test_release_sandbox_image_is_pulled_when_missing(self, run) -> None:
+        run.side_effect = [SimpleNamespace(returncode=1), SimpleNamespace(returncode=0)]
+        ensure_sandbox_image(
+            Path("/repository"),
+            "ghcr.io/rajat-blr/incidentlab-sandbox:1.0.0",
+            pull=True,
+        )
+        self.assertEqual(
+            run.call_args_list[1].args[0],
+            ["docker", "pull", "ghcr.io/rajat-blr/incidentlab-sandbox:1.0.0"],
+        )
+
+    @patch("incidentlab.verification.agent.subprocess.run")
+    def test_local_sandbox_image_is_built_when_missing(self, run) -> None:
+        run.side_effect = [SimpleNamespace(returncode=1), SimpleNamespace(returncode=0)]
+        ensure_sandbox_image(Path("/repository"), "incidentlab-sandbox:test")
+        self.assertEqual(
+            run.call_args_list[1].args[0],
+            [
+                "docker",
+                "build",
+                "--file",
+                "/repository/Dockerfile.sandbox",
+                "--tag",
+                "incidentlab-sandbox:test",
+                "/repository",
+            ],
+        )
+
     def test_waiting_run_is_verified_and_signaled(self) -> None:
         run = SimpleNamespace(id=uuid4(), scenario_id="inventory-underflow")
         candidate = SimpleNamespace(id=uuid4())

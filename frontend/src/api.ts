@@ -145,7 +145,7 @@ const replayStorageKey = "incidentlab.demo-replays.v1";
 const demoReplays = new Map<string, DemoReplay>();
 
 function restoreDemoReplays() {
-  if (typeof sessionStorage === "undefined" || import.meta.env.MODE === "test") return;
+  if (!isDemoMode || typeof sessionStorage === "undefined" || import.meta.env.MODE === "test") return;
   try {
     const values = JSON.parse(sessionStorage.getItem(replayStorageKey) ?? "[]") as DemoReplay[];
     for (const value of values) demoReplays.set(value.id, value);
@@ -155,14 +155,14 @@ function restoreDemoReplays() {
 }
 
 function persistDemoReplays() {
-  if (typeof sessionStorage === "undefined" || import.meta.env.MODE === "test") return;
+  if (!isDemoMode || typeof sessionStorage === "undefined" || import.meta.env.MODE === "test") return;
   sessionStorage.setItem(replayStorageKey, JSON.stringify([...demoReplays.values()]));
 }
 
 restoreDemoReplays();
 
 export function isDemoReplayRun(id: string) {
-  return demoReplays.has(id);
+  return isDemoMode && demoReplays.has(id);
 }
 
 function replayState(replay: DemoReplay, now = Date.now()): RunState {

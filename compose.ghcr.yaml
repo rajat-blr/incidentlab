@@ -1,0 +1,137 @@
+name: incidentlab
+
+include:
+  - compose.telemetry.yaml
+
+services:
+  postgres:
+    image: postgres:16.10
+    environment:
+      POSTGRES_USER: incidentlab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-incidentlab-local}
+      POSTGRES_DB: incidentlab
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incidentlab -d incidentlab"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  temporal:
+    image: temporalio/temporal:1.6.2
+    user: "0:0"
+    command: ["server", "start-dev", "--ip", "0.0.0.0", "--db-filename", "/data/temporal.db"]
+    volumes:
+      - temporal_data:/data
+    ports:
+      - "127.0.0.1:7233:7233"
+      - "127.0.0.1:8233:8233"
+
+  migrate:
+    image: ghcr.io/rajat-blr/incidentlab-api:${INCIDENTLAB_VERSION:-latest}
+    pull_policy: always
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://incidentlab:${POSTGRES_PASSWORD:-incidentlab-local}@postgres:5432/incidentlab
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: ghcr.io/rajat-blr/incidentlab-api:${INCIDENTLAB_VERSION:-latest}
+    pull_policy: always
+    environment:
+      DATABASE_URL: postgresql+psycopg://incidentlab:${POSTGRES_PASSWORD:-incidentlab-local}@postgres:5432/incidentlab
+      TEMPORAL_ADDRESS: temporal:7233
+      SCENARIO_ROOT: /app/scenarios
+      REPOSITORY_GIT_DIR: /repository/.git
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+    volumes:
+      - ./.git:/repository/.git:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=2)"
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  worker:
+    image: ghcr.io/rajat-blr/incidentlab-api:${INCIDENTLAB_VERSION:-latest}
+    pull_policy: always
+    command: ["python", "-m", "incidentlab.workflow.worker"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://incidentlab:${POSTGRES_PASSWORD:-incidentlab-local}@postgres:5432/incidentlab
+      TEMPORAL_ADDRESS: temporal:7233
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318
+      JAEGER_URL: http://jaeger:16686
+      PROMETHEUS_URL: http://prometheus:9090
+      LOKI_URL: http://loki:3100
+      REPOSITORY_GIT_DIR: /repository/.git
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-mini}
+    volumes:
+      - ./.git:/repository/.git:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+      collector:
+        condition: service_started
+    stop_grace_period: 10s
+
+  verifier:
+    image: ghcr.io/rajat-blr/incidentlab-verifier:${INCIDENTLAB_VERSION:-latest}
+    pull_policy: always
+    environment:
+      DATABASE_URL: postgresql+psycopg://incidentlab:${POSTGRES_PASSWORD:-incidentlab-local}@postgres:5432/incidentlab
+      TEMPORAL_ADDRESS: temporal:7233
+      HOST_REPOSITORY_PATH: ${PWD}
+      VERIFIER_RUNTIME_ROOT: ${PWD}/.incidentlab-runtime
+      SANDBOX_IMAGE: ghcr.io/rajat-blr/incidentlab-sandbox:${INCIDENTLAB_VERSION:-latest}
+      SANDBOX_IMAGE_PULL: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${PWD}:${PWD}:ro
+      - ${PWD}/.incidentlab-runtime:${PWD}/.incidentlab-runtime
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; os.kill(1, 0)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  frontend:
+    image: ghcr.io/rajat-blr/incidentlab-frontend:${INCIDENTLAB_VERSION:-latest}
+    pull_policy: always
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/api/ready"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres_data:
+  temporal_data:
