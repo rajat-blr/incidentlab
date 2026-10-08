@@ -11,3 +11,6 @@ frontend/dist/
 frontend/*.tsbuildinfo
 evaluation-results/
 .incidentlab-runtime/
+
+# Product requirements documents
+*[Pp][Rr][Dd]*
