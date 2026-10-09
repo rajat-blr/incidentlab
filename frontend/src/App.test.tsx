@@ -31,6 +31,30 @@ function renderApp(path = "/runs") {
 }
 
 describe("IncidentLab frontend", () => {
+  it("shows stock observations for cached mutation incidents even without an HTTP error", async () => {
+    const run = {
+      schema_version: 1, id: "88888888-8888-5888-8888-888888888888",
+      scenario_id: "mutation-response-cache", scenario_version: 1,
+      pinned_commit: "a".repeat(40), workflow_id: "cache-run", state: "COMPLETED",
+      created_at: "2026-10-09T05:00:00Z", updated_at: "2026-10-09T05:01:00Z",
+    };
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.endsWith(`/api/runs/${run.id}`)) return jsonResponse(run);
+      if (url.endsWith(`/api/runs/${run.id}/events`)) return jsonResponse([{
+        id: "cache-observation", run_id: run.id, kind: "reproduction_recorded", actor: "worker",
+        correlation_id: "cache-1", created_at: run.created_at,
+        details: { statuses: [200, 200], failure: null,
+          responses: [{ remaining_inventory: 9 }, { remaining_inventory: 9 }] },
+      }]);
+      if (url.includes(`/api/runs/${run.id}/`)) return jsonResponse([]);
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    renderApp(`/runs/${run.id}`);
+    expect(await screen.findByText("9 → 9")).toBeInTheDocument();
+    expect(screen.getByText("Repeated stock value")).toBeInTheDocument();
+  });
+
   it("renders durable run state from the API", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
       const url = String(input);

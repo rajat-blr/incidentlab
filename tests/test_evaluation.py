@@ -15,11 +15,11 @@ class EvaluationHarnessTests(unittest.TestCase):
                 [item["system"] for item in report["summary"]],
                 ["incidentlab", "deterministic-keyword", "one-shot-uncited"],
             )
-            self.assertEqual(len(report["trials"]), 6)
+            self.assertEqual(len(report["trials"]), 12)
             self.assertTrue(all(item["contained"] for item in report["adversarial"]))
             self.assertTrue((output / "metrics.csv").is_file())
             failures = json.loads((output / "failures.json").read_text())
-            self.assertEqual(failures["evaluation_version"], "evaluation-v1")
+            self.assertEqual(failures["evaluation_version"], "evaluation-v2")
 
     def test_trial_count_is_bounded(self) -> None:
         with self.assertRaises(ValueError):

@@ -1,0 +1,7 @@
+{
+  "scenario_id": "mutation-response-cache", "version": 1,
+  "root_cause_label": "mutating_post_response_cached",
+  "mechanism": "A checkout response is cached and reused for a second POST, skipping the second stock decrement.",
+  "expected_affected_files": ["sample_service/gateway.py"],
+  "expected_repair": "Do not serve checkout POST requests from the response cache; forward each purchase to inventory."
+}

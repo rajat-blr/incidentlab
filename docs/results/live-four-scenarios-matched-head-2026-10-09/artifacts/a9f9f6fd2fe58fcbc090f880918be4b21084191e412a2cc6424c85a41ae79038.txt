@@ -1,0 +1,14 @@
+{"exit_code": 0, "failure_reason": null, "finished_at": "2026-10-09T07:31:45.166873+00:00", "name": "baseline_replay", "outcome": "PASS", "started_at": "2026-10-09T07:31:42.900887+00:00"}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "40e7285c0b8447d48c6339966b53029a", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "40e7285c0b8447d48c6339966b53029a", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "40e7285c0b8447d48c6339966b53029a", "trace_id": null}
+{"event": "gateway_result", "request_id": "40e7285c0b8447d48c6339966b53029a", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "e0e2695d5d8c4a7d9a94974cdfebbac4", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "e0e2695d5d8c4a7d9a94974cdfebbac4", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "e0e2695d5d8c4a7d9a94974cdfebbac4", "trace_id": null}
+{"event": "gateway_result", "request_id": "e0e2695d5d8c4a7d9a94974cdfebbac4", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "a3434db25531469aa7277d96d117c4d8", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "a3434db25531469aa7277d96d117c4d8", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "a3434db25531469aa7277d96d117c4d8", "trace_id": null}
+{"event": "gateway_result", "request_id": "a3434db25531469aa7277d96d117c4d8", "status": 200, "trace_id": null}
+{"expected": [[200], [-1], -1], "fault_mode": "inventory_underflow", "gateway_fault_mode": "off", "inactive_scenarios": [], "matches": 3, "mode": "baseline", "observed": [[[200], [-1], -1], [[200], [-1], -1], [[200], [-1], -1]], "scenario": "inventory-underflow", "trials": 3}

@@ -1,0 +1,3305 @@
+{
+  "config": {
+    "base_url": "http://127.0.0.1:8000",
+    "model": "gpt-5.4-mini",
+    "output": "docs/results/live-2026-10-09-rerun",
+    "timeout": 300,
+    "trials": 3
+  },
+  "evaluation_version": "live-evaluation-v1",
+  "limitations": [
+    "Two controlled scenarios from one checkout service; no cross-service generalization.",
+    "Citation validity checks IDs, gap handling and artifact integrity, not semantic entailment.",
+    "Approval is performed by the evaluator, not a human reviewer.",
+    "Provider retries inside an activity are part of one trial; recorded usage may omit rejected calls."
+  ],
+  "started_at": "2026-10-09T06:53:58.993708+00:00",
+  "summary": [
+    {
+      "citation_count": 9,
+      "citation_validity": 0.6666666666666666,
+      "failure_count": 1,
+      "reproduction_rate": 1.0,
+      "resolved_citation_count": 9,
+      "scenario_id": "pool-exhaustion",
+      "trials": 3,
+      "verified_repair_rate": 0.6666666666666666
+    },
+    {
+      "citation_count": 24,
+      "citation_validity": 1.0,
+      "failure_count": 0,
+      "reproduction_rate": 1.0,
+      "resolved_citation_count": 24,
+      "scenario_id": "inventory-underflow",
+      "trials": 3,
+      "verified_repair_rate": 1.0
+    },
+    {
+      "citation_count": 33,
+      "citation_validity": 0.8333333333333334,
+      "failure_count": 1,
+      "reproduction_rate": 1.0,
+      "resolved_citation_count": 33,
+      "scenario_id": "all",
+      "trials": 6,
+      "verified_repair_rate": 0.8333333333333334
+    }
+  ],
+  "trials": [
+    {
+      "citation_count": 4,
+      "citations_valid": true,
+      "duration_ms": 32394,
+      "estimated_cost_usd": 0.01454,
+      "failure_category": null,
+      "input_tokens": 11658,
+      "model_ids": [
+        "gpt-5.4-mini"
+      ],
+      "output_tokens": 1288,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [
+        "diagnosis-v2",
+        "repair-v7"
+      ],
+      "report": {
+        "candidates": [
+          {
+            "changed_paths": [
+              "sample_service/app.py"
+            ],
+            "diff_sha256": "417a731b9bed18c304b1c1a5d870fa787d50fec67f9efe5b725bc88cf8192727",
+            "expected_behavior": "When inventory is insufficient, the service returns 409 but still releases the database connection, preventing pool exhaustion and database_pool_timeout.",
+            "explanation": "Eliminate the checkout-slot leak in the active pool_leak branch while preserving the out_of_stock response and all other scenario behavior.",
+            "generator_id": "gpt-5.4-mini",
+            "id": "8f944084-b5f2-5a37-adc6-cfc170bcf545",
+            "policy_status": "accepted",
+            "policy_version": "repair-policy-v2",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "target_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+            "unified_diff": "diff --git a/sample_service/app.py b/sample_service/app.py\n--- a/sample_service/app.py\n+++ b/sample_service/app.py\n@@ -97,8 +97,7 @@\n                     return 404, {\"error\": \"unknown_sku\"}\n                 if row[0] < quantity and self.fault_mode != \"inventory_underflow\":\n                     if self.fault_mode == \"pool_leak\":\n-                        # Intentional incident fixture: this branch leaves its slot checked out.\n-                        return_connection = False\n+                        pass\n                     return 409, {\"error\": \"out_of_stock\"}\n                 remaining = row[0] - quantity\n                 connection.execute(\n"
+          }
+        ],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-8ca0207a36d44795b989d2436b7e63aa",
+            "created_at": "2026-10-09T06:53:58.995630+00:00",
+            "details": {
+              "scenario_id": "pool-exhaustion",
+              "scenario_version": 1
+            },
+            "id": "f75e0e41-b708-4651-bef1-b746146e10c6",
+            "kind": "run_created",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:53:59.033198+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "331e8f33-b531-4a9a-92eb-73f031017923",
+            "kind": "state_changed",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:01.773705+00:00",
+            "details": {
+              "failure": "database_pool_timeout",
+              "observed_end": "2026-10-09T06:54:03.670693+00:00",
+              "observed_start": "2026-10-09T06:53:57.136876+00:00",
+              "request_ids": [
+                "run-be09c1b5-df84ad20-a",
+                "run-be09c1b5-df84ad20-b",
+                "run-be09c1b5-df84ad20-failure"
+              ],
+              "response": {
+                "error": "database_pool_timeout"
+              },
+              "statuses": [
+                409,
+                409,
+                503
+              ]
+            },
+            "id": "e76081a9-8adc-4bf4-a80e-766c9eafc11e",
+            "kind": "reproduction_recorded",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:01.793244+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "ac62b791-5aa2-4b80-8014-8dca3516821d",
+            "kind": "state_changed",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:02.832622+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "a32116e5-b078-4465-b0f3-a64cb1378b86",
+            "kind": "evidence_recorded",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:02.874178+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "f3ea5777-110b-4f00-b8b8-129e3e00e238",
+            "kind": "state_changed",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:12.188422+00:00",
+            "details": {
+              "hypothesis_count": 2,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "diagnosis-v2",
+              "tool_call_count": 2
+            },
+            "id": "aca6b257-7436-4062-842f-dfd2dd47ef1e",
+            "kind": "diagnosis_recorded",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:12.188422+00:00",
+            "details": {
+              "evidence_id": "ev-b0dfc29d-b0cd-586a-b255-bca31e609987",
+              "schema_version": 1,
+              "tool": "search_logs"
+            },
+            "id": "b21452e5-98a4-477a-b408-f4f986efba20",
+            "kind": "diagnosis_tool_call",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:12.188422+00:00",
+            "details": {
+              "evidence_id": "ev-c911bd57-0843-5868-b115-1e46f1596338",
+              "schema_version": 1,
+              "tool": "fetch_trace"
+            },
+            "id": "d911617b-b4c6-42e9-8434-935ebe9d0768",
+            "kind": "diagnosis_tool_call",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:12.225833+00:00",
+            "details": {
+              "state": "AWAITING_REPAIR_APPROVAL"
+            },
+            "id": "436a20f0-a11d-407f-ac96-3b3f932da5f0",
+            "kind": "state_changed",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "live-evaluation-v1",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:13.156137+00:00",
+            "details": {
+              "action": "generate_repair",
+              "decision": "approved",
+              "policy_version": "approval-v1"
+            },
+            "id": "809a559b-59b4-4838-8513-700264717e8a",
+            "kind": "repair_approval",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:13.188625+00:00",
+            "details": {
+              "state": "GENERATING"
+            },
+            "id": "d2853618-3563-4043-b776-0981805bc6e8",
+            "kind": "state_changed",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "policy",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:16.800746+00:00",
+            "details": {
+              "accepted": true,
+              "category": "accepted",
+              "detail": "diff passed deterministic repair policy",
+              "diff_sha256": "417a731b9bed18c304b1c1a5d870fa787d50fec67f9efe5b725bc88cf8192727"
+            },
+            "id": "0bfa666b-b7b7-418d-9b9b-0e11bda9a8c9",
+            "kind": "repair_policy_decision",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:16.800746+00:00",
+            "details": {
+              "candidate_count": 1,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "repair-v7",
+              "rejected_count": 0
+            },
+            "id": "48b501d0-1138-4b46-acc4-3ba6edd8c2ad",
+            "kind": "repair_generation_recorded",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:16.824516+00:00",
+            "details": {
+              "state": "VERIFYING"
+            },
+            "id": "6210e22e-e66d-40c2-94e2-596aee327187",
+            "kind": "state_changed",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:31.160730+00:00",
+            "details": {
+              "candidate_id": "8f944084-b5f2-5a37-adc6-cfc170bcf545",
+              "check_count": 7,
+              "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+              "outcome": "PASS"
+            },
+            "id": "f45875f9-ad94-4790-a96d-345a914c1d9a",
+            "kind": "verification_recorded",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:31.209620+00:00",
+            "details": {
+              "candidate_count": 1,
+              "score_version": "verification-score-v1",
+              "terminal_state": "COMPLETED",
+              "verified_count": 1
+            },
+            "id": "b3cc33df-8179-4046-808e-21e937be8e44",
+            "kind": "verification_ranking_recorded",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:31.246007+00:00",
+            "details": {
+              "state": "REPORTING"
+            },
+            "id": "4ccddffb-b72a-4648-b8df-fcbb74dab9b2",
+            "kind": "state_changed",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:31.270773+00:00",
+            "details": {
+              "format": "internal-json",
+              "status": "placeholder"
+            },
+            "id": "ae666e9a-796c-41fb-a806-08a08f047e64",
+            "kind": "report_placeholder_recorded",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "created_at": "2026-10-09T06:54:31.300027+00:00",
+            "details": {
+              "state": "COMPLETED"
+            },
+            "id": "6e7b3341-55a2-45fe-8de3-0c2b88504e2a",
+            "kind": "state_changed",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/a934897c-8355-5fcc-a509-0bb43ef50744",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-150bb8ec-4e40-5030-8b29-2e54195f9af0",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:54:02.832181Z",
+            "observed_start": "2026-10-09T06:54:02.832181Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/83d1611b-6cd0-5386-a766-7bc8d02fc137",
+            "content_sha256": "ae4d4e65039f7ed2e24809c12677978cf41cc17afe83011adfefe2a94dee82e3",
+            "id": "ev-4e9ecb8a-1dd9-5c6a-b70b-b24f4f658661",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:54:03.670693Z",
+            "observed_start": "2026-10-09T06:53:57.136876Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/f44e42e0-6f0f-593c-bbf3-95cdc4ceb036",
+            "content_sha256": "c31a07806a7561a33c6b9d25a631aeca3eb94da9fe60a2fcad3b5ae9f8a027f4",
+            "id": "ev-b0dfc29d-b0cd-586a-b255-bca31e609987",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:54:03.670693Z",
+            "observed_start": "2026-10-09T06:53:57.136876Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/f0028793-a57e-5b9a-b835-0b7c2f35e08e",
+            "content_sha256": "73529f5763b124f5048b231fdc9cb501dcc8b461014d2d083afeba5af769bc07",
+            "id": "ev-34cfa04e-4fd7-5add-9200-41e345fcebe5",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:03.670693Z",
+            "observed_start": "2026-10-09T06:53:57.136876Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/d77ed1cf-3555-5dcc-b58e-dfbc6db9ac46",
+            "content_sha256": "db5d36075f539d8181846f79b208d942e5a0d1b6547ca1b5fbc3f45ca0453af9",
+            "id": "ev-4f812e8c-2f05-502b-b769-fd651decbc7b",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:03.670693Z",
+            "observed_start": "2026-10-09T06:53:57.136876Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/e54cdb7b-a6f7-5528-b34d-89b9f8c44c44",
+            "content_sha256": "82a0ef1bf8880f6153bed85046ff6b1d9200ce524f21436c26c7a11b90661254",
+            "id": "ev-82548192-ebfb-56fc-bf76-bb47fa8a7248",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:03.670693Z",
+            "observed_start": "2026-10-09T06:53:57.136876Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=0, maximum=0, latest=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/7854e87e-4296-5003-b82b-f0debfe61e44",
+            "content_sha256": "59f71c421531c1ccc2848e92e6ae2806c3a72d61288217cc5fc42adb9a3e3b8f",
+            "id": "ev-c911bd57-0843-5868-b115-1e46f1596338",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:54:03.670693Z",
+            "observed_start": "2026-10-09T06:53:57.136876Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=True."
+          }
+        ],
+        "hypotheses": [
+          {
+            "confidence": "high",
+            "contradicting_evidence_ids": [],
+            "id": "809b3059-0d0f-5e01-92f9-bba2f551648b",
+            "mechanism": "The correlated trace shows `db.pool.acquire` timing out with `database_pool_timeout`, and both checkout and inventory server spans end with HTTP 503 for the same request.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-4e9ecb8a-1dd9-5c6a-b70b-b24f4f658661",
+                "schema_version": 1,
+                "tool": "search_logs"
+              },
+              {
+                "evidence_id": "ev-34cfa04e-4fd7-5add-9200-41e345fcebe5",
+                "schema_version": 1,
+                "tool": "query_metric"
+              }
+            ],
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "summary": "Inventory checkout is failing because the inventory service cannot acquire a database connection and returns 503.",
+            "supporting_evidence_ids": [
+              "ev-c911bd57-0843-5868-b115-1e46f1596338",
+              "ev-b0dfc29d-b0cd-586a-b255-bca31e609987"
+            ]
+          },
+          {
+            "confidence": "medium",
+            "contradicting_evidence_ids": [],
+            "id": "a3eac466-303b-50e7-83ba-97fc79566fcd",
+            "mechanism": "Inventory shows a timeout/error path and the trace attributes the failure to inventory\u2019s database acquisition, while checkout only relays the 503 response from downstream.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-4e9ecb8a-1dd9-5c6a-b70b-b24f4f658661",
+                "schema_version": 1,
+                "tool": "search_logs"
+              },
+              {
+                "evidence_id": "ev-82548192-ebfb-56fc-bf76-bb47fa8a7248",
+                "schema_version": 1,
+                "tool": "query_metric"
+              }
+            ],
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1,
+            "summary": "The incident is likely localized to inventory rather than checkout.",
+            "supporting_evidence_ids": [
+              "ev-c911bd57-0843-5868-b115-1e46f1596338",
+              "ev-b0dfc29d-b0cd-586a-b255-bca31e609987"
+            ]
+          }
+        ],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [
+          {
+            "estimated_cost_usd": 0.008885,
+            "id": "068c1d83-1dae-5acb-aa9e-be871c31e0b4",
+            "input_tokens": 5756,
+            "latency_ms": 9257,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 1015,
+            "prompt_version": "diagnosis-v2",
+            "provider": "openai",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1
+          },
+          {
+            "estimated_cost_usd": 0.005655,
+            "id": "989e3f7d-bfd2-55a3-9315-5b294f5ce9e5",
+            "input_tokens": 5902,
+            "latency_ms": 3567,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 273,
+            "prompt_version": "repair-v7",
+            "provider": "openai",
+            "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+            "schema_version": 1
+          }
+        ],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:53:58.995630Z",
+          "id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "pool-exhaustion",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-09T06:54:31.300027Z",
+          "workflow_id": "incidentlab-run-be09c1b5-ee7a-5227-8e4a-14336d1f956d"
+        },
+        "verifications": [
+          {
+            "candidate_id": "8f944084-b5f2-5a37-adc6-cfc170bcf545",
+            "checks": [
+              {
+                "artifact_ref": "/verification/artifacts/71d7c2d6-69ee-55b0-adeb-ddeb52cd1681",
+                "content_sha256": "5364026651876184a998fe0bf6a84eadc8bd9acd94df0996b5a310e63ea6f470",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:54:21.578481Z",
+                "name": "baseline_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:54:18.195451Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/bcf51134-df71-5e95-87ff-f31ddf4f8c4c",
+                "content_sha256": "f3683054e8d01e6963e09ef787b007c80d18e44d558886a1214e89aa2d80628e",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:54:21.597054Z",
+                "name": "patch_apply",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:54:21.579590Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/347eb1e5-d34d-536e-b00d-f1406f483b97",
+                "content_sha256": "9ad7e7b1dc567a6d59e37c4da7b97d71de7241d74f04edc15ef669cb5fe70206",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:54:21.899359Z",
+                "name": "build",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:54:21.597437Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/9f4cb0f5-1f51-5261-beb8-46e1b0a72a53",
+                "content_sha256": "2cf0be5ef3d67d19f8ebe21b54771a1c9f1faec60bb7f7e0a4210d40e8141fe1",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:54:22.101354Z",
+                "name": "static",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:54:21.900091Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/68f59e73-b7a1-5581-a530-2c53ec9a6d12",
+                "content_sha256": "c5397dd15df406fac4c7e09047060b5811e1af23e6c4c28af8a6a389a671be90",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:54:22.811766Z",
+                "name": "unit",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:54:22.102169Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/c5b197ee-332f-5281-a40c-1828fb4499ce",
+                "content_sha256": "bfd9d781dccc5fc18b46750b539c00e5638ea96b82d134039d218d9b0b478e4a",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:54:25.971648Z",
+                "name": "integration",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:54:22.813368Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/531d14ae-be71-584a-ad52-266352403963",
+                "content_sha256": "c6e7e7e8bdd85aeaa0dd4649c0d3a5e49bdb74984a3eaae94b332d3a0aa6d175",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:54:31.118370Z",
+                "name": "incident_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:54:25.972444Z"
+              }
+            ],
+            "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+            "finished_at": "2026-10-09T06:54:31.118370Z",
+            "id": "5e7b8094-93a8-5259-b8f6-590858587fb6",
+            "outcome": "PASS",
+            "rank": 1,
+            "schema_version": 1,
+            "score": {
+              "changed_files": 1,
+              "changed_lines": 3,
+              "mandatory_outcome": 0
+            },
+            "score_version": "verification-score-v1",
+            "started_at": "2026-10-09T06:54:18.195451Z"
+          }
+        ]
+      },
+      "reproduced": true,
+      "resolved_citation_count": 4,
+      "run_id": "be09c1b5-ee7a-5227-8e4a-14336d1f956d",
+      "scenario_id": "pool-exhaustion",
+      "state": "COMPLETED",
+      "trial": 1,
+      "verified_repair": true
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 11151,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "follow-up query budget exhausted",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-527ec79e627e43b994de34a5d9376842",
+            "created_at": "2026-10-09T06:54:31.390914+00:00",
+            "details": {
+              "scenario_id": "pool-exhaustion",
+              "scenario_version": 1
+            },
+            "id": "76615a97-b374-42b6-b3e5-ad906aef75f5",
+            "kind": "run_created",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:31.418674+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "9e151a71-c8a7-479f-8d49-477d91a2bb48",
+            "kind": "state_changed",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:34.024074+00:00",
+            "details": {
+              "failure": "database_pool_timeout",
+              "observed_end": "2026-10-09T06:54:35.958535+00:00",
+              "observed_start": "2026-10-09T06:54:29.434401+00:00",
+              "request_ids": [
+                "run-4a6fdef7-c2b86ce4-a",
+                "run-4a6fdef7-c2b86ce4-b",
+                "run-4a6fdef7-c2b86ce4-failure"
+              ],
+              "response": {
+                "error": "database_pool_timeout"
+              },
+              "statuses": [
+                409,
+                409,
+                503
+              ]
+            },
+            "id": "cce5c188-3007-4486-b43a-c7780ba93a16",
+            "kind": "reproduction_recorded",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:34.039007+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "d96e38e6-7c7f-448d-ba91-6db268f1bcc4",
+            "kind": "state_changed",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:34.069327+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "5d423b8b-77d2-4184-8436-32386bd23b61",
+            "kind": "evidence_recorded",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:34.093325+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "6648c39e-e621-431a-ae2a-7cab6d983647",
+            "kind": "state_changed",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:42.416593+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "follow-up query budget exhausted"
+            },
+            "id": "284e048b-5b46-436a-91d0-2fc85ac52fdc",
+            "kind": "diagnosis_rejected",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:42.442562+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "7e6b3fcf-5273-4ca1-aff7-de48179945d3",
+            "kind": "state_changed",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/f402f1fc-61ef-55a3-b7ff-f4e76aa49e83",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-7a464bf5-e9a3-5e3e-990a-d39300410b84",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:54:34.069182Z",
+            "observed_start": "2026-10-09T06:54:34.069182Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/34cf4398-aaf5-5fad-ae6c-4d174b9010a5",
+            "content_sha256": "1e8ea86eac1b71acfedfef5482986c0c8e8cf51e346964f07de158cf316d0cd3",
+            "id": "ev-1201e7b8-4d28-5b8e-a47e-df318aced8b0",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/7e7389b7-1eff-5708-8d36-6414f6b9b1db",
+            "content_sha256": "37305fce4ef07867507276dadb40f89a930f518caf7b2f89738ce2f3b8d22d77",
+            "id": "ev-e7a30812-8b67-5afc-937f-6141c7285067",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2efee511-4ab6-5b12-9805-7635b5ceb4e4",
+            "content_sha256": "2086710f9f127ec3be09d89c9282d63053ae2ea99981d3707bfd2408e03d2627",
+            "id": "ev-0cf2f5f0-cd38-5fd4-9dcd-928eb6770284",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/277e0354-22bc-5ba7-a211-c5675f38e655",
+            "content_sha256": "da270ed9280c77e5cf2f56f27a70ea6529604e01d4c2091d1c6d8b534db8bba8",
+            "id": "ev-82833857-463d-5105-b839-5349c4ef97aa",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/87503597-92da-5fd6-a97d-18b829023825",
+            "content_sha256": "528db81627f4eb309b28fd2ae41854f217a7afada6dbc48230f34e1bc8d57656",
+            "id": "ev-f201d2ea-9648-5290-bffd-1968a954f0d1",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=0, maximum=0, latest=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/f6428782-e6d8-52b2-bff7-cee28b00d189",
+            "content_sha256": "989669566eb8f1ce8536b0cdc99fd5b0df997d1b73f68e6ea9f458aea5c376da",
+            "id": "ev-1ad1b736-b634-574f-b66b-2cdfc59128a1",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=True."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:54:31.390914Z",
+          "id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "pool-exhaustion",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T06:54:42.442562Z",
+          "workflow_id": "incidentlab-run-4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+      "scenario_id": "pool-exhaustion",
+      "state": "FAILED",
+      "trial": 2,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 5,
+      "citations_valid": true,
+      "duration_ms": 30372,
+      "estimated_cost_usd": 0.015672,
+      "failure_category": null,
+      "input_tokens": 11667,
+      "model_ids": [
+        "gpt-5.4-mini"
+      ],
+      "output_tokens": 1538,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [
+        "diagnosis-v2",
+        "repair-v7"
+      ],
+      "report": {
+        "candidates": [
+          {
+            "changed_paths": [
+              "sample_service/app.py"
+            ],
+            "diff_sha256": "417a731b9bed18c304b1c1a5d870fa787d50fec67f9efe5b725bc88cf8192727",
+            "expected_behavior": "When INCIDENTLAB_FAULT is pool_leak, checkout requests should no longer exhaust the database pool; failed checkout responses still return 409 without leaking connections.",
+            "explanation": "Disable the pool-leak fixture branch so out-of-stock checkouts still release the borrowed connection in the finally block.",
+            "generator_id": "gpt-5.4-mini",
+            "id": "8914efef-fe33-5ff0-be34-ad0ff774615b",
+            "policy_status": "accepted",
+            "policy_version": "repair-policy-v2",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "target_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+            "unified_diff": "diff --git a/sample_service/app.py b/sample_service/app.py\n--- a/sample_service/app.py\n+++ b/sample_service/app.py\n@@ -97,8 +97,7 @@\n                     return 404, {\"error\": \"unknown_sku\"}\n                 if row[0] < quantity and self.fault_mode != \"inventory_underflow\":\n                     if self.fault_mode == \"pool_leak\":\n-                        # Intentional incident fixture: this branch leaves its slot checked out.\n-                        return_connection = False\n+                        pass\n                     return 409, {\"error\": \"out_of_stock\"}\n                 remaining = row[0] - quantity\n                 connection.execute(\n"
+          }
+        ],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-20fe509e650d43219fea01042ba6a7b2",
+            "created_at": "2026-10-09T06:54:42.557360+00:00",
+            "details": {
+              "scenario_id": "pool-exhaustion",
+              "scenario_version": 1
+            },
+            "id": "a67d0903-d040-41a8-b9d8-7c65632a334a",
+            "kind": "run_created",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:42.585835+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "baf11c7c-2877-4c36-b140-65aff0e9cd67",
+            "kind": "state_changed",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:45.289517+00:00",
+            "details": {
+              "failure": "database_pool_timeout",
+              "observed_end": "2026-10-09T06:54:47.221834+00:00",
+              "observed_start": "2026-10-09T06:54:40.602799+00:00",
+              "request_ids": [
+                "run-f4a474db-9ee77c31-a",
+                "run-f4a474db-9ee77c31-b",
+                "run-f4a474db-9ee77c31-failure"
+              ],
+              "response": {
+                "error": "database_pool_timeout"
+              },
+              "statuses": [
+                409,
+                409,
+                503
+              ]
+            },
+            "id": "d30af4a7-8efd-45e6-af93-2259aa984555",
+            "kind": "reproduction_recorded",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:45.324366+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "649995a3-d015-4e84-9c1f-323ac8f5c970",
+            "kind": "state_changed",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:45.382638+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "8e6f2173-df53-4b1e-a9d2-054658a295b5",
+            "kind": "evidence_recorded",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:45.407479+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "ac71505e-46b6-4552-9325-eae7bb3fc672",
+            "kind": "state_changed",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:53.987798+00:00",
+            "details": {
+              "evidence_id": "ev-da7054e0-e853-588a-9189-c81710b215f0",
+              "schema_version": 1,
+              "tool": "search_logs"
+            },
+            "id": "03604bb8-ff13-41a8-9d92-f449f3fce306",
+            "kind": "diagnosis_tool_call",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:53.987798+00:00",
+            "details": {
+              "hypothesis_count": 3,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "diagnosis-v2",
+              "tool_call_count": 2
+            },
+            "id": "04a6f959-c729-4df4-a106-8eed51fb8542",
+            "kind": "diagnosis_recorded",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:53.987798+00:00",
+            "details": {
+              "evidence_id": "ev-16f82e67-0ed8-50cf-bf06-0723e9b77c74",
+              "schema_version": 1,
+              "tool": "fetch_trace"
+            },
+            "id": "63d8f2ea-72ad-48a3-bb91-f75854040f7b",
+            "kind": "diagnosis_tool_call",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:54.024621+00:00",
+            "details": {
+              "state": "AWAITING_REPAIR_APPROVAL"
+            },
+            "id": "e31418bd-e196-4625-af8f-83e8d0d55afe",
+            "kind": "state_changed",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "live-evaluation-v1",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:54.693074+00:00",
+            "details": {
+              "action": "generate_repair",
+              "decision": "approved",
+              "policy_version": "approval-v1"
+            },
+            "id": "2c1741f0-3240-4bdd-a6e3-92dee58f1c97",
+            "kind": "repair_approval",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:54.725947+00:00",
+            "details": {
+              "state": "GENERATING"
+            },
+            "id": "b62a88e1-49a6-42c0-b5db-9bc80a5fd057",
+            "kind": "state_changed",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:58.831834+00:00",
+            "details": {
+              "candidate_count": 1,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "repair-v7",
+              "rejected_count": 0
+            },
+            "id": "d98286e0-c1b4-42f3-a893-72ff76507c22",
+            "kind": "repair_generation_recorded",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "policy",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:58.831834+00:00",
+            "details": {
+              "accepted": true,
+              "category": "accepted",
+              "detail": "diff passed deterministic repair policy",
+              "diff_sha256": "417a731b9bed18c304b1c1a5d870fa787d50fec67f9efe5b725bc88cf8192727"
+            },
+            "id": "dfe8cffe-f9da-46e7-bf89-8184125035c4",
+            "kind": "repair_policy_decision",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:54:58.860877+00:00",
+            "details": {
+              "state": "VERIFYING"
+            },
+            "id": "4bc4a929-03ae-4ddc-a33d-d5673816696d",
+            "kind": "state_changed",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:55:12.529196+00:00",
+            "details": {
+              "candidate_id": "8914efef-fe33-5ff0-be34-ad0ff774615b",
+              "check_count": 7,
+              "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+              "outcome": "PASS"
+            },
+            "id": "0adf8f35-5cd8-4cc1-851c-2edda5d27627",
+            "kind": "verification_recorded",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:55:12.570830+00:00",
+            "details": {
+              "candidate_count": 1,
+              "score_version": "verification-score-v1",
+              "terminal_state": "COMPLETED",
+              "verified_count": 1
+            },
+            "id": "6caea33f-2a38-48b5-90ec-fc646ace40ec",
+            "kind": "verification_ranking_recorded",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:55:12.600369+00:00",
+            "details": {
+              "state": "REPORTING"
+            },
+            "id": "5e7d48ce-c288-4481-987e-fb16a237fecd",
+            "kind": "state_changed",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:55:12.615022+00:00",
+            "details": {
+              "format": "internal-json",
+              "status": "placeholder"
+            },
+            "id": "c250dd4c-15b4-4ea8-bfce-37467eaadb4a",
+            "kind": "report_placeholder_recorded",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "created_at": "2026-10-09T06:55:12.636684+00:00",
+            "details": {
+              "state": "COMPLETED"
+            },
+            "id": "d44cb791-36a4-4b32-aa41-5225a811391c",
+            "kind": "state_changed",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/a57e58f7-534b-5063-866f-545e5a2ef0c1",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-0c56b98f-4d6b-5004-936d-1b4459756fc3",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:54:45.382375Z",
+            "observed_start": "2026-10-09T06:54:45.382375Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2f98e8d2-a618-5a50-8d2d-55359f3a8c49",
+            "content_sha256": "90f9bfabcff4c0a616d204ab5584f87789a19cbfd31b3c6de99001b567a37591",
+            "id": "ev-5c8dceaa-98b0-5a26-b9ee-05f2305fe18a",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:54:47.221834Z",
+            "observed_start": "2026-10-09T06:54:40.602799Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/06bac3c0-231b-5405-814b-b7449382729c",
+            "content_sha256": "dc0742f14827db980731b752d7fed1491ce680e6ed553d626d5b7cd330692e54",
+            "id": "ev-da7054e0-e853-588a-9189-c81710b215f0",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:54:47.221834Z",
+            "observed_start": "2026-10-09T06:54:40.602799Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/ac463e17-23f1-59ed-9825-591e201cc405",
+            "content_sha256": "dbd5b293a231f42887c9a1b0236bd05a69649cf3a7d27df921a6b701a5ca7a61",
+            "id": "ev-58fb8918-38cd-53de-8750-b39353ca744a",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:47.221834Z",
+            "observed_start": "2026-10-09T06:54:40.602799Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/f70a19c7-e36e-5954-a790-a9a06670107c",
+            "content_sha256": "5c42d085c4e5c25b68183e2601a0e11fc6037d044b52ff644d11d9b1f9191eb9",
+            "id": "ev-a32e015d-42d3-5b2b-a66a-3d7871f78164",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:47.221834Z",
+            "observed_start": "2026-10-09T06:54:40.602799Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/b001832b-10f1-5685-bc96-d810a87196e7",
+            "content_sha256": "e8484df5b995fcfac38bb95639a9582e39190deefa8dd89335cc43c501fcea49",
+            "id": "ev-b22c10ed-5ceb-5ddd-9d99-68bf852e40d5",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:47.221834Z",
+            "observed_start": "2026-10-09T06:54:40.602799Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=0, maximum=0, latest=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/cfbaabfd-a338-52aa-bf11-57b1227388c4",
+            "content_sha256": "7852015f4cd5ce2fb5a4505869e73d2da1b33da61a66612a44a9801a71c1c04e",
+            "id": "ev-16f82e67-0ed8-50cf-bf06-0723e9b77c74",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:54:47.221834Z",
+            "observed_start": "2026-10-09T06:54:40.602799Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=True."
+          }
+        ],
+        "hypotheses": [
+          {
+            "confidence": "medium",
+            "contradicting_evidence_ids": [],
+            "id": "1627ad15-0817-5a45-b6dc-9a621148f881",
+            "mechanism": "The trace shows the checkout server span and the downstream inventory span both returning 503 for the same request, indicating checkout is failing because inventory cannot serve the request successfully.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-0c56b98f-4d6b-5004-936d-1b4459756fc3",
+                "schema_version": 1,
+                "tool": "search_repository"
+              }
+            ],
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "summary": "A checkout path dependency on inventory is propagating the failure to the client.",
+            "supporting_evidence_ids": [
+              "ev-16f82e67-0ed8-50cf-bf06-0723e9b77c74",
+              "ev-da7054e0-e853-588a-9189-c81710b215f0"
+            ]
+          },
+          {
+            "confidence": "low",
+            "contradicting_evidence_ids": [],
+            "id": "a2156ae8-0beb-5e53-8a0a-ba6ddb1704f7",
+            "mechanism": "The only explicit failure signal is a database pool timeout inside inventory, while metrics show no obvious error-series increase in the provided window; this points more toward pool starvation/exhaustion than a generic HTTP handling problem.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-58fb8918-38cd-53de-8750-b39353ca744a",
+                "schema_version": 1,
+                "tool": "query_metric"
+              }
+            ],
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "summary": "The incident is likely due to resource contention or exhaustion in inventory\u2019s DB access layer rather than an application-level routing bug.",
+            "supporting_evidence_ids": [
+              "ev-16f82e67-0ed8-50cf-bf06-0723e9b77c74",
+              "ev-58fb8918-38cd-53de-8750-b39353ca744a"
+            ]
+          },
+          {
+            "confidence": "high",
+            "contradicting_evidence_ids": [],
+            "id": "cfd36afc-96ae-5d4a-814c-2179ea9c31e4",
+            "mechanism": "The correlated trace shows both checkout and inventory POST /checkout spans ending in 503, with the inventory internal span failing at db.pool.acquire due to database_pool_timeout.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-b22c10ed-5ceb-5ddd-9d99-68bf852e40d5",
+                "schema_version": 1,
+                "tool": "query_metric"
+              }
+            ],
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1,
+            "summary": "Inventory\u2019s database pool acquisition is timing out, causing checkout requests to return 503.",
+            "supporting_evidence_ids": [
+              "ev-16f82e67-0ed8-50cf-bf06-0723e9b77c74"
+            ]
+          }
+        ],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [
+          {
+            "estimated_cost_usd": 0.005759,
+            "id": "47e70664-4cde-58a7-90b9-401ec32a18e9",
+            "input_tokens": 5836,
+            "latency_ms": 4065,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 307,
+            "prompt_version": "repair-v7",
+            "provider": "openai",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1
+          },
+          {
+            "estimated_cost_usd": 0.009913,
+            "id": "91fa3236-01f8-5927-8f15-d2fa18c3a872",
+            "input_tokens": 5831,
+            "latency_ms": 8542,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 1231,
+            "prompt_version": "diagnosis-v2",
+            "provider": "openai",
+            "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+            "schema_version": 1
+          }
+        ],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:54:42.557360Z",
+          "id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "pool-exhaustion",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-09T06:55:12.636684Z",
+          "workflow_id": "incidentlab-run-f4a474db-6b63-5c3c-a135-6030d921b5b2"
+        },
+        "verifications": [
+          {
+            "candidate_id": "8914efef-fe33-5ff0-be34-ad0ff774615b",
+            "checks": [
+              {
+                "artifact_ref": "/verification/artifacts/0dbf578e-e077-5c12-9086-f75cf90bd180",
+                "content_sha256": "c95043dca64a42086f482724e4b54789a8a75badbb743e09d321431dd9a5e862",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:02.905397Z",
+                "name": "baseline_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:54:59.697499Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/05c4059a-4783-5959-b416-b4c0a1532ff5",
+                "content_sha256": "deee8e7f085ac1a8961e7ee7ed9162d913b4161a8cc72c15f9a9418340b2e7b6",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:02.917363Z",
+                "name": "patch_apply",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:02.906278Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/5f64932d-99d6-5517-a786-64d27727909b",
+                "content_sha256": "9db8709189d3f535c4029e558bda947baf86875b1b56f4075e11f97411e600d7",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:03.220244Z",
+                "name": "build",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:02.917673Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/f51e1ea4-a2ec-5545-ac22-79873a9470ac",
+                "content_sha256": "12aa94c7e3fc9b26ac65667c3ff9f0a40d6cb8400018c7d515adecb2fbf6bc07",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:03.421997Z",
+                "name": "static",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:03.221021Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/15a67375-746c-517b-88ff-a892d982b419",
+                "content_sha256": "6acd33524f2ef9214c868d906071c2bee76191c3638809d48ca3653ae613faa7",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:04.130143Z",
+                "name": "unit",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:03.423020Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/15e09137-2cc0-57c6-9026-3084faefff72",
+                "content_sha256": "dbfaceef2fda7c7616f895296c9bec72c68f21924f566c595eae152421a38a5e",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:07.292927Z",
+                "name": "integration",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:04.130743Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/283b6557-f033-543f-94a5-cd80a3498ce0",
+                "content_sha256": "4fc93c78b975ed27a3e3ed32bf0be58e9626118dca267bad66f80e16e28b653f",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:12.496610Z",
+                "name": "incident_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:07.293621Z"
+              }
+            ],
+            "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+            "finished_at": "2026-10-09T06:55:12.496610Z",
+            "id": "ce0b41ab-d6f4-5dcc-a100-8fe18a5426b1",
+            "outcome": "PASS",
+            "rank": 1,
+            "schema_version": 1,
+            "score": {
+              "changed_files": 1,
+              "changed_lines": 3,
+              "mandatory_outcome": 0
+            },
+            "score_version": "verification-score-v1",
+            "started_at": "2026-10-09T06:54:59.697499Z"
+          }
+        ]
+      },
+      "reproduced": true,
+      "resolved_citation_count": 5,
+      "run_id": "f4a474db-6b63-5c3c-a135-6030d921b5b2",
+      "scenario_id": "pool-exhaustion",
+      "state": "COMPLETED",
+      "trial": 3,
+      "verified_repair": true
+    },
+    {
+      "citation_count": 11,
+      "citations_valid": true,
+      "duration_ms": 37461,
+      "estimated_cost_usd": 0.022,
+      "failure_category": null,
+      "input_tokens": 16313,
+      "model_ids": [
+        "gpt-5.4-mini"
+      ],
+      "output_tokens": 2170,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [
+        "diagnosis-v2",
+        "repair-v7"
+      ],
+      "report": {
+        "candidates": [
+          {
+            "changed_paths": [
+              "sample_service/app.py"
+            ],
+            "diff_sha256": "56d5cc4ebd6b8781ee213307bc1475fc6db05c0be229aa595eae4ce447a2b11e",
+            "expected_behavior": "Checkout requests with quantity greater than available inventory should return 409 out_of_stock and leave inventory unchanged.",
+            "explanation": "Remove the inventory_underflow exception so insufficient stock returns out_of_stock instead of allowing negative inventory.",
+            "generator_id": "gpt-5.4-mini",
+            "id": "53f96b9a-13bb-5b54-8765-3f6aab843ebc",
+            "policy_status": "accepted",
+            "policy_version": "repair-policy-v2",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "target_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+            "unified_diff": "diff --git a/sample_service/app.py b/sample_service/app.py\n--- a/sample_service/app.py\n+++ b/sample_service/app.py\n@@ -95,7 +95,7 @@\n                     ).fetchone()\n                 if row is None:\n                     return 404, {\"error\": \"unknown_sku\"}\n-                if row[0] < quantity and self.fault_mode != \"inventory_underflow\":\n+                if row[0] < quantity:\n                     if self.fault_mode == \"pool_leak\":\n                         # Intentional incident fixture: this branch leaves its slot checked out.\n                         return_connection = False\n"
+          }
+        ],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-c99e2ce03030497badd05d2568fcb8d5",
+            "created_at": "2026-10-09T06:55:12.932324+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "bcaafc98-69bc-47f9-8ebc-7a7bc40a3db7",
+            "kind": "run_created",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:12.960039+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "dabdf2cc-ef42-4bc3-9733-76937fe6dd2d",
+            "kind": "state_changed",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:15.540430+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T06:55:17.442213+00:00",
+              "observed_start": "2026-10-09T06:55:10.976168+00:00",
+              "request_ids": [
+                "run-f373cd81-03c1969b-failure"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "statuses": [
+                200
+              ]
+            },
+            "id": "1466e349-64c9-4f07-8d22-75a29379f3cb",
+            "kind": "reproduction_recorded",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:15.554987+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "7beb00bd-69d8-440e-8141-3d54b5362109",
+            "kind": "state_changed",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:19.598802+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "2c3de64f-0b23-4d82-8bb1-2cc08c90d4da",
+            "kind": "evidence_recorded",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:19.639216+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "cfb9f888-a36f-427c-b312-b4346d97f466",
+            "kind": "state_changed",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:33.082402+00:00",
+            "details": {
+              "evidence_id": "ev-ff8fdcac-4754-583b-8213-4846c7bf45eb",
+              "schema_version": 1,
+              "tool": "fetch_trace"
+            },
+            "id": "06821425-68b4-4a0b-8ffc-04f0e4aaf9b3",
+            "kind": "diagnosis_tool_call",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:33.082402+00:00",
+            "details": {
+              "evidence_id": "ev-daa82acb-31cb-53fc-8adf-af45bce1af6d",
+              "schema_version": 1,
+              "tool": "search_logs"
+            },
+            "id": "26809408-fc5d-40c3-a530-2ad6e51d57c3",
+            "kind": "diagnosis_tool_call",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:33.082402+00:00",
+            "details": {
+              "hypothesis_count": 3,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "diagnosis-v2",
+              "tool_call_count": 2
+            },
+            "id": "82c2ecb7-5e2d-4295-8c01-42018e6a9fd7",
+            "kind": "diagnosis_recorded",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:33.121444+00:00",
+            "details": {
+              "state": "AWAITING_REPAIR_APPROVAL"
+            },
+            "id": "c9bd87e6-9d7a-49e2-af3a-1aaa7290a1d7",
+            "kind": "state_changed",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "live-evaluation-v1",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:33.150617+00:00",
+            "details": {
+              "action": "generate_repair",
+              "decision": "approved",
+              "policy_version": "approval-v1"
+            },
+            "id": "c4fa1737-340f-4ae3-867a-8249ef830624",
+            "kind": "repair_approval",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:33.173578+00:00",
+            "details": {
+              "state": "GENERATING"
+            },
+            "id": "f202fdf1-3f85-4b3e-90b8-6507dc010694",
+            "kind": "state_changed",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:36.177190+00:00",
+            "details": {
+              "candidate_count": 1,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "repair-v7",
+              "rejected_count": 0
+            },
+            "id": "1e8339c2-7fd3-4db1-82cc-5e00ea2cc555",
+            "kind": "repair_generation_recorded",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "policy",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:36.177190+00:00",
+            "details": {
+              "accepted": true,
+              "category": "accepted",
+              "detail": "diff passed deterministic repair policy",
+              "diff_sha256": "56d5cc4ebd6b8781ee213307bc1475fc6db05c0be229aa595eae4ce447a2b11e"
+            },
+            "id": "9777fb40-ebf8-4567-9abd-bd74cf9bdcf1",
+            "kind": "repair_policy_decision",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:36.205731+00:00",
+            "details": {
+              "state": "VERIFYING"
+            },
+            "id": "f8c8a227-73a1-45a8-8195-3ee36567c4bf",
+            "kind": "state_changed",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:49.915540+00:00",
+            "details": {
+              "candidate_id": "53f96b9a-13bb-5b54-8765-3f6aab843ebc",
+              "check_count": 7,
+              "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+              "outcome": "PASS"
+            },
+            "id": "fb83ff48-09bf-4366-af96-2a0b96ba6da0",
+            "kind": "verification_recorded",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:49.948725+00:00",
+            "details": {
+              "candidate_count": 1,
+              "score_version": "verification-score-v1",
+              "terminal_state": "COMPLETED",
+              "verified_count": 1
+            },
+            "id": "c99cc493-6469-4fbd-9f50-4c37124098f2",
+            "kind": "verification_ranking_recorded",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:49.974814+00:00",
+            "details": {
+              "state": "REPORTING"
+            },
+            "id": "1a553a46-38ea-4bfc-9509-5732645c38af",
+            "kind": "state_changed",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:50.002182+00:00",
+            "details": {
+              "format": "internal-json",
+              "status": "placeholder"
+            },
+            "id": "11004ae0-c949-47ea-9f72-ce616718dbc0",
+            "kind": "report_placeholder_recorded",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "created_at": "2026-10-09T06:55:50.018700+00:00",
+            "details": {
+              "state": "COMPLETED"
+            },
+            "id": "a17fa367-b84e-4d01-af1a-d653fe8b69ac",
+            "kind": "state_changed",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/5b21f0aa-eb96-506d-9014-66c45351c9c8",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-c901d40e-c455-5866-815d-284c7fcd7a44",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:55:19.598417Z",
+            "observed_start": "2026-10-09T06:55:19.598417Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/7f823cf2-44ca-542e-8315-752601aa31ac",
+            "content_sha256": "a1c52646c8c19e3955c3828e682b4b36cb0866f9d6c24ac730ed2eedc2a5405f",
+            "id": "ev-b6c17c90-6252-52ab-a814-2d3f005f4a66",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:55:17.442213Z",
+            "observed_start": "2026-10-09T06:55:10.976168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2828b61d-1737-5d9b-9108-ad1651bb1d35",
+            "content_sha256": "28ed0f749c9e0639df9644b48497640c8ad1a7cdbe6eb1fe9a413eb3e247f154",
+            "id": "ev-e68fab72-a2dd-524a-afb0-37bc85725251",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:55:17.442213Z",
+            "observed_start": "2026-10-09T06:55:10.976168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/369027b9-e1d9-5d0a-9ff1-7290c606b624",
+            "content_sha256": "9304c8b2aa7310c4ee0444f71e6303437e49611b4834cd8f553aded84433dbde",
+            "id": "ev-0b45cfb6-d0f6-53a8-855c-a2055ede139d",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:55:17.442213Z",
+            "observed_start": "2026-10-09T06:55:10.976168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/c04bc5ad-ebf5-573e-a126-7b1d78d1aedc",
+            "content_sha256": "c2fdff50029ccf648294c23f52c26f056d85f8d04dd1ea8e1e5c8cbf4f4f860a",
+            "id": "ev-daa82acb-31cb-53fc-8adf-af45bce1af6d",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:55:17.442213Z",
+            "observed_start": "2026-10-09T06:55:10.976168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/11b46fce-45ed-5ad9-a154-00124f2466ee",
+            "content_sha256": "8a2a23acb0588006226efa0541ec05d69475f7703a85096401074fe125527d75",
+            "id": "ev-7aaa12cb-2ac5-5fc2-badd-e1ba2a645f78",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:55:17.442213Z",
+            "observed_start": "2026-10-09T06:55:10.976168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/5a597977-2afb-52d4-aaa8-7efd56ccd623",
+            "content_sha256": "3fb8dff13a805113006d79977ccd567e0f4120d95c03938180dbd1a3524492bd",
+            "id": "ev-ff8fdcac-4754-583b-8213-4846c7bf45eb",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:55:17.442213Z",
+            "observed_start": "2026-10-09T06:55:10.976168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False."
+          }
+        ],
+        "hypotheses": [
+          {
+            "confidence": "low",
+            "contradicting_evidence_ids": [],
+            "id": "1c2ec77f-c0f4-58e2-b566-97fb5f232c81",
+            "mechanism": "The trace shows both checkout and inventory server spans returning 200, with the inventory request completing its DB work and no database acquisition timeout. The incident may be a non-error user-facing failure or a partial telemetry issue rather than an application crash.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-c901d40e-c455-5866-815d-284c7fcd7a44",
+                "schema_version": 1,
+                "tool": "search_repository"
+              }
+            ],
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "summary": "No clear root-cause failure is evidenced; the checkout flow completed successfully with HTTP 200.",
+            "supporting_evidence_ids": [
+              "ev-ff8fdcac-4754-583b-8213-4846c7bf45eb",
+              "ev-0b45cfb6-d0f6-53a8-855c-a2055ede139d",
+              "ev-daa82acb-31cb-53fc-8adf-af45bce1af6d",
+              "ev-7aaa12cb-2ac5-5fc2-badd-e1ba2a645f78"
+            ]
+          },
+          {
+            "confidence": "low",
+            "contradicting_evidence_ids": [
+              "ev-0b45cfb6-d0f6-53a8-855c-a2055ede139d",
+              "ev-daa82acb-31cb-53fc-8adf-af45bce1af6d"
+            ],
+            "id": "75589916-7bc0-5c99-8c5f-67f926562baf",
+            "mechanism": "The inventory request includes DB acquisition and query spans, but the end-to-end checkout trace still returns 200. If users saw errors, they may have been caused by transient slowness or an upstream timeout outside the captured span, not by a hard inventory failure.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-ff8fdcac-4754-583b-8213-4846c7bf45eb",
+                "schema_version": 1,
+                "tool": "fetch_trace"
+              }
+            ],
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "summary": "A latency-related issue in inventory is possible but not proven.",
+            "supporting_evidence_ids": [
+              "ev-ff8fdcac-4754-583b-8213-4846c7bf45eb"
+            ]
+          },
+          {
+            "confidence": "low",
+            "contradicting_evidence_ids": [
+              "ev-ff8fdcac-4754-583b-8213-4846c7bf45eb"
+            ],
+            "id": "847ea6ce-3d22-5412-b67f-c0106fee3b87",
+            "mechanism": "Prometheus returned no matching telemetry for both services, while logs and trace data were present. This suggests the incident view is incomplete, so the apparent lack of errors may reflect missing metrics rather than a healthy system.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-0b45cfb6-d0f6-53a8-855c-a2055ede139d",
+                "schema_version": 1,
+                "tool": "search_logs"
+              }
+            ],
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1,
+            "summary": "The incident may be caused by telemetry or observability gaps rather than service failure.",
+            "supporting_evidence_ids": [
+              "ev-0b45cfb6-d0f6-53a8-855c-a2055ede139d",
+              "ev-daa82acb-31cb-53fc-8adf-af45bce1af6d",
+              "ev-c901d40e-c455-5866-815d-284c7fcd7a44"
+            ]
+          }
+        ],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [
+          {
+            "estimated_cost_usd": 0.016337,
+            "id": "29bc4f8d-512b-534a-aed3-48f6a3a76803",
+            "input_tokens": 10425,
+            "latency_ms": 13416,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 1893,
+            "prompt_version": "diagnosis-v2",
+            "provider": "openai",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1
+          },
+          {
+            "estimated_cost_usd": 0.005663,
+            "id": "6d523294-a3e2-5409-8bd6-6e0d16fe0ee4",
+            "input_tokens": 5888,
+            "latency_ms": 2959,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 277,
+            "prompt_version": "repair-v7",
+            "provider": "openai",
+            "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+            "schema_version": 1
+          }
+        ],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:55:12.932324Z",
+          "id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-09T06:55:50.018700Z",
+          "workflow_id": "incidentlab-run-f373cd81-d65a-55a9-b63b-21fd518f8086"
+        },
+        "verifications": [
+          {
+            "candidate_id": "53f96b9a-13bb-5b54-8765-3f6aab843ebc",
+            "checks": [
+              {
+                "artifact_ref": "/verification/artifacts/de5a0531-b218-546f-9ab2-dd147a3ba6d1",
+                "content_sha256": "d7ecb0cfbda35c2abeb5c05f0a3211f388da166bc7b2a48a738d7eb647dccf4e",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:39.759292Z",
+                "name": "baseline_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:37.091798Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/22057298-7f3c-5a06-9aa0-0faa985a0b46",
+                "content_sha256": "2ccdc670fde11591877b4eb72490f0e5370850967129c771d812827df2dfb0ae",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:39.779772Z",
+                "name": "patch_apply",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:39.760261Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/2305a288-775b-5098-8491-176dff3923f8",
+                "content_sha256": "e73f6c675a64b6cd64e032ee30eaf2cc70836d51a5ce752cb8c7f191a415c97d",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:40.132863Z",
+                "name": "build",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:39.780400Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/009f96de-9de5-52a6-ad9a-90fcc0e72b8c",
+                "content_sha256": "58459c6563d431232e2afc5a3448a7f47a71222cabace1bf66f64f8091ffc491",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:40.284480Z",
+                "name": "static",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:40.133543Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/19250bae-6337-5312-b353-f25eba70b101",
+                "content_sha256": "62dc9f52856a3aa586eb4259c2eb0c4bfdf9a54d5866a9cff698f9818ae6cf80",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:40.939716Z",
+                "name": "unit",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:40.285679Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/b3a5ebf4-f1bb-5c60-9660-ff225e812366",
+                "content_sha256": "554210954cf5bff6d5c13df225eb5ec1c8c277011f0f60f5eeebcd149288b700",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:44.720637Z",
+                "name": "integration",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:40.940480Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/fe73a60f-ae65-56d9-a958-f0a9e172b9c6",
+                "content_sha256": "8ca771fc5ad3ba539b0b8e56c7a06cebb578fe1d2d8de06b82c7a1da30fa7f17",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:55:49.868581Z",
+                "name": "incident_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:55:44.722139Z"
+              }
+            ],
+            "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+            "finished_at": "2026-10-09T06:55:49.868581Z",
+            "id": "2517f54a-54c5-531b-88ea-1eb1272e0a6a",
+            "outcome": "PASS",
+            "rank": 1,
+            "schema_version": 1,
+            "score": {
+              "changed_files": 1,
+              "changed_lines": 2,
+              "mandatory_outcome": 0
+            },
+            "score_version": "verification-score-v1",
+            "started_at": "2026-10-09T06:55:37.091798Z"
+          }
+        ]
+      },
+      "reproduced": true,
+      "resolved_citation_count": 11,
+      "run_id": "f373cd81-d65a-55a9-b63b-21fd518f8086",
+      "scenario_id": "inventory-underflow",
+      "state": "COMPLETED",
+      "trial": 1,
+      "verified_repair": true
+    },
+    {
+      "citation_count": 9,
+      "citations_valid": true,
+      "duration_ms": 55612,
+      "estimated_cost_usd": 0.015904,
+      "failure_category": null,
+      "input_tokens": 11628,
+      "model_ids": [
+        "gpt-5.4-mini"
+      ],
+      "output_tokens": 1596,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [
+        "diagnosis-v2",
+        "repair-v7"
+      ],
+      "report": {
+        "candidates": [
+          {
+            "changed_paths": [
+              "sample_service/app.py"
+            ],
+            "diff_sha256": "56d5cc4ebd6b8781ee213307bc1475fc6db05c0be229aa595eae4ce447a2b11e",
+            "expected_behavior": "Checkout should reject requests that exceed available inventory and never write a negative remaining_inventory.",
+            "explanation": "Remove the inventory_underflow exception so insufficient stock always returns out_of_stock instead of allowing a negative inventory update.",
+            "generator_id": "gpt-5.4-mini",
+            "id": "4cca49e8-d3c1-52b3-b702-20c745dfb182",
+            "policy_status": "accepted",
+            "policy_version": "repair-policy-v2",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "target_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+            "unified_diff": "diff --git a/sample_service/app.py b/sample_service/app.py\n--- a/sample_service/app.py\n+++ b/sample_service/app.py\n@@ -95,7 +95,7 @@\n                     ).fetchone()\n                 if row is None:\n                     return 404, {\"error\": \"unknown_sku\"}\n-                if row[0] < quantity and self.fault_mode != \"inventory_underflow\":\n+                if row[0] < quantity:\n                     if self.fault_mode == \"pool_leak\":\n                         # Intentional incident fixture: this branch leaves its slot checked out.\n                         return_connection = False\n"
+          }
+        ],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-20abf9f3d37e4a5ca35706680eeac14d",
+            "created_at": "2026-10-09T06:55:50.396306+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "b932774b-ad89-4253-b460-0282a35a2928",
+            "kind": "run_created",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:55:50.428213+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "48ca0840-1ac5-4e59-ae95-381422e76c76",
+            "kind": "state_changed",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:55:52.987231+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T06:55:54.915846+00:00",
+              "observed_start": "2026-10-09T06:55:48.449916+00:00",
+              "request_ids": [
+                "run-ee49cc92-f01215db-failure"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "statuses": [
+                200
+              ]
+            },
+            "id": "940c4078-dea3-4ead-8d79-d2c712b81c1c",
+            "kind": "reproduction_recorded",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:55:53.002827+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "07a23583-aed8-4b6a-b813-041c435d626e",
+            "kind": "state_changed",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:55:57.058996+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "60cf2997-4d8c-4e07-93c4-f40bfa418d8e",
+            "kind": "evidence_recorded",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:55:57.080089+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "48696f3f-6fe0-4316-8a5b-bf9bb452ef1d",
+            "kind": "state_changed",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:28.692545+00:00",
+            "details": {
+              "evidence_id": "ev-2d14bb34-4d9c-5ead-b646-2f3a4319f4c0",
+              "schema_version": 1,
+              "tool": "search_logs"
+            },
+            "id": "3ed441f5-4819-47de-a3b1-f9b3421f615e",
+            "kind": "diagnosis_tool_call",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:28.692545+00:00",
+            "details": {
+              "evidence_id": "ev-32c12965-186d-5ce3-9062-e159cd85841e",
+              "schema_version": 1,
+              "tool": "fetch_trace"
+            },
+            "id": "55b38100-6000-478d-ace7-73f77166b8d2",
+            "kind": "diagnosis_tool_call",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:28.692545+00:00",
+            "details": {
+              "hypothesis_count": 3,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "diagnosis-v2",
+              "tool_call_count": 2
+            },
+            "id": "dcef7331-3b85-4f36-a757-f39861efb1b9",
+            "kind": "diagnosis_recorded",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:28.713825+00:00",
+            "details": {
+              "state": "AWAITING_REPAIR_APPROVAL"
+            },
+            "id": "bbaf9dd2-4696-44bc-8634-f8978341e184",
+            "kind": "state_changed",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "live-evaluation-v1",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:28.799208+00:00",
+            "details": {
+              "action": "generate_repair",
+              "decision": "approved",
+              "policy_version": "approval-v1"
+            },
+            "id": "9399d352-b03b-493d-8f16-12828c72d732",
+            "kind": "repair_approval",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:28.821796+00:00",
+            "details": {
+              "state": "GENERATING"
+            },
+            "id": "169eb0f4-0fd8-4c05-a569-f1709e45852e",
+            "kind": "state_changed",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "policy",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:31.517870+00:00",
+            "details": {
+              "accepted": true,
+              "category": "accepted",
+              "detail": "diff passed deterministic repair policy",
+              "diff_sha256": "56d5cc4ebd6b8781ee213307bc1475fc6db05c0be229aa595eae4ce447a2b11e"
+            },
+            "id": "1cf1327f-ee99-42f3-b912-5fa2b9384ac2",
+            "kind": "repair_policy_decision",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:31.517870+00:00",
+            "details": {
+              "candidate_count": 1,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "repair-v7",
+              "rejected_count": 0
+            },
+            "id": "451b596b-8630-44eb-8b47-f4bc8adb65e1",
+            "kind": "repair_generation_recorded",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:31.534253+00:00",
+            "details": {
+              "state": "VERIFYING"
+            },
+            "id": "613c78eb-4f11-456d-b545-9c6e375db69e",
+            "kind": "state_changed",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:45.442547+00:00",
+            "details": {
+              "candidate_id": "4cca49e8-d3c1-52b3-b702-20c745dfb182",
+              "check_count": 7,
+              "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+              "outcome": "PASS"
+            },
+            "id": "28b2a8dc-16dc-49f4-9f49-a65660764d59",
+            "kind": "verification_recorded",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:45.478209+00:00",
+            "details": {
+              "candidate_count": 1,
+              "score_version": "verification-score-v1",
+              "terminal_state": "COMPLETED",
+              "verified_count": 1
+            },
+            "id": "1b54cf11-bf49-456d-ad91-9c184c86626e",
+            "kind": "verification_ranking_recorded",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:45.515856+00:00",
+            "details": {
+              "state": "REPORTING"
+            },
+            "id": "2ce02e8d-629a-4943-a111-c2d0f35d9450",
+            "kind": "state_changed",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:45.535704+00:00",
+            "details": {
+              "format": "internal-json",
+              "status": "placeholder"
+            },
+            "id": "dde56c72-e561-4cd8-b278-1d595ee8a5c1",
+            "kind": "report_placeholder_recorded",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "created_at": "2026-10-09T06:56:45.553607+00:00",
+            "details": {
+              "state": "COMPLETED"
+            },
+            "id": "ffc89015-64c5-42ff-8e2a-f05e794182ad",
+            "kind": "state_changed",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/90880d38-1b2d-5426-b0c9-fd8c42932b25",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-c62d2ca0-cf5e-53c9-81da-a04c5da2a053",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:55:57.058868Z",
+            "observed_start": "2026-10-09T06:55:57.058868Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/45a97861-b34c-50b9-9c86-45fc57034d0b",
+            "content_sha256": "ce92ec5886182f4422667f5be7f16f12c93c19599a6996e0d6d4badc83d6f2a4",
+            "id": "ev-41ad3e01-8a13-58b1-9b60-34305622ca12",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:55:54.915846Z",
+            "observed_start": "2026-10-09T06:55:48.449916Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/b06c8e41-dce6-5ea1-bfab-bb371fdb403d",
+            "content_sha256": "44b82cfba5514997a0c9058844f42189a4ed6803b41f9252dba270bac28fc258",
+            "id": "ev-475c4433-f5ee-5887-8ab8-3edf1636b94f",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:55:54.915846Z",
+            "observed_start": "2026-10-09T06:55:48.449916Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/1f99ed1b-bfb5-514a-ac6e-b69d061f64b9",
+            "content_sha256": "920a03949645f5ce081150635a331ef6d4a173188cb9e6ae6a1018a27522833d",
+            "id": "ev-2d14bb34-4d9c-5ead-b646-2f3a4319f4c0",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:55:54.915846Z",
+            "observed_start": "2026-10-09T06:55:48.449916Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/4fbf1fbd-144b-5406-8eef-0bf644dd620c",
+            "content_sha256": "0dc1da25fe8ab7c22cd97d253ec4d088501e610d3a6a0866cd5a73b93630694d",
+            "id": "ev-994e42e6-b07d-5df3-bd14-a18a176c26e6",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:55:54.915846Z",
+            "observed_start": "2026-10-09T06:55:48.449916Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/51b44624-34a8-5c1e-b093-a0949745628c",
+            "content_sha256": "15ecff097361400895a17d246bcb64ae72574c2b30df422a0955e81c834ff927",
+            "id": "ev-55101048-f905-54e0-be8a-d2a8c7a04a72",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:55:54.915846Z",
+            "observed_start": "2026-10-09T06:55:48.449916Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/a2075ab1-f8e9-54df-9f6f-7635aaed01bc",
+            "content_sha256": "cf5258951c3805ec59af3997854dbf08950b135b18c5691b0731063ddd0f0d8b",
+            "id": "ev-32c12965-186d-5ce3-9062-e159cd85841e",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:55:54.915846Z",
+            "observed_start": "2026-10-09T06:55:48.449916Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False."
+          }
+        ],
+        "hypotheses": [
+          {
+            "confidence": "medium",
+            "contradicting_evidence_ids": [
+              "ev-55101048-f905-54e0-be8a-d2a8c7a04a72"
+            ],
+            "id": "08a30d3c-8ec6-509b-9c2f-cb905334dc4c",
+            "mechanism": "Inventory logs report checkout_result with pool_available=2, while trace shows db.pool.acquire leaving 1 available; this suggests some pool usage but not exhaustion at the observed time.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [],
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "summary": "The incident may be a transient or already-resolved issue with inventory pool capacity rather than a hard failure.",
+            "supporting_evidence_ids": [
+              "ev-2d14bb34-4d9c-5ead-b646-2f3a4319f4c0",
+              "ev-32c12965-186d-5ce3-9062-e159cd85841e"
+            ]
+          },
+          {
+            "confidence": "low",
+            "contradicting_evidence_ids": [
+              "ev-32c12965-186d-5ce3-9062-e159cd85841e",
+              "ev-2d14bb34-4d9c-5ead-b646-2f3a4319f4c0"
+            ],
+            "id": "2c8a0589-e751-5f6c-821b-6439d9dcd8cb",
+            "mechanism": "Only the repository commit is known, and the observed telemetry shows successful behavior in both services, so there is insufficient evidence to tie the incident to code failure at this commit.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [],
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "summary": "The most likely root cause is not in the observed request path; the pinned commit alone does not indicate a regression.",
+            "supporting_evidence_ids": [
+              "ev-c62d2ca0-cf5e-53c9-81da-a04c5da2a053"
+            ]
+          },
+          {
+            "confidence": "high",
+            "contradicting_evidence_ids": [
+              "ev-41ad3e01-8a13-58b1-9b60-34305622ca12",
+              "ev-475c4433-f5ee-5887-8ab8-3edf1636b94f"
+            ],
+            "id": "2e88cc12-8114-5185-8d7a-503de459ce7c",
+            "mechanism": "The trace shows checkout and inventory both returned HTTP 200, with inventory DB acquisition succeeding and no acquisition timeout.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [],
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1,
+            "summary": "No backend outage is evident; the checkout request completed successfully end-to-end.",
+            "supporting_evidence_ids": [
+              "ev-32c12965-186d-5ce3-9062-e159cd85841e"
+            ]
+          }
+        ],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [
+          {
+            "estimated_cost_usd": 0.005324,
+            "id": "235f69a5-d040-580b-b4ad-e1ef26ab77eb",
+            "input_tokens": 5784,
+            "latency_ms": 2558,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 219,
+            "prompt_version": "repair-v7",
+            "provider": "openai",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1
+          },
+          {
+            "estimated_cost_usd": 0.01058,
+            "id": "2ff1f615-dd67-55fb-aee6-53421da945ad",
+            "input_tokens": 5844,
+            "latency_ms": 9379,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 1377,
+            "prompt_version": "diagnosis-v2",
+            "provider": "openai",
+            "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+            "schema_version": 1
+          }
+        ],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:55:50.396306Z",
+          "id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-09T06:56:45.553607Z",
+          "workflow_id": "incidentlab-run-ee49cc92-aecc-5e01-9c85-bf2186e5dfaf"
+        },
+        "verifications": [
+          {
+            "candidate_id": "4cca49e8-d3c1-52b3-b702-20c745dfb182",
+            "checks": [
+              {
+                "artifact_ref": "/verification/artifacts/907ccbdc-58d9-51d7-8d10-dbdd1d1e9049",
+                "content_sha256": "12a429cff4838a471f79f89bb3dc2488d3930e49e279530ad72f5c5e6b59e4d2",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:56:35.195155Z",
+                "name": "baseline_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:56:32.486124Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/7eed010f-865d-533a-9239-cfe081b85e61",
+                "content_sha256": "c906ac67d4f7e22b20e47bf6f1d296676cb72865286dea986e16ea47989d6e60",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:56:35.216656Z",
+                "name": "patch_apply",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:56:35.196201Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/3defffa5-f7e1-56af-82fe-eab0b17c734c",
+                "content_sha256": "937bf56fd28d5a4f4a2f27ed40c90307451fb0db8d0519d58c35be50e3d95b7d",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:56:35.568462Z",
+                "name": "build",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:56:35.217150Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/d2415c92-6f8e-5f68-b838-c5e545a97236",
+                "content_sha256": "d59c0c88f37abc30a1778c2738267057c175f6f90f57b0cd57cb90ecc05d9d83",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:56:35.772039Z",
+                "name": "static",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:56:35.570119Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/99c17b5e-06c8-524c-8071-1438f04720b1",
+                "content_sha256": "e4e412ca9b846e1aee8531a4e7636d68dd6cb741b5bdf7732571ad1ba52279b4",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:56:36.484948Z",
+                "name": "unit",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:56:35.774880Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/f6cb15fb-4933-5a18-8c36-3598ebc4b95d",
+                "content_sha256": "2ee0b1c66ef5190b61f564a2d3e48813c10780ca83e6dff5d75611319d0f5a96",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:56:39.718631Z",
+                "name": "integration",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:56:36.485559Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/ba0df81e-9f45-5dde-a9a7-ff5551bc3814",
+                "content_sha256": "bb9456a29f258754caebaf972289834675183ec965688831098306d5808fff74",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:56:45.409399Z",
+                "name": "incident_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:56:39.719851Z"
+              }
+            ],
+            "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+            "finished_at": "2026-10-09T06:56:45.409399Z",
+            "id": "d35d2d8a-def4-5e5e-998f-6c2413d38e7a",
+            "outcome": "PASS",
+            "rank": 1,
+            "schema_version": 1,
+            "score": {
+              "changed_files": 1,
+              "changed_lines": 2,
+              "mandatory_outcome": 0
+            },
+            "score_version": "verification-score-v1",
+            "started_at": "2026-10-09T06:56:32.486124Z"
+          }
+        ]
+      },
+      "reproduced": true,
+      "resolved_citation_count": 9,
+      "run_id": "ee49cc92-aecc-5e01-9c85-bf2186e5dfaf",
+      "scenario_id": "inventory-underflow",
+      "state": "COMPLETED",
+      "trial": 2,
+      "verified_repair": true
+    },
+    {
+      "citation_count": 4,
+      "citations_valid": true,
+      "duration_ms": 32360,
+      "estimated_cost_usd": 0.015022,
+      "failure_category": null,
+      "input_tokens": 11893,
+      "model_ids": [
+        "gpt-5.4-mini"
+      ],
+      "output_tokens": 1356,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [
+        "diagnosis-v2",
+        "repair-v7"
+      ],
+      "report": {
+        "candidates": [
+          {
+            "changed_paths": [
+              "sample_service/app.py"
+            ],
+            "diff_sha256": "56d5cc4ebd6b8781ee213307bc1475fc6db05c0be229aa595eae4ce447a2b11e",
+            "expected_behavior": "Checkout requests with quantity greater than available inventory should return 409 out_of_stock and leave inventory non-negative.",
+            "explanation": "This removes the inventory_underflow bypass so insufficient stock returns out_of_stock instead of writing a negative inventory value, while preserving the separate pool_leak fixture branch.",
+            "generator_id": "gpt-5.4-mini",
+            "id": "d6c09b17-7346-523a-b33b-784da7a35f3c",
+            "policy_status": "accepted",
+            "policy_version": "repair-policy-v2",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "target_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+            "unified_diff": "diff --git a/sample_service/app.py b/sample_service/app.py\n--- a/sample_service/app.py\n+++ b/sample_service/app.py\n@@ -95,7 +95,7 @@\n                     ).fetchone()\n                 if row is None:\n                     return 404, {\"error\": \"unknown_sku\"}\n-                if row[0] < quantity and self.fault_mode != \"inventory_underflow\":\n+                if row[0] < quantity:\n                     if self.fault_mode == \"pool_leak\":\n                         # Intentional incident fixture: this branch leaves its slot checked out.\n                         return_connection = False\n"
+          }
+        ],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-5a76b388ac3645e3a51c9520f7e619d3",
+            "created_at": "2026-10-09T06:56:46.011667+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "5e1c3a66-d0a8-4658-8a7a-7638694449c6",
+            "kind": "run_created",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:56:46.037681+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "41049faa-ee87-4e28-882b-b53e9177eb48",
+            "kind": "state_changed",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:56:48.588009+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T06:56:50.522151+00:00",
+              "observed_start": "2026-10-09T06:56:44.054544+00:00",
+              "request_ids": [
+                "run-ab9edbdc-29ac45ce-failure"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "statuses": [
+                200
+              ]
+            },
+            "id": "6399ff43-107c-44fc-97ce-fb68df98468b",
+            "kind": "reproduction_recorded",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:56:48.607086+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "0dc7bb99-c58c-45e9-bbe7-0d7e5fea1bb0",
+            "kind": "state_changed",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:56:52.665039+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "6ad3308f-5590-4957-91ed-da9cf91a7dbb",
+            "kind": "evidence_recorded",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:56:52.693615+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "da68078b-1218-4885-9ba6-43107ceb3456",
+            "kind": "state_changed",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:00.121968+00:00",
+            "details": {
+              "hypothesis_count": 1,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "diagnosis-v2",
+              "tool_call_count": 2
+            },
+            "id": "0dc33c06-f942-4123-b6bf-8969a064bd2c",
+            "kind": "diagnosis_recorded",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:00.121968+00:00",
+            "details": {
+              "evidence_id": "ev-07deace4-f391-5ce3-a43f-3b8c841a12d9",
+              "schema_version": 1,
+              "tool": "search_logs"
+            },
+            "id": "79e5dd68-0a71-4e9b-91ae-8e4bf13aad44",
+            "kind": "diagnosis_tool_call",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:00.121968+00:00",
+            "details": {
+              "evidence_id": "ev-592e0c48-2d92-5f83-871f-d3ab935f7b78",
+              "schema_version": 1,
+              "tool": "fetch_trace"
+            },
+            "id": "87ca9935-37ac-4122-bab6-a5ed456b0dda",
+            "kind": "diagnosis_tool_call",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:00.147649+00:00",
+            "details": {
+              "state": "AWAITING_REPAIR_APPROVAL"
+            },
+            "id": "aebd349a-41d8-42d6-84c7-29a5f9111bad",
+            "kind": "state_changed",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "live-evaluation-v1",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:01.154032+00:00",
+            "details": {
+              "action": "generate_repair",
+              "decision": "approved",
+              "policy_version": "approval-v1"
+            },
+            "id": "e55e0511-c3c5-4eb5-83f4-2b8700884bac",
+            "kind": "repair_approval",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:01.176434+00:00",
+            "details": {
+              "state": "GENERATING"
+            },
+            "id": "3477b1a2-d7d2-4990-bdc2-03ade20902ca",
+            "kind": "state_changed",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "policy",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:03.846281+00:00",
+            "details": {
+              "accepted": true,
+              "category": "accepted",
+              "detail": "diff passed deterministic repair policy",
+              "diff_sha256": "56d5cc4ebd6b8781ee213307bc1475fc6db05c0be229aa595eae4ce447a2b11e"
+            },
+            "id": "7d14ea53-d682-4534-8617-b0e7fa673dee",
+            "kind": "repair_policy_decision",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:03.846281+00:00",
+            "details": {
+              "candidate_count": 1,
+              "model_id": "gpt-5.4-mini",
+              "prompt_version": "repair-v7",
+              "rejected_count": 0
+            },
+            "id": "beaf4e68-6d54-42e6-99d5-ab72fb396978",
+            "kind": "repair_generation_recorded",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:03.863190+00:00",
+            "details": {
+              "state": "VERIFYING"
+            },
+            "id": "098c36f6-317f-4a04-8864-66699a98eeaa",
+            "kind": "state_changed",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:17.499858+00:00",
+            "details": {
+              "candidate_id": "d6c09b17-7346-523a-b33b-784da7a35f3c",
+              "check_count": 7,
+              "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+              "outcome": "PASS"
+            },
+            "id": "b6c20325-76ad-46d8-9cd4-5ef8150395c8",
+            "kind": "verification_recorded",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "verifier",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:17.534974+00:00",
+            "details": {
+              "candidate_count": 1,
+              "score_version": "verification-score-v1",
+              "terminal_state": "COMPLETED",
+              "verified_count": 1
+            },
+            "id": "30a9f1ee-188c-4dea-961a-b5725386833a",
+            "kind": "verification_ranking_recorded",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:17.576150+00:00",
+            "details": {
+              "state": "REPORTING"
+            },
+            "id": "dbc1c827-9946-454d-a2c9-fbed13a87082",
+            "kind": "state_changed",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:17.595168+00:00",
+            "details": {
+              "format": "internal-json",
+              "status": "placeholder"
+            },
+            "id": "6dfc0378-bd58-4051-bff6-046ae6d4d444",
+            "kind": "report_placeholder_recorded",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "created_at": "2026-10-09T06:57:17.608971+00:00",
+            "details": {
+              "state": "COMPLETED"
+            },
+            "id": "5a50eb97-0704-4d5d-8dd6-5261d4633257",
+            "kind": "state_changed",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/58d56444-c454-5ec5-8ac5-b5dfd6605fe7",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-a2642a10-1222-5045-8d7c-1912ea96849a",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:56:52.664759Z",
+            "observed_start": "2026-10-09T06:56:52.664759Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/f0f7a1e6-dc10-5cbf-9d49-12da2f12e21b",
+            "content_sha256": "681bc37f04e5f26080a523f7e4201cc1eb736eeae994d4efc8cfd09fc3bccb51",
+            "id": "ev-18cc9246-7a15-5fe3-aa13-402a3d258fac",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:56:50.522151Z",
+            "observed_start": "2026-10-09T06:56:44.054544Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/4086f917-f534-5325-aabb-00f74551e792",
+            "content_sha256": "aed442075f746d04e86e22670090d8da00396ffe0a039e066c9640a5194ae887",
+            "id": "ev-328a9306-9a75-556c-bdc6-26d7a76f1cfb",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:56:50.522151Z",
+            "observed_start": "2026-10-09T06:56:44.054544Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/5650d12f-d185-5558-9e13-1686473d1048",
+            "content_sha256": "5157b27f04d93978efd4a3367d9790cc7bb8efd3bfd2a52ccc2a7aee884d46bf",
+            "id": "ev-07deace4-f391-5ce3-a43f-3b8c841a12d9",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:56:50.522151Z",
+            "observed_start": "2026-10-09T06:56:44.054544Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/3fbe962e-8067-5576-bb3f-74c96bf6f683",
+            "content_sha256": "43442790d6d26646781caa4b84dbe203a90b3f39b3a784299250f6e6ef8b4697",
+            "id": "ev-1671a7f2-3e65-5b70-be22-6c0e06dc48c1",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:56:50.522151Z",
+            "observed_start": "2026-10-09T06:56:44.054544Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/c7e967d0-d728-5b83-8d64-e9ecf61b3513",
+            "content_sha256": "7f457ea9ce4d646d2ccce31b8805501703f00fc490116b0faee5a5478f09276a",
+            "id": "ev-919d0c41-c5e7-579a-9a4e-3f1e4504b2f9",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:56:50.522151Z",
+            "observed_start": "2026-10-09T06:56:44.054544Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 3 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/4d8d9444-964f-56d7-a57f-535384e27862",
+            "content_sha256": "9fd4659c2832d9376d32f49776b8f0a26b35ed77e45eab38dae4b49202217811",
+            "id": "ev-592e0c48-2d92-5f83-871f-d3ab935f7b78",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:56:50.522151Z",
+            "observed_start": "2026-10-09T06:56:44.054544Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False."
+          }
+        ],
+        "hypotheses": [
+          {
+            "confidence": "high",
+            "contradicting_evidence_ids": [
+              "ev-18cc9246-7a15-5fe3-aa13-402a3d258fac",
+              "ev-328a9306-9a75-556c-bdc6-26d7a76f1cfb"
+            ],
+            "id": "b60d292d-185b-5432-acdc-cd681b8e3a64",
+            "mechanism": "Both checkout and inventory spans returned 200, inventory logs show a successful checkout_result with pool_available=2, and the trace shows normal DB acquisition/query durations with no acquisition timeout.",
+            "model_id": "gpt-5.4-mini",
+            "prompt_version": "diagnosis-v2",
+            "proposed_checks": [
+              {
+                "evidence_id": "ev-07deace4-f391-5ce3-a43f-3b8c841a12d9",
+                "schema_version": 1,
+                "tool": "search_logs"
+              },
+              {
+                "evidence_id": "ev-592e0c48-2d92-5f83-871f-d3ab935f7b78",
+                "schema_version": 1,
+                "tool": "fetch_trace"
+              }
+            ],
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1,
+            "summary": "No clear incident-causing failure is visible; the observed checkout path completed successfully with HTTP 200 end-to-end.",
+            "supporting_evidence_ids": [
+              "ev-592e0c48-2d92-5f83-871f-d3ab935f7b78",
+              "ev-07deace4-f391-5ce3-a43f-3b8c841a12d9"
+            ]
+          }
+        ],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [
+          {
+            "estimated_cost_usd": 0.00564,
+            "id": "19f32799-512d-5356-8f5f-371b65561152",
+            "input_tokens": 5930,
+            "latency_ms": 2634,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 265,
+            "prompt_version": "repair-v7",
+            "provider": "openai",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1
+          },
+          {
+            "estimated_cost_usd": 0.009382,
+            "id": "1a5044c2-2cfc-5267-bdd8-d5e51eea0f88",
+            "input_tokens": 5963,
+            "latency_ms": 7400,
+            "model_id": "gpt-5.4-mini",
+            "output_tokens": 1091,
+            "prompt_version": "diagnosis-v2",
+            "provider": "openai",
+            "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+            "schema_version": 1
+          }
+        ],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:56:46.011667Z",
+          "id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "COMPLETED",
+          "updated_at": "2026-10-09T06:57:17.608971Z",
+          "workflow_id": "incidentlab-run-ab9edbdc-9149-5153-acfa-cdc1f9eb01fa"
+        },
+        "verifications": [
+          {
+            "candidate_id": "d6c09b17-7346-523a-b33b-784da7a35f3c",
+            "checks": [
+              {
+                "artifact_ref": "/verification/artifacts/377cc290-bf8a-5aa9-91a7-7f2872b64866",
+                "content_sha256": "c75c90bd6e46eaeb63599c1874946a4020c76834bb9b63b146a67b8204d8c3bc",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:57:08.678206Z",
+                "name": "baseline_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:57:05.940768Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/3bc85021-6eaa-59e9-9332-5a32a68b1662",
+                "content_sha256": "22dc6432eeb92a6f65d327336c47ba5f8db3631067b8a3304eff28c99e9bf7c3",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:57:08.702274Z",
+                "name": "patch_apply",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:57:08.679332Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/78d7569b-01c3-5ae0-b9ed-55d203933381",
+                "content_sha256": "34d2599dcbb0c455c5983faea4aa2266f848889f291932bdf47862784e880a9d",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:57:09.055099Z",
+                "name": "build",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:57:08.702761Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/239dfe76-9d53-53f0-890a-2e447d4209e0",
+                "content_sha256": "902fcb10a5f2ae87752a501256ca1a7820f6f7189fde52e0d5152ee60060ade6",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:57:09.256875Z",
+                "name": "static",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:57:09.055744Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/1243b792-73cf-5484-823d-4afbb8193ff0",
+                "content_sha256": "e62fe959945f14800b5bc403ba7614a35985eb19db9811ff1b31f33d56909547",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:57:10.014061Z",
+                "name": "unit",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:57:09.259335Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/0108350d-92b3-5c5a-a49c-9c74ffbd0256",
+                "content_sha256": "2b511be3768401180272b9b5da9253ddbea5383eaf44fb64f28bc7f9f9cefd24",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:57:12.232549Z",
+                "name": "integration",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:57:10.014619Z"
+              },
+              {
+                "artifact_ref": "/verification/artifacts/4399e11c-f0c7-5382-a608-93b8e85c4577",
+                "content_sha256": "51663edbb3544fe07b9bd6b6e40ae60a95f42df8b599846a45d4aaab5fbc15ee",
+                "exit_code": 0,
+                "failure_reason": null,
+                "finished_at": "2026-10-09T06:57:17.459311Z",
+                "name": "incident_replay",
+                "outcome": "PASS",
+                "schema_version": 1,
+                "started_at": "2026-10-09T06:57:12.233019Z"
+              }
+            ],
+            "environment_digest": "sha256:2db6f086fe39b55d813ae328c231d70dc6eb7cef26fc35a04f25eebde3243086",
+            "finished_at": "2026-10-09T06:57:17.459311Z",
+            "id": "7511f79f-59e7-5612-b381-499358654ba6",
+            "outcome": "PASS",
+            "rank": 1,
+            "schema_version": 1,
+            "score": {
+              "changed_files": 1,
+              "changed_lines": 2,
+              "mandatory_outcome": 0
+            },
+            "score_version": "verification-score-v1",
+            "started_at": "2026-10-09T06:57:05.940768Z"
+          }
+        ]
+      },
+      "reproduced": true,
+      "resolved_citation_count": 4,
+      "run_id": "ab9edbdc-9149-5153-acfa-cdc1f9eb01fa",
+      "scenario_id": "inventory-underflow",
+      "state": "COMPLETED",
+      "trial": 3,
+      "verified_repair": true
+    }
+  ]
+}

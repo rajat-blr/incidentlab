@@ -1,0 +1,14 @@
+{"exit_code": 0, "failure_reason": null, "finished_at": "2026-10-09T06:56:35.195155+00:00", "name": "baseline_replay", "outcome": "PASS", "started_at": "2026-10-09T06:56:32.486124+00:00"}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "5e2c624c721b46dea9389899c75bd6e9", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "5e2c624c721b46dea9389899c75bd6e9", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "5e2c624c721b46dea9389899c75bd6e9", "trace_id": null}
+{"event": "gateway_result", "request_id": "5e2c624c721b46dea9389899c75bd6e9", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "d1db0654b02241eb810a5daf1a674c2c", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "d1db0654b02241eb810a5daf1a674c2c", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "d1db0654b02241eb810a5daf1a674c2c", "trace_id": null}
+{"event": "gateway_result", "request_id": "d1db0654b02241eb810a5daf1a674c2c", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "f75da66e77b64f05b054acf8f8d9aeca", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "f75da66e77b64f05b054acf8f8d9aeca", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "f75da66e77b64f05b054acf8f8d9aeca", "trace_id": null}
+{"event": "gateway_result", "request_id": "f75da66e77b64f05b054acf8f8d9aeca", "status": 200, "trace_id": null}
+{"expected": [200], "fault_mode": "inventory_underflow", "matches": 3, "mode": "baseline", "observed": [[200], [200], [200]], "scenario": "inventory-underflow", "trials": 3}

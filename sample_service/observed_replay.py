@@ -14,6 +14,7 @@ from pathlib import Path
 
 from sample_service.demo import post_checkout
 from sample_service.reset import reset_database
+from sample_service.scenarios import SCENARIOS
 
 
 def _free_port() -> int:
@@ -33,18 +34,7 @@ def _wait_for(url: str, timeout: float = 10) -> None:
     raise RuntimeError(f"service did not become ready: {url}")
 
 
-SCENARIO_REPLAYS = {
-    "pool-exhaustion": {
-        "fault_mode": "pool_leak",
-        "traffic": (("widget", 99), ("widget", 99), ("widget", 1)),
-        "suffixes": ("a", "b", "failure"),
-    },
-    "inventory-underflow": {
-        "fault_mode": "inventory_underflow",
-        "traffic": (("widget", 11),),
-        "suffixes": ("failure",),
-    },
-}
+SCENARIO_REPLAYS = SCENARIOS
 
 
 def replay_with_telemetry(
@@ -56,11 +46,12 @@ def replay_with_telemetry(
     reset_database(database)
     inventory_port, gateway_port = _free_port(), _free_port()
     root_id = f"run-{run_id[:8]}-{uuid.uuid4().hex[:8]}"
-    request_ids = [f"{root_id}-{suffix}" for suffix in scenario["suffixes"]]
+    request_ids = [f"{root_id}-{index}" for index in range(len(scenario["traffic"]))]
     environment = {
         **os.environ,
         "INCIDENTLAB_DATABASE": str(database),
         "INCIDENTLAB_FAULT": scenario["fault_mode"],
+        "INCIDENTLAB_GATEWAY_FAULT": scenario["gateway_fault_mode"],
         "INCIDENTLAB_RUN_ID": run_id,
         "INCIDENTLAB_PORT": str(inventory_port),
         "OTEL_BSP_SCHEDULE_DELAY": "200",
@@ -101,6 +92,7 @@ def replay_with_telemetry(
         time.sleep(2.25)
         return {
             "statuses": [status for status, _ in results],
+            "responses": [body for _, body in results],
             "failure": results[-1][1].get("error"),
             "response": results[-1][1],
             "request_ids": request_ids,

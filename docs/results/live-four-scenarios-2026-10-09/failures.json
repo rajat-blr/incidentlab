@@ -1,0 +1,1631 @@
+{
+  "evaluation_version": "live-evaluation-v1",
+  "failures": [
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 11159,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "tool search_repository cannot inspect evidence kind gap: ev-fe4a7369-9041-53b9-bdcc-3526a1f0d053",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-09061e716fbc418d884d0f83a6a8a8b9",
+            "created_at": "2026-10-09T07:15:32.659706+00:00",
+            "details": {
+              "scenario_id": "upstream-error-masking",
+              "scenario_version": 1
+            },
+            "id": "4b300aad-99d0-479f-a37c-bd221865d355",
+            "kind": "run_created",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "created_at": "2026-10-09T07:15:32.686205+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "71a2c212-4ada-4052-984d-9e0451feca36",
+            "kind": "state_changed",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "created_at": "2026-10-09T07:15:35.268624+00:00",
+            "details": {
+              "failure": "out_of_stock",
+              "observed_end": "2026-10-09T07:15:37.166976+00:00",
+              "observed_start": "2026-10-09T07:15:30.702836+00:00",
+              "request_ids": [
+                "run-2f23202b-179d67cc-0"
+              ],
+              "response": {
+                "error": "out_of_stock"
+              },
+              "responses": [
+                {
+                  "error": "out_of_stock"
+                }
+              ],
+              "statuses": [
+                200
+              ]
+            },
+            "id": "c8b36926-660e-4f03-a0fc-6d2a1116682f",
+            "kind": "reproduction_recorded",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "created_at": "2026-10-09T07:15:35.284546+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "8eda60bb-63b9-479d-a8c1-49707bbf8312",
+            "kind": "state_changed",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "created_at": "2026-10-09T07:15:39.336647+00:00",
+            "details": {
+              "artifact_count": 8,
+              "evidence_count": 8
+            },
+            "id": "b552e0f0-2044-411b-93ba-41f3fbcd9701",
+            "kind": "evidence_recorded",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "created_at": "2026-10-09T07:15:39.376243+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "e29fea80-9314-4d25-836c-41c119e250e4",
+            "kind": "state_changed",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "created_at": "2026-10-09T07:15:43.573678+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "tool search_repository cannot inspect evidence kind gap: ev-fe4a7369-9041-53b9-bdcc-3526a1f0d053"
+            },
+            "id": "d6d04039-25c8-42ad-861c-caa0c1e0ea7b",
+            "kind": "diagnosis_rejected",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "created_at": "2026-10-09T07:15:43.607511+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "591d6b1b-bf7d-4a02-9844-2c1c1aae4da0",
+            "kind": "state_changed",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/15b1b5e3-e3e4-52e0-819a-7b26296eb351",
+            "content_sha256": "0ad7f09c462da1fa1fd4daca71cd515de307607f033ee9e5a37d3fffce941347",
+            "id": "ev-25e7e8a8-ce9c-5d2c-b132-5a321218d00d",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:15:37.166976Z",
+            "observed_start": "2026-10-09T07:15:30.702836Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/aa569dc9-1917-529a-a812-22f15a670ac9",
+            "content_sha256": "ee49adbccc135af2c1a9afc655f3b3be0b637a27e0939a1fff5a033d0e182570",
+            "id": "ev-898c8dad-67bd-5125-8625-d112542d4b67",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:15:37.166976Z",
+            "observed_start": "2026-10-09T07:15:30.702836Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/05d0f19c-7a90-55e5-bdc7-25bfaded0ce4",
+            "content_sha256": "d2c0a5a49d8bf6751c4df86b670032192d91ff8c6ad534369142ded340c8ba5d",
+            "id": "ev-fe4a7369-9041-53b9-bdcc-3526a1f0d053",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:15:39.335975Z",
+            "observed_start": "2026-10-09T07:15:39.335975Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Pinned commit could not be matched to the checked-out Git HEAD."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/98ddea01-46d8-5035-8847-7bc439eb7b6a",
+            "content_sha256": "b6820283a2387b3114fb3adc158a2a42cf727a135a7c5219e786f428d39e2e14",
+            "id": "ev-854edb08-e404-50ef-9d17-7bc588e3c7fe",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:15:37.166976Z",
+            "observed_start": "2026-10-09T07:15:30.702836Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/de7650f5-c127-55d2-acf4-948218e89007",
+            "content_sha256": "bfdb2dd88564d6ee4f9ea5aee13eec39193c41d1045caf088555a90767068278",
+            "id": "ev-c963aa1d-eddf-54cc-aff3-c5f8c63ec978",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:15:37.166976Z",
+            "observed_start": "2026-10-09T07:15:30.702836Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/c32cfe8d-4dd9-520d-8b56-d36317d06350",
+            "content_sha256": "6b7e679c58f07ae83b611c749e2d0523dfb7cc295c4a039a82b9554a253dbd25",
+            "id": "ev-78b23dcc-0962-5eb1-880c-df06fbf652f4",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:15:37.166976Z",
+            "observed_start": "2026-10-09T07:15:30.702836Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/4bef7ba6-698f-5f81-aba7-eb1f398da852",
+            "content_sha256": "52e7fef0bda69c0380abc7906da937a18b0746a3a2d94601e463ea0ebd8407df",
+            "id": "ev-9d6073a0-fc7d-5582-8a2f-6a38ce7995eb",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:15:37.166976Z",
+            "observed_start": "2026-10-09T07:15:30.702836Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/42e87ec0-20f3-57eb-9d30-62e15f88f53b",
+            "content_sha256": "ff65b33e1b016e32afd1905ac9113f58017723883dba3bda3d489b0354872892",
+            "id": "ev-03059512-99b7-5f2b-ae2b-f6bfe0e749d2",
+            "kind": "trace",
+            "observed_end": "2026-10-09T07:15:37.166976Z",
+            "observed_start": "2026-10-09T07:15:30.702836Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False; gateway observations=[{\"gateway.upstream_status\": 409}]."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T07:15:32.659706Z",
+          "id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+          "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+          "scenario_id": "upstream-error-masking",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T07:15:43.607511Z",
+          "workflow_id": "incidentlab-run-2f23202b-aee7-5176-b80c-017b4a1df7ba"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "2f23202b-aee7-5176-b80c-017b4a1df7ba",
+      "scenario_id": "upstream-error-masking",
+      "state": "FAILED",
+      "trial": 3,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 21252,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "gap evidence cannot support a hypothesis: ['ev-af75f601-b6d0-53eb-9687-c515e3ce54c0']",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-a85441d3fb964fbe8054409293f7da34",
+            "created_at": "2026-10-09T07:17:10.896303+00:00",
+            "details": {
+              "scenario_id": "mutation-response-cache",
+              "scenario_version": 1
+            },
+            "id": "4c8fe333-72ec-4140-ba4a-2cabf78d890c",
+            "kind": "run_created",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "created_at": "2026-10-09T07:17:10.929000+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "9a14198f-3884-49f8-8fb9-6dced1aefff9",
+            "kind": "state_changed",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "created_at": "2026-10-09T07:17:13.580476+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T07:17:15.510773+00:00",
+              "observed_start": "2026-10-09T07:17:08.946337+00:00",
+              "request_ids": [
+                "run-68539607-0a3742f8-0",
+                "run-68539607-0a3742f8-1"
+              ],
+              "response": {
+                "remaining_inventory": 9,
+                "sku": "widget"
+              },
+              "responses": [
+                {
+                  "remaining_inventory": 9,
+                  "sku": "widget"
+                },
+                {
+                  "remaining_inventory": 9,
+                  "sku": "widget"
+                }
+              ],
+              "statuses": [
+                200,
+                200
+              ]
+            },
+            "id": "39f6e50c-d9a5-47f2-81de-a544f1b9a593",
+            "kind": "reproduction_recorded",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "created_at": "2026-10-09T07:17:13.597418+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "794eec57-43d8-494e-b291-5a2dd866ca0b",
+            "kind": "state_changed",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "created_at": "2026-10-09T07:17:17.670487+00:00",
+            "details": {
+              "artifact_count": 8,
+              "evidence_count": 8
+            },
+            "id": "3ac0ecb3-2680-48d5-afcc-b6e8832569bc",
+            "kind": "evidence_recorded",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "created_at": "2026-10-09T07:17:17.696602+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "c03baa6e-0aa2-4043-a20d-d0c07d568b8b",
+            "kind": "state_changed",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "created_at": "2026-10-09T07:17:31.892572+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "gap evidence cannot support a hypothesis: ['ev-af75f601-b6d0-53eb-9687-c515e3ce54c0']"
+            },
+            "id": "e7ec87b5-1cd2-4137-b231-af6a281b1215",
+            "kind": "diagnosis_rejected",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "created_at": "2026-10-09T07:17:31.912598+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "54a7f970-95fc-4118-a377-aa10660a1c04",
+            "kind": "state_changed",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/9bb44182-3026-500f-a9dd-46664bed20fe",
+            "content_sha256": "fc4bac8ff0e95998b5eee14a9cce8d3d5763d6aab91a2b80599b9f7a9483be8c",
+            "id": "ev-187eabac-ebf4-5773-a75b-6398537b2fb2",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:17:15.510773Z",
+            "observed_start": "2026-10-09T07:17:08.946337Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/de2fd839-b035-5b71-9164-9fd52b943479",
+            "content_sha256": "db664c0f132c8fb8dfe0c0d4f8e15646ebb967422de8455a69abeb902a611ecf",
+            "id": "ev-572af264-d84e-56b0-9db7-5be8977f5437",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:17:15.510773Z",
+            "observed_start": "2026-10-09T07:17:08.946337Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/9fe1bc62-c90c-5eca-bd82-6290b8293a8e",
+            "content_sha256": "d2c0a5a49d8bf6751c4df86b670032192d91ff8c6ad534369142ded340c8ba5d",
+            "id": "ev-af75f601-b6d0-53eb-9687-c515e3ce54c0",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:17:17.670160Z",
+            "observed_start": "2026-10-09T07:17:17.670160Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Pinned commit could not be matched to the checked-out Git HEAD."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/a29caa41-4e53-5cbc-8ba2-7c76c228e3bc",
+            "content_sha256": "7b07d032c34933913d2a087cb9d74187d015133ee5ae93400cdf7a50a47d97c0",
+            "id": "ev-c94d311e-af16-5435-9cfa-1631791c788e",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:17:15.510773Z",
+            "observed_start": "2026-10-09T07:17:08.946337Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/17a5b189-ecee-57ec-8d1f-38e6aacd0d14",
+            "content_sha256": "57e3f0e515fb53e257f0c041384c9c02cf4b1fa8a6a2aa32f70927f1578d08b5",
+            "id": "ev-3fa425f8-3001-573a-96e0-721f46e4537a",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:17:15.510773Z",
+            "observed_start": "2026-10-09T07:17:08.946337Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/18c9b202-e03d-5a36-aed1-fab9afadc6be",
+            "content_sha256": "94691def45795932ba1851cd71e419d17a130c02c18f607d062ff91363c83bac",
+            "id": "ev-b2a30f1a-08bd-5ba2-8306-d4ddd54d698c",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:17:15.510773Z",
+            "observed_start": "2026-10-09T07:17:08.946337Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/1add52c6-90db-5686-b960-ef10765c1325",
+            "content_sha256": "7ae821d9c2c599f5d384f16ca7e84bcae3c0dab3a4d982464dac5ee9ada3f3f5",
+            "id": "ev-ceeaa6ad-e25e-50fb-96a0-74cf8943c985",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:17:15.510773Z",
+            "observed_start": "2026-10-09T07:17:08.946337Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/3780f714-e176-543a-9674-1d9de8fee6c9",
+            "content_sha256": "9dec04cc1667dedd4a88b24f2b39ebfc17dbb6b1b14ea622729ee887fc969bce",
+            "id": "ev-6aa2f879-272c-5a02-9f6a-74d40da2c609",
+            "kind": "trace",
+            "observed_end": "2026-10-09T07:17:15.510773Z",
+            "observed_start": "2026-10-09T07:17:08.946337Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False; gateway observations=[{\"gateway.cache_hit\": true}]."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T07:17:10.896303Z",
+          "id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+          "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+          "scenario_id": "mutation-response-cache",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T07:17:31.912598Z",
+          "workflow_id": "incidentlab-run-68539607-7d49-5e7e-a5eb-572f97e96d61"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "68539607-7d49-5e7e-a5eb-572f97e96d61",
+      "scenario_id": "mutation-response-cache",
+      "state": "FAILED",
+      "trial": 3,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 14212,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "follow-up query budget exhausted",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-12ac5b1cde5b45fb81c07b2f3512da3c",
+            "created_at": "2026-10-09T07:18:05.604485+00:00",
+            "details": {
+              "scenario_id": "pool-exhaustion",
+              "scenario_version": 1
+            },
+            "id": "c0ce018b-ae2f-4bc9-b765-8445dee8e299",
+            "kind": "run_created",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "created_at": "2026-10-09T07:18:05.637504+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "454ad753-b963-4e24-b5c2-ba5790f45f6a",
+            "kind": "state_changed",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "created_at": "2026-10-09T07:18:08.238436+00:00",
+            "details": {
+              "failure": "database_pool_timeout",
+              "observed_end": "2026-10-09T07:18:10.170315+00:00",
+              "observed_start": "2026-10-09T07:18:03.655747+00:00",
+              "request_ids": [
+                "run-0fbb0538-839fe16f-0",
+                "run-0fbb0538-839fe16f-1",
+                "run-0fbb0538-839fe16f-2"
+              ],
+              "response": {
+                "error": "database_pool_timeout"
+              },
+              "responses": [
+                {
+                  "error": "out_of_stock"
+                },
+                {
+                  "error": "out_of_stock"
+                },
+                {
+                  "error": "database_pool_timeout"
+                }
+              ],
+              "statuses": [
+                409,
+                409,
+                503
+              ]
+            },
+            "id": "959358b5-1518-457f-8c43-d6eb2669521a",
+            "kind": "reproduction_recorded",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "created_at": "2026-10-09T07:18:08.257935+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "dbc88342-f06a-4241-86b1-be2a46e3eb40",
+            "kind": "state_changed",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "created_at": "2026-10-09T07:18:08.283347+00:00",
+            "details": {
+              "artifact_count": 8,
+              "evidence_count": 8
+            },
+            "id": "749a5d82-28eb-4ddc-8481-f8e213d70287",
+            "kind": "evidence_recorded",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "created_at": "2026-10-09T07:18:08.302784+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "b8f75b4e-cfeb-4d7a-85a7-30207b39b5ee",
+            "kind": "state_changed",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "created_at": "2026-10-09T07:18:18.803443+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "follow-up query budget exhausted"
+            },
+            "id": "56feeb88-80b3-4b9d-a14e-15c5449a4cb4",
+            "kind": "diagnosis_rejected",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "created_at": "2026-10-09T07:18:18.876127+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "998f843b-ee18-4df8-b573-01d3e1b4472c",
+            "kind": "state_changed",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/d3aca6e0-9b30-5823-95be-d92b4a37046d",
+            "content_sha256": "d2c0a5a49d8bf6751c4df86b670032192d91ff8c6ad534369142ded340c8ba5d",
+            "id": "ev-e139d0ac-a1e3-5aed-96d4-a4653c65732e",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:18:08.283256Z",
+            "observed_start": "2026-10-09T07:18:08.283256Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Pinned commit could not be matched to the checked-out Git HEAD."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/beab074d-7dda-5f4d-8e15-30c1061db5f1",
+            "content_sha256": "fd1887ad1b30abb6775b41c801c4c455fd28b0f87556e7c2e4f660dc05e22db9",
+            "id": "ev-4358c859-8d07-58fe-a7d0-837f281d7098",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:18:10.170315Z",
+            "observed_start": "2026-10-09T07:18:03.655747Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/c1408cd0-28f3-53fe-9227-bb63118a5e7c",
+            "content_sha256": "f1145032cf62ff7caa7cb346fb3d12547a3ef75b0a744072fd067c904c198c6a",
+            "id": "ev-d20c8231-d963-5a87-b47d-fe12ccfe11c8",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:18:10.170315Z",
+            "observed_start": "2026-10-09T07:18:03.655747Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/3db527f0-d385-5aa7-91ec-39a2c7b2395c",
+            "content_sha256": "607061e32a6fc7e48d5f6e030fd3a51dec39851a13e250e5d84ada43a9c30719",
+            "id": "ev-0e640b79-c8c9-591c-98a3-d7838492f4ae",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:18:10.170315Z",
+            "observed_start": "2026-10-09T07:18:03.655747Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=0, maximum=0, latest=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/01fdba6e-08d2-5bed-b281-dd2931c30f1b",
+            "content_sha256": "73c9ebb8b2f8d4121d142c529499a8e6c5b11b1cd0376aa671828299eb1de2b5",
+            "id": "ev-c5e8642e-4cf3-5c22-ae71-40b994b6993f",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:18:10.170315Z",
+            "observed_start": "2026-10-09T07:18:03.655747Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 2 metric series with 4 sample(s); minimum=1, maximum=2, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/3b986bd0-f7c5-5c21-bbe8-cb4eb4eace1e",
+            "content_sha256": "001b2f1c120e430df0bd70974447085923407db6156b1eedd6e5411a6df74a01",
+            "id": "ev-d6114765-3ad2-5143-8b0b-c47a74535725",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:18:10.170315Z",
+            "observed_start": "2026-10-09T07:18:03.655747Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/ce08b55c-c13a-5d8b-a02b-454a03f9ecd0",
+            "content_sha256": "85cfa2de69aabd6c10f6fb2d16f328cb3a8b4eda830a6fe0eda8b7371a407d02",
+            "id": "ev-f3807ec8-2ec0-52fb-a433-40e9ae2ae878",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:18:10.170315Z",
+            "observed_start": "2026-10-09T07:18:03.655747Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/09f73564-f794-5ceb-b821-f6370802c582",
+            "content_sha256": "eea915f2d5146f2f64a676d6f0b8f153bbacce0a5710c115437373b566db5ade",
+            "id": "ev-5619b9f6-6b12-540e-880b-72a9c86b4b24",
+            "kind": "trace",
+            "observed_end": "2026-10-09T07:18:10.170315Z",
+            "observed_start": "2026-10-09T07:18:03.655747Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=True; gateway observations=[]."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T07:18:05.604485Z",
+          "id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+          "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+          "scenario_id": "pool-exhaustion",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T07:18:18.876127Z",
+          "workflow_id": "incidentlab-run-0fbb0538-c029-5e35-bd69-dda40a794a06"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "0fbb0538-c029-5e35-bd69-dda40a794a06",
+      "scenario_id": "pool-exhaustion",
+      "state": "FAILED",
+      "trial": 2,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 12172,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "tool search_repository cannot inspect evidence kind gap: ev-edb2395f-2c80-54df-9829-565981a0ce2a",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-65b93d2064604d78b841902266e3411f",
+            "created_at": "2026-10-09T07:18:53.277500+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "e640b575-6932-42a1-b393-4721c4632b9c",
+            "kind": "run_created",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "created_at": "2026-10-09T07:18:53.325439+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "9bdda6b5-94ec-41a7-97f9-667790daa829",
+            "kind": "state_changed",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "created_at": "2026-10-09T07:18:55.921781+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T07:18:57.818065+00:00",
+              "observed_start": "2026-10-09T07:18:51.347409+00:00",
+              "request_ids": [
+                "run-ac923a17-de061a30-0"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "responses": [
+                {
+                  "remaining_inventory": -1,
+                  "sku": "widget"
+                }
+              ],
+              "statuses": [
+                200
+              ]
+            },
+            "id": "15355a3d-f543-44d3-85b8-d46657d15dd5",
+            "kind": "reproduction_recorded",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "created_at": "2026-10-09T07:18:55.943695+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "9afe3cb8-21e8-48a7-8d6f-642cbc107a2e",
+            "kind": "state_changed",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "created_at": "2026-10-09T07:19:00.000166+00:00",
+            "details": {
+              "artifact_count": 8,
+              "evidence_count": 8
+            },
+            "id": "193da0a2-a199-407b-8926-d32a45f5068b",
+            "kind": "evidence_recorded",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "created_at": "2026-10-09T07:19:00.040707+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "3c3a70b9-09b6-4e73-b29f-f7399bbcc943",
+            "kind": "state_changed",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "created_at": "2026-10-09T07:19:04.829024+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "tool search_repository cannot inspect evidence kind gap: ev-edb2395f-2c80-54df-9829-565981a0ce2a"
+            },
+            "id": "b2dd58f3-61d0-470a-b613-9bc4f7975386",
+            "kind": "diagnosis_rejected",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "created_at": "2026-10-09T07:19:04.862022+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "279217b7-66dd-4ac2-88fe-d6586fcaac1b",
+            "kind": "state_changed",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/4592b5ea-bb4a-523a-b93d-a0b87f7d0b62",
+            "content_sha256": "b6b203dac0ba30f4c413aceff4c2d4605bbada2765adde182aa9feffe4129142",
+            "id": "ev-004b4466-4b78-5c8c-a96f-ea392e9a6b86",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:18:57.818065Z",
+            "observed_start": "2026-10-09T07:18:51.347409Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/783cbb98-7142-5789-9327-972233320f86",
+            "content_sha256": "d2c0a5a49d8bf6751c4df86b670032192d91ff8c6ad534369142ded340c8ba5d",
+            "id": "ev-edb2395f-2c80-54df-9829-565981a0ce2a",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:18:59.999826Z",
+            "observed_start": "2026-10-09T07:18:59.999826Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Pinned commit could not be matched to the checked-out Git HEAD."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/9c319752-f2e1-5d7e-a204-d5cee6f9a914",
+            "content_sha256": "38991e4e1172182bedb70c7e9f1963bcbe1e2c9aa6b8f5c5c26db710a0dd71a2",
+            "id": "ev-f5544e3d-1530-5a9c-bb47-c13f41d1263c",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:18:57.818065Z",
+            "observed_start": "2026-10-09T07:18:51.347409Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/00259ab6-4d8a-5c6a-bf12-043fa89f1034",
+            "content_sha256": "af18ea151787b0fe5a47f93751c4b40d04b57c1d5793d50500514057ad2ab7e9",
+            "id": "ev-24af61f9-db8e-5917-98db-d617bd7a1adb",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:18:57.818065Z",
+            "observed_start": "2026-10-09T07:18:51.347409Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/c25c065a-593b-588e-a991-4a330f630121",
+            "content_sha256": "c62fdf3423c5abcab94f4309fc6c21b55585d1ab869a391200e3fd853367ffd9",
+            "id": "ev-695e8148-8105-55c1-ad47-d7a17d0ff431",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:18:57.818065Z",
+            "observed_start": "2026-10-09T07:18:51.347409Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/eb62e0a3-c1be-597e-9c4b-a79048f55d83",
+            "content_sha256": "c2bda3c59fb32aea9dbf7b6d072dc143f29a73b9f70c64bc7d6625f73df85d17",
+            "id": "ev-5f27e140-10db-57dd-8d19-da77cbf76eb8",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:18:57.818065Z",
+            "observed_start": "2026-10-09T07:18:51.347409Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 3 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2be63ab7-c87d-5766-8467-bb2a2a9d05ee",
+            "content_sha256": "d6d19c943d45c46cabe028bfdf57a14376c783da6b815db8404e3c1946eb7538",
+            "id": "ev-c2b2b2d1-3e5d-53e4-a77b-957d907aed02",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:18:57.818065Z",
+            "observed_start": "2026-10-09T07:18:51.347409Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 3 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/426d42f4-d740-577a-aa34-5cf822f46f74",
+            "content_sha256": "49fd547aac8d78aefc07a986bc6768bbb77b782f1dbbdda7bcb473fd5f5b33e2",
+            "id": "ev-e1492ae1-2d0a-5189-a864-8947d186d308",
+            "kind": "trace",
+            "observed_end": "2026-10-09T07:18:57.818065Z",
+            "observed_start": "2026-10-09T07:18:51.347409Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False; gateway observations=[]."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T07:18:53.277500Z",
+          "id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+          "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T07:19:04.862022Z",
+          "workflow_id": "incidentlab-run-ac923a17-125c-508b-adc1-e6952bdfbf3f"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "ac923a17-125c-508b-adc1-e6952bdfbf3f",
+      "scenario_id": "inventory-underflow",
+      "state": "FAILED",
+      "trial": 1,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 19237,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "tool search_repository cannot inspect evidence kind gap: ev-c81eea4f-9614-5c12-906f-6749ffcb19b8",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-c87a91a3f5a94422aa0804bd908ac68e",
+            "created_at": "2026-10-09T07:19:05.450987+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "7642b047-289b-43b6-962d-1746257f47f8",
+            "kind": "run_created",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "created_at": "2026-10-09T07:19:05.478752+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "824c8b94-c324-4ab4-89ae-b82bd108d67a",
+            "kind": "state_changed",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "created_at": "2026-10-09T07:19:08.055496+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T07:19:09.956354+00:00",
+              "observed_start": "2026-10-09T07:19:03.495514+00:00",
+              "request_ids": [
+                "run-0a196f2d-bbf5c38e-0"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "responses": [
+                {
+                  "remaining_inventory": -1,
+                  "sku": "widget"
+                }
+              ],
+              "statuses": [
+                200
+              ]
+            },
+            "id": "714af54e-dee9-4a27-9f57-1674e029ded0",
+            "kind": "reproduction_recorded",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "created_at": "2026-10-09T07:19:08.076111+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "904ff5d1-ed57-4a3f-a173-fae74b2a3308",
+            "kind": "state_changed",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "created_at": "2026-10-09T07:19:12.141372+00:00",
+            "details": {
+              "artifact_count": 8,
+              "evidence_count": 8
+            },
+            "id": "359aba19-769d-4f04-9fc9-941af7eef33e",
+            "kind": "evidence_recorded",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "created_at": "2026-10-09T07:19:12.183155+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "34353b4b-9376-425f-9a01-a84274189a43",
+            "kind": "state_changed",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "created_at": "2026-10-09T07:19:24.492358+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "tool search_repository cannot inspect evidence kind gap: ev-c81eea4f-9614-5c12-906f-6749ffcb19b8"
+            },
+            "id": "2e1b5eb1-bc5d-4884-b874-2814b024effd",
+            "kind": "diagnosis_rejected",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "created_at": "2026-10-09T07:19:24.539276+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "ab285c87-6adc-4726-a25c-ca8790a40066",
+            "kind": "state_changed",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/37b4e657-3940-548b-be66-55caa3388c0b",
+            "content_sha256": "1fc7171582cc5f1156e5f25d162846b12395c7aa482d6a2e1eba289c575d313f",
+            "id": "ev-2568ddf2-32bd-50f5-80cf-34b86053f4da",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:19:09.956354Z",
+            "observed_start": "2026-10-09T07:19:03.495514Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/17026f43-a91d-51df-a662-9fbcfe983f02",
+            "content_sha256": "8803ed8d050a09865699d8a066fd1f1e4cf05cb273788bdd35d34cf6e40359ba",
+            "id": "ev-a9b3cc86-e352-5388-8fa9-f34d120d526e",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:19:09.956354Z",
+            "observed_start": "2026-10-09T07:19:03.495514Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/26a2664f-26fb-5824-8b6a-100eed545388",
+            "content_sha256": "d2c0a5a49d8bf6751c4df86b670032192d91ff8c6ad534369142ded340c8ba5d",
+            "id": "ev-c81eea4f-9614-5c12-906f-6749ffcb19b8",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:19:12.141109Z",
+            "observed_start": "2026-10-09T07:19:12.141109Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Pinned commit could not be matched to the checked-out Git HEAD."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/6fbec94a-c48f-5a13-af7c-46cdbae2e630",
+            "content_sha256": "d632bac9a66ccef10922c3ae9b25ec823ab41261a53118ce78c6374c961e5b02",
+            "id": "ev-20454775-8f8e-58db-92d2-3145598d8031",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:19:09.956354Z",
+            "observed_start": "2026-10-09T07:19:03.495514Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/aef27f89-a2b6-5d3b-a910-1453e8ec7d42",
+            "content_sha256": "b5ed81798f8201ae892109d6e46ee89f7f9739a21aa421a5e0a7ef6534b13f66",
+            "id": "ev-849c1cb1-cbe0-5cea-9747-055104c2f740",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:19:09.956354Z",
+            "observed_start": "2026-10-09T07:19:03.495514Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/4cca3c71-d51f-59f3-841b-d77fb7b32504",
+            "content_sha256": "1e0db66d40cdda45db6ce91744b564d8c77e6e53f994d3136c773f22fcf6b076",
+            "id": "ev-b4f446d5-25fc-579e-ab77-2bd65b083163",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:19:09.956354Z",
+            "observed_start": "2026-10-09T07:19:03.495514Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 3 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/a3e51cec-5ff0-53e7-817e-8a7c14aaf8eb",
+            "content_sha256": "37f2fd82e198ec918f9cb5b430117c29dc6126552e2e496585d1dcadeb699deb",
+            "id": "ev-dda93b48-f4d0-562f-bd03-caac79003a57",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:19:09.956354Z",
+            "observed_start": "2026-10-09T07:19:03.495514Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 3 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2a90eb69-0a00-5718-94db-1cfb418530f2",
+            "content_sha256": "0b77b7241b8613559f01958ac84b97a39b953770392248aa8331ba19fb712665",
+            "id": "ev-acfd33e9-4500-584f-b17f-0455af32a3bc",
+            "kind": "trace",
+            "observed_end": "2026-10-09T07:19:09.956354Z",
+            "observed_start": "2026-10-09T07:19:03.495514Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False; gateway observations=[]."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T07:19:05.450987Z",
+          "id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+          "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T07:19:24.539276Z",
+          "workflow_id": "incidentlab-run-0a196f2d-5638-5896-b7b9-20dee6a90994"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "0a196f2d-5638-5896-b7b9-20dee6a90994",
+      "scenario_id": "inventory-underflow",
+      "state": "FAILED",
+      "trial": 2,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 21288,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "gap evidence cannot support a hypothesis: ['ev-b8d4914a-912a-587e-b864-e0f88e864f4f']",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-dc9af8c8f3ac439bb68ca719717d533d",
+            "created_at": "2026-10-09T07:19:24.692053+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "194838a6-18c1-41dc-bbd4-2636bac93ca0",
+            "kind": "run_created",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "created_at": "2026-10-09T07:19:24.724630+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "3a5f6dac-f195-4473-965f-d6f117309b5c",
+            "kind": "state_changed",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "created_at": "2026-10-09T07:19:27.282747+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T07:19:29.212647+00:00",
+              "observed_start": "2026-10-09T07:19:22.742448+00:00",
+              "request_ids": [
+                "run-26627c0c-e6b72f80-0"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "responses": [
+                {
+                  "remaining_inventory": -1,
+                  "sku": "widget"
+                }
+              ],
+              "statuses": [
+                200
+              ]
+            },
+            "id": "b8e4ac3e-6eae-47b1-994a-d0cec2f86a2a",
+            "kind": "reproduction_recorded",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "created_at": "2026-10-09T07:19:27.309370+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "c74dc957-5832-4f7b-a91e-3f3ef1ab62cc",
+            "kind": "state_changed",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "created_at": "2026-10-09T07:19:31.375714+00:00",
+            "details": {
+              "artifact_count": 8,
+              "evidence_count": 8
+            },
+            "id": "0154bc31-6c67-4239-803f-5c077523cb72",
+            "kind": "evidence_recorded",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "created_at": "2026-10-09T07:19:31.420606+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "f56f227e-649e-4db7-bd80-595beedd6326",
+            "kind": "state_changed",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "created_at": "2026-10-09T07:19:45.635897+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "gap evidence cannot support a hypothesis: ['ev-b8d4914a-912a-587e-b864-e0f88e864f4f']"
+            },
+            "id": "96fddcfc-a6cf-4d04-a043-24819b8085b1",
+            "kind": "diagnosis_rejected",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "created_at": "2026-10-09T07:19:45.677394+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "0c53c3d8-feec-4e4f-9f0d-750bcdf897f0",
+            "kind": "state_changed",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/41284b7e-26cf-59e0-8b72-fa5421eebade",
+            "content_sha256": "24a2573629ca3c6a4ee5aefe9fd83c0e14433a13010bb4dff5a11a268ef0ecd9",
+            "id": "ev-68f8f816-f11c-529c-beee-e9519444f3b2",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:19:29.212647Z",
+            "observed_start": "2026-10-09T07:19:22.742448Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/77ba7f8e-d018-550e-8037-83e88ea1aa51",
+            "content_sha256": "d2c0a5a49d8bf6751c4df86b670032192d91ff8c6ad534369142ded340c8ba5d",
+            "id": "ev-b8d4914a-912a-587e-b864-e0f88e864f4f",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:19:31.375379Z",
+            "observed_start": "2026-10-09T07:19:31.375379Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Pinned commit could not be matched to the checked-out Git HEAD."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/d2bd4123-4cdd-5a6e-91ba-2c7fbc86449a",
+            "content_sha256": "0adccb0b0d0ac356d49bce150d46a938f2a35d7c04f793c5bf5cff27155e3520",
+            "id": "ev-f5d3a6fb-328a-5384-9c7b-7f4919efdf51",
+            "kind": "gap",
+            "observed_end": "2026-10-09T07:19:29.212647Z",
+            "observed_start": "2026-10-09T07:19:22.742448Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/1f85b083-4458-5acb-afdb-818dd9cd0a39",
+            "content_sha256": "015b65afaf5b0f61fc152eb9e90d0d291c30946577fe92ea3f7287b0209081f4",
+            "id": "ev-37f186f6-99ab-5006-a163-3313b4006b66",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:19:29.212647Z",
+            "observed_start": "2026-10-09T07:19:22.742448Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/d419933c-f60e-56e8-8078-8ba7e30b314c",
+            "content_sha256": "4d8f3c3d2a0ef20be6a9be60d34016e7a7dce4b081f0bfb9e70ee6831eecb9be",
+            "id": "ev-c49852f3-8087-5f44-8078-318318172587",
+            "kind": "log",
+            "observed_end": "2026-10-09T07:19:29.212647Z",
+            "observed_start": "2026-10-09T07:19:22.742448Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/9a808c02-6fd9-59c3-9dc1-815ee7abe980",
+            "content_sha256": "d35d72c3ce73b7a7267820c5f1c260c3996b346e959f0adc48b0c6d01e9ac05d",
+            "id": "ev-541e2ad5-60e6-510b-a17f-1c042da2451c",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:19:29.212647Z",
+            "observed_start": "2026-10-09T07:19:22.742448Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/5ad318b6-d97d-5cc1-8b48-270fd82099b1",
+            "content_sha256": "88a507f0c1edb1cfc6ad4da5f4ec9896121ecfe3207974b6f1362df0a0accf01",
+            "id": "ev-f4e1c9ab-cb80-5fe1-8740-3d8e7dd7ac7b",
+            "kind": "metric",
+            "observed_end": "2026-10-09T07:19:29.212647Z",
+            "observed_start": "2026-10-09T07:19:22.742448Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2252d782-1223-5f12-8eb4-d277da69d5e1",
+            "content_sha256": "b390cd44472975ba4a28bf13163e425d619d1bc31ee8210ebd76bbb62ed0d9d2",
+            "id": "ev-0cb6dcf9-25cf-57ff-a7d1-a10b2b683de2",
+            "kind": "trace",
+            "observed_end": "2026-10-09T07:19:29.212647Z",
+            "observed_start": "2026-10-09T07:19:22.742448Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False; gateway observations=[]."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T07:19:24.692053Z",
+          "id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+          "pinned_commit": "36a20fd72be99e1ebadad1deee620c311dbbe177",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T07:19:45.677394Z",
+          "workflow_id": "incidentlab-run-26627c0c-73d9-5f95-8c01-5fa3bb25c14f"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "26627c0c-73d9-5f95-8c01-5fa3bb25c14f",
+      "scenario_id": "inventory-underflow",
+      "state": "FAILED",
+      "trial": 3,
+      "verified_repair": false
+    }
+  ]
+}

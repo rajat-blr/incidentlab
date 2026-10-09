@@ -1,0 +1,12 @@
+{
+  "id": "mutation-response-cache", "version": 1, "service": "checkout-gateway",
+  "description": "The gateway caches a successful mutating POST; a repeated purchase reuses stale inventory and never reaches inventory.",
+  "reset_command": "python3 -m sample_service.reset --database <path>",
+  "fault_mode": "mutation_cache",
+  "traffic": [
+    {"sku": "widget", "quantity": 1, "expected_status": 200},
+    {"sku": "widget", "quantity": 1, "expected_status": 200}
+  ],
+  "failure_signal": {"status": 200, "remaining_inventory": 9},
+  "healthy_signal": {"status": 200, "remaining_inventory": 8}
+}

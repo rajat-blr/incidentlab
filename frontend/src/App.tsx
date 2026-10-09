@@ -163,7 +163,7 @@ function AppShell({ children }: { children: ReactNode }) {
         <aside className="demo-banner" aria-label="Demonstration mode">
           <div>
             <strong>Browser-only product demonstration</strong>
-            <span>Start a guided replay or explore seven saved outcomes. No backend, API, or model requests are made.</span>
+            <span>Start a guided replay or explore saved outcomes. No backend, API, or model requests are made.</span>
           </div>
           <a href="https://github.com/rajat-blr/incidentlab" target="_blank" rel="noreferrer">
             <Code2 size={15} /> View source
@@ -490,6 +490,17 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
   onOpenApproval: () => void;
 }) {
   const reproduction = events.find((event) => event.kind === "reproduction_recorded");
+  const responses: unknown[] = Array.isArray(reproduction?.details.responses)
+    ? reproduction.details.responses : [reproduction?.details.response];
+  const stockSequence = responses.flatMap((response) => {
+    if (!response || typeof response !== "object" || !("remaining_inventory" in response)) return [];
+    return typeof response.remaining_inventory === "number" ? [response.remaining_inventory] : [];
+  });
+  const failureSignal = typeof reproduction?.details.failure === "string"
+    ? humanize(reproduction.details.failure)
+    : stockSequence.some((value) => value < 0) ? "Negative inventory"
+    : stockSequence.length > 1 && new Set(stockSequence).size === 1 ? "Repeated stock value"
+    : reproduction ? "See observed responses" : "Pending";
   const top = [...verifications].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))[0];
   const inputTokens = modelUsage.reduce((total, item) => total + item.input_tokens, 0);
   const outputTokens = modelUsage.reduce((total, item) => total + item.output_tokens, 0);
@@ -537,7 +548,8 @@ function OverviewTab({ run, evidence, candidates, verifications, hypothesis, eve
         <div className="panel-head"><div><span className="section-label">Reproduction</span><h2>Observed incident facts</h2></div><Route size={18} /></div>
         <div className="panel-body fact-row">
           <div><span>Status sequence</span><strong>{Array.isArray(reproduction?.details.statuses) ? reproduction.details.statuses.join(" → ") : "Pending"}</strong></div>
-          <div><span>Failure signal</span><strong>{typeof reproduction?.details.failure === "string" ? humanize(reproduction.details.failure) : "Pending"}</strong></div>
+          <div><span>Failure signal</span><strong>{failureSignal}</strong></div>
+          {stockSequence.length ? <div><span>Stock sequence</span><strong>{stockSequence.join(" → ")}</strong></div> : null}
           <div><span>Pinned commit</span><strong><code>{shortId(run.pinned_commit)}</code></strong></div>
         </div>
       </section>

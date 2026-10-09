@@ -1,0 +1,7 @@
+citation_count,citations_valid,duration_ms,estimated_cost_usd,failure_category,input_tokens,model_ids,output_tokens,pinned_commit,prompt_versions,reproduced,resolved_citation_count,run_id,scenario_id,state,trial,verified_repair,failure_detail
+0,False,5127,0,DiagnosisError,0,[],0,a8c1bd576f633b6c0202b5cc68918874ae575053,[],True,0,cafb6b59-d8a8-5053-b41d-ad34a0a0154b,pool-exhaustion,FAILED,1,False,OpenAI request failed: AuthenticationError
+0,False,4074,0,DiagnosisError,0,[],0,a8c1bd576f633b6c0202b5cc68918874ae575053,[],True,0,5c5ebd4b-3cc2-5198-921b-6b15336324c7,pool-exhaustion,FAILED,2,False,OpenAI request failed: AuthenticationError
+0,False,4079,0,DiagnosisError,0,[],0,a8c1bd576f633b6c0202b5cc68918874ae575053,[],True,0,9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc,pool-exhaustion,FAILED,3,False,OpenAI request failed: AuthenticationError
+0,False,8114,0,DiagnosisError,0,[],0,a8c1bd576f633b6c0202b5cc68918874ae575053,[],True,0,0693814c-16f8-52cf-94a3-085b31e7d64b,inventory-underflow,FAILED,1,False,OpenAI request failed: AuthenticationError
+0,False,8139,0,DiagnosisError,0,[],0,a8c1bd576f633b6c0202b5cc68918874ae575053,[],True,0,3fcc5446-ec2b-5941-9674-d20a672fe772,inventory-underflow,FAILED,2,False,OpenAI request failed: AuthenticationError
+0,False,7108,0,DiagnosisError,0,[],0,a8c1bd576f633b6c0202b5cc68918874ae575053,[],True,0,f73146bc-dd38-556d-9bb0-0da7f1daf929,inventory-underflow,FAILED,3,False,OpenAI request failed: AuthenticationError

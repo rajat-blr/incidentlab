@@ -373,7 +373,12 @@ class DockerSandboxRunner:
         cancel_event: threading.Event | None = None,
         scenario_id: str = "pool-exhaustion",
     ) -> SandboxRunResult:
-        if scenario_id not in {"pool-exhaustion", "inventory-underflow"}:
+        if scenario_id not in {
+            "pool-exhaustion",
+            "inventory-underflow",
+            "upstream-error-masking",
+            "mutation-response-cache",
+        }:
             raise SandboxError("unsupported verification scenario")
         self._validate_commit(target_commit)
         changed_paths = self._validate_patch(unified_diff)
@@ -414,6 +419,7 @@ class DockerSandboxRunner:
                     "python",
                     "/opt/incidentlab-runner/container_check.py",
                     "healthy",
+                    "--preserve-inactive",
                     "--trials",
                     "3",
                     "--scenario",

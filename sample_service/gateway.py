@@ -15,7 +15,13 @@ from opentelemetry.trace import SpanKind
 from sample_service.telemetry import configure_telemetry, emit_log, request_id_from_header
 
 
-def make_gateway_handler(inventory_url: str) -> type[BaseHTTPRequestHandler]:
+def make_gateway_handler(
+    inventory_url: str, fault_mode: str = "off"
+) -> type[BaseHTTPRequestHandler]:
+    if fault_mode not in {"off", "status_masking", "mutation_cache"}:
+        raise ValueError("unsupported gateway fault mode")
+    cached_responses: dict[bytes, tuple[int, bytes]] = {}
+    cache_lock = threading.Lock()
     tracer = trace.get_tracer("incidentlab.checkout")
     meter = metrics.get_meter("incidentlab.checkout")
     requests = meter.create_counter("incidentlab.gateway.requests", unit="1")
@@ -67,6 +73,17 @@ def make_gateway_handler(inventory_url: str) -> type[BaseHTTPRequestHandler]:
             ) as span:
                 span.set_attribute("http.route", "/checkout")
                 span.set_attribute("incidentlab.request_id", request_id)
+                with cache_lock:
+                    cached = cached_responses.get(body)
+                if fault_mode == "mutation_cache" and cached is not None:
+                    # Intentional fixture: caching a POST skips the second mutation.
+                    status, result = cached
+                    span.set_attribute("gateway.cache_hit", True)
+                    span.set_attribute("http.response.status_code", status)
+                    emit_log("gateway_cache_hit", request_id, upstream_request_skipped=True)
+                    self._reply(status, result, request_id)
+                    requests.add(1, {**metric_attributes, "status": str(status)})
+                    return
                 with tracer.start_as_current_span("inventory POST /checkout", kind=SpanKind.CLIENT):
                     headers = {"Content-Type": "application/json", "X-Request-ID": request_id}
                     propagate.inject(headers)
@@ -84,6 +101,14 @@ def make_gateway_handler(inventory_url: str) -> type[BaseHTTPRequestHandler]:
                     else:
                         with response:
                             status, result = response.status, response.read(2048)
+                if fault_mode == "status_masking" and status >= 400:
+                    # Intentional fixture: the body remains an error while HTTP claims success.
+                    span.set_attribute("gateway.upstream_status", status)
+                    emit_log("upstream_status_masked", request_id, upstream_status=status)
+                    status = 200
+                if fault_mode == "mutation_cache" and status == 200:
+                    with cache_lock:
+                        cached_responses[body] = (status, result)
                 span.set_attribute("http.response.status_code", status)
                 self._reply(status, result, request_id)
                 requests.add(1, {**metric_attributes, "status": str(status)})
@@ -96,8 +121,8 @@ def make_gateway_handler(inventory_url: str) -> type[BaseHTTPRequestHandler]:
 
 
 @contextmanager
-def running_gateway(inventory_url: str) -> Iterator[ThreadingHTTPServer]:
-    server = ThreadingHTTPServer(("127.0.0.1", 0), make_gateway_handler(inventory_url))
+def running_gateway(inventory_url: str, fault_mode: str = "off") -> Iterator[ThreadingHTTPServer]:
+    server = ThreadingHTTPServer(("127.0.0.1", 0), make_gateway_handler(inventory_url, fault_mode))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -112,7 +137,10 @@ def main() -> None:
     tracer_provider, meter_provider, logger_provider = configure_telemetry("checkout")
     inventory_url = os.environ.get("INCIDENTLAB_INVENTORY_URL", "http://127.0.0.1:8766")
     port = int(os.environ.get("INCIDENTLAB_PORT", "8765"))
-    server = ThreadingHTTPServer(("127.0.0.1", port), make_gateway_handler(inventory_url))
+    server = ThreadingHTTPServer(
+        ("127.0.0.1", port),
+        make_gateway_handler(inventory_url, os.environ.get("INCIDENTLAB_GATEWAY_FAULT", "off")),
+    )
     try:
         print(f"Checkout gateway listening on 127.0.0.1:{port}", flush=True)
         server.serve_forever()

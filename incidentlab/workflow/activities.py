@@ -20,6 +20,7 @@ from incidentlab.model_adapter.repair import PROMPT_VERSION as REPAIR_PROMPT_VER
 from incidentlab.model_adapter.repair import RepairError, generate_repairs
 from incidentlab.policy.context import RepositoryContextError, read_pinned_source
 from sample_service.observed_replay import replay_with_telemetry
+from sample_service.scenarios import SCENARIOS, matches_results
 
 
 @activity.defn(name="transition_run")
@@ -48,12 +49,9 @@ async def reproduce_incident_activity(data: dict) -> dict:
         )
     statuses = payload["statuses"]
     activity.heartbeat("replay completed")
-    reproduced = {
-        "pool-exhaustion": statuses == [409, 409, 503]
-        and payload["failure"] == "database_pool_timeout",
-        "inventory-underflow": statuses == [200]
-        and payload["response"].get("remaining_inventory", 0) < 0,
-    }.get(data["scenario_id"], False)
+    reproduced = matches_results(
+        data["scenario_id"], list(zip(statuses, payload["responses"], strict=True)), healthy=False
+    )
     if not reproduced:
         raise ApplicationError("scenario did not reproduce", non_retryable=True)
     await asyncio.to_thread(
@@ -197,7 +195,7 @@ async def generate_repair_placeholder(data: dict) -> dict:
             read_pinned_source,
             Path(os.environ.get("REPOSITORY_GIT_DIR", "/repository/.git")),
             run.pinned_commit,
-            "sample_service/app.py",
+            SCENARIOS[run.scenario_id]["source_path"],
         )
         adapter = OpenAIRepairAdapter()
         try:

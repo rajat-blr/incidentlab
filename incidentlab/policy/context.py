@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path, PurePosixPath
 
 COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
-ALLOWED_CONTEXT_PATHS = ("sample_service/app.py",)
+ALLOWED_CONTEXT_PATHS = ("sample_service/app.py", "sample_service/gateway.py")
 
 
 class RepositoryContextError(RuntimeError):

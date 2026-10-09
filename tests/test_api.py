@@ -19,7 +19,12 @@ class ApiContractTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             {item["id"] for item in response.json()},
-            {"pool-exhaustion", "inventory-underflow"},
+            {
+                "pool-exhaustion",
+                "inventory-underflow",
+                "upstream-error-masking",
+                "mutation-response-cache",
+            },
         )
         self.assertTrue(all(item["schema_version"] == 1 for item in response.json()))
         self.assertNotIn("root_cause_label", response.text)

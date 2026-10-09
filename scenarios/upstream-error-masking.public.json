@@ -1,0 +1,9 @@
+{
+  "id": "upstream-error-masking", "version": 1, "service": "checkout-gateway",
+  "description": "The gateway returns HTTP 200 for an inventory rejection, hiding the upstream HTTP 409 error.",
+  "reset_command": "python3 -m sample_service.reset --database <path>",
+  "fault_mode": "status_masking",
+  "traffic": [{"sku": "widget", "quantity": 99, "expected_status": 200}],
+  "failure_signal": {"status": 200, "error": "out_of_stock"},
+  "healthy_signal": {"status": 409, "error": "out_of_stock"}
+}

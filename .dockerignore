@@ -8,3 +8,9 @@ docs/
 telemetry/
 frontend/node_modules/
 frontend/dist/
+.env
+.env.ghcr
+.incidentlab-runtime/
+evaluation-results/
+work/
+*[Pp][Rr][Dd]*

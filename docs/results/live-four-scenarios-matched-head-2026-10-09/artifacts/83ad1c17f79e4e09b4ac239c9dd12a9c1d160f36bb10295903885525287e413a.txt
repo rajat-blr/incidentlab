@@ -1,0 +1,17 @@
+{"exit_code": 0, "failure_reason": null, "finished_at": "2026-10-09T07:27:41.171656+00:00", "name": "baseline_replay", "outcome": "PASS", "started_at": "2026-10-09T07:27:38.488919+00:00"}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "ca9df1c4597c464e946db057d2d21ebe", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "ca9df1c4597c464e946db057d2d21ebe", "status": 409, "trace_id": null}
+{"event": "upstream_status_masked", "request_id": "ca9df1c4597c464e946db057d2d21ebe", "trace_id": null, "upstream_status": 409}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "ca9df1c4597c464e946db057d2d21ebe", "trace_id": null}
+{"event": "gateway_result", "request_id": "ca9df1c4597c464e946db057d2d21ebe", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "63014cd8d5004fc18dbca0fbc3a1b99d", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "63014cd8d5004fc18dbca0fbc3a1b99d", "status": 409, "trace_id": null}
+{"event": "upstream_status_masked", "request_id": "63014cd8d5004fc18dbca0fbc3a1b99d", "trace_id": null, "upstream_status": 409}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "63014cd8d5004fc18dbca0fbc3a1b99d", "trace_id": null}
+{"event": "gateway_result", "request_id": "63014cd8d5004fc18dbca0fbc3a1b99d", "status": 200, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "3e42b47b8fa0472bb7c24ade54712635", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "3e42b47b8fa0472bb7c24ade54712635", "status": 409, "trace_id": null}
+{"event": "upstream_status_masked", "request_id": "3e42b47b8fa0472bb7c24ade54712635", "trace_id": null, "upstream_status": 409}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 200 -", "request_id": "3e42b47b8fa0472bb7c24ade54712635", "trace_id": null}
+{"event": "gateway_result", "request_id": "3e42b47b8fa0472bb7c24ade54712635", "status": 200, "trace_id": null}
+{"expected": [[200], [null], 10], "fault_mode": "off", "gateway_fault_mode": "status_masking", "inactive_scenarios": [], "matches": 3, "mode": "baseline", "observed": [[[200], [null], 10], [[200], [null], 10], [[200], [null], 10]], "scenario": "upstream-error-masking", "trials": 3}

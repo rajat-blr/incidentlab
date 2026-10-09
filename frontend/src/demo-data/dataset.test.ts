@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { demoApi } from "../api";
 import dataset from "./dataset.json";
+import evaluation from "../../../docs/results/live-four-scenarios-matched-head-2026-10-09/report.json";
 
 async function sha256(value: string) {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -9,11 +10,22 @@ async function sha256(value: string) {
 }
 
 describe("saved demonstration data", () => {
+  it("retains every latest live trial, including failed runs and their full audits", () => {
+    for (const trial of evaluation.trials) {
+      expect(dataset.runs.find((run) => run.id === trial.run_id)).toEqual(trial.report.run);
+      const data = dataset.run_data[trial.run_id as keyof typeof dataset.run_data];
+      expect(data.events).toEqual(trial.report.events);
+      expect(data.model_usage).toEqual(trial.report.model_usage);
+      expect(data.verifications).toEqual(trial.report.verifications);
+    }
+    expect(evaluation.trials.filter((trial) => trial.report.run.state === "FAILED")).toHaveLength(6);
+  });
+
   it("serves a varied investigation history without network access", async () => {
     const fetch = vi.spyOn(globalThis, "fetch");
     const runs = await demoApi.runs();
 
-    expect(runs).toHaveLength(7);
+    expect(runs).toHaveLength(21);
     expect(new Set(runs.map((run) => run.state))).toEqual(
       new Set([
         "COMPLETED",
@@ -30,12 +42,12 @@ describe("saved demonstration data", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("runs both guided scenario replays without network access", async () => {
+  it("runs all four guided scenario replays without network access", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-29T10:00:00Z"));
     const fetch = vi.spyOn(globalThis, "fetch");
     try {
-      for (const scenario of ["pool-exhaustion", "inventory-underflow"]) {
+      for (const scenario of ["pool-exhaustion", "inventory-underflow", "upstream-error-masking", "mutation-response-cache"]) {
         const run = await demoApi.createRun(scenario, `guided-${scenario}`);
         expect(run.state).toBe("CREATED");
 
@@ -47,11 +59,11 @@ describe("saved demonstration data", () => {
         await demoApi.approve(run.id, "demo-reviewer", "approved");
         vi.advanceTimersByTime(2_100);
         expect((await demoApi.run(run.id)).state).toBe("VERIFYING");
-        expect(await demoApi.candidates(run.id)).toHaveLength(1);
+        expect((await demoApi.candidates(run.id)).length).toBeGreaterThan(0);
 
         vi.advanceTimersByTime(6_000);
         expect((await demoApi.run(run.id)).state).toBe("COMPLETED");
-        expect(await demoApi.verifications(run.id)).toHaveLength(1);
+        expect((await demoApi.verifications(run.id)).length).toBeGreaterThan(0);
       }
       expect(fetch).not.toHaveBeenCalled();
     } finally {

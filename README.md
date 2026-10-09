@@ -1,214 +1,179 @@
 # IncidentLab
 
-IncidentLab is an evidence-backed incident investigation and repair-verification
-system. It reproduces a failure, gathers attributable telemetry and source
-context, produces a structured diagnosis, and verifies a proposed repair inside
-an isolated sandbox.
+[![CI](https://github.com/rajat-blr/incidentlab/actions/workflows/ci.yml/badge.svg)](https://github.com/rajat-blr/incidentlab/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-The project explores a practical question: **how can an AI-assisted incident
-workflow remain useful without allowing the model to become the source of
-truth?**
+IncidentLab reproduces controlled service failures, collects traces, metrics,
+logs, and pinned source, then uses a model to diagnose the incident and propose
+a repair. A reviewer approves repair generation; deterministic policy and an
+isolated Docker sandbox decide whether the candidate passes.
 
-IncidentLab keeps collection, approval, policy enforcement, and verification
-outside the model. The model can explain evidence and propose a bounded change;
-deterministic controls decide what is accepted.
+**[Explore the demo →](https://incidentlab-flax.vercel.app/runs)**
 
-## Live demo
+The browser-only demo needs no account, backend, or API key. The demo dataset
+contains **21 saved investigations**: nine curated histories plus all 12 trials
+from the latest live-model evaluation, including six successful repairs and six
+failures. Four guided replays walk through diagnosis, approval, and verification.
+Saved histories include evidence artifacts, model usage, patches where generated,
+verification logs, audit events, and downloadable reports.
 
-### [Launch IncidentLab →](https://incidentlab-flax.vercel.app/runs)
+## Failure scenarios
 
-The deployed experience runs entirely from curated saved investigation data. It
-does not require an account, backend service, or API key.
+| Scenario | Fault | Healthy behavior |
+| --- | --- | --- |
+| Pool exhaustion | Rejected checkouts leak database connections; the next valid request times out. | Reject oversized purchases and preserve capacity for valid requests. |
+| Inventory underflow | An oversized purchase commits negative stock. | Reject the purchase without changing inventory. |
+| Upstream error masking | The gateway converts an inventory rejection from HTTP 409 to 200. | Preserve the upstream error status and response. |
+| Mutation response cache | The gateway caches a purchase POST; a repeated purchase skips inventory. | Execute both purchases; stock moves from 9 to 8. |
 
-## What the demo shows
+These cover inventory and its checkout gateway. Each scenario has fixed
+reproduction checks and a bounded repair surface. See [scenario definitions](docs/scenarios.md).
 
-The browser-only demo contains seven investigation histories with successful,
-failed, inconclusive, closed, and cancelled outcomes. It also lets a visitor
-start a guided replay for either supported incident:
+## Review console
 
-- **Pool exhaustion** — rejected checkout requests leak database connections
-  until a valid request times out.
-- **Inventory underflow** — an oversized checkout bypasses the stock guard and
-  commits a negative inventory quantity.
+Inspect the evidence behind a diagnosis:
 
-A guided replay moves through reproduction, evidence collection, diagnosis,
-human approval, repair generation, and verification using curated saved data.
+![Diagnosis with trace, metric, and log citations](docs/images/citations.png)
 
-## Investigation pipeline
+Approve repair generation at an explicit checkpoint:
+
+![Repair approval checkpoint](docs/images/approval.png)
+
+Screenshots show curated guided replays. The saved live-model histories retain
+actual recorded outcomes; replaying a scenario in the demo makes no model calls.
+
+## Measured live-model results
+
+Latest batch: **12 trials on 2026-10-09**, three per scenario, using
+`gpt-5.4-mini`, `diagnosis-v2`, and `repair-v8`. Source was pinned to
+`36a20fd72be99e1ebadad1deee620c311dbbe177` with matching Git HEAD evidence.
+Every attempt, including failures, remains in the denominator.
+
+| Scenario | Reproduction | Valid cited diagnosis¹ | Verified repair | Failures |
+| --- | ---: | ---: | ---: | ---: |
+| Pool exhaustion | 3/3 | 2/3 | 2/3 | 1 |
+| Inventory underflow | 3/3 | 2/3 | 2/3 | 1 |
+| Upstream error masking | 3/3 | 2/3 | 2/3 | 1 |
+| Mutation response cache | 3/3 | 0/3 | 0/3 | 3 |
+| **Total** | **12/12 (100%)** | **6/12 (50%)** | **6/12 (50%)** | **6** |
+
+All six successful repairs passed seven mandatory sandbox gates, including
+checks preserving the other three inactive faults. The six failures stopped
+at diagnosis: three misused gap evidence, and three violated follow-up or
+correction-query limits. Evaluation approval was automated.
+
+¹A valid cited diagnosis requires resolving citation IDs, no gap used as
+support, and matching artifact SHA-256 hashes. **44/44 emitted citation IDs
+resolved**; this checks integrity, not semantic proof of the diagnosis.
+
+[Report and failures](docs/results/live-four-scenarios-matched-head-2026-10-09/summary.md)
+· [Raw report](docs/results/live-four-scenarios-matched-head-2026-10-09/report.json)
+· [Artifact manifest](docs/results/live-four-scenarios-matched-head-2026-10-09/artifact-manifest.json)
+· [Evaluated source archive](docs/results/live-four-scenarios-2026-10-09/source.tar.gz)
+
+Across all historical batches, 36 attempts produced 17 verified repairs and
+19 failures, including six authentication failures. Setups differ, so that
+aggregate is an audit count. [Evaluation methodology](docs/evaluation.md)
+separates historical batches and the offline oracle from live-model results.
+These small, controlled trials do not establish performance on unfamiliar services.
+
+## How it works
 
 ```text
-Reproduce incident
-       │
-       ▼
-Collect traces, metrics, logs, and pinned source
-       │
-       ▼
-Generate evidence-cited diagnosis
-       │
-       ▼
-Human approval checkpoint
-       │
-       ▼
-Generate bounded repair candidate
-       │
-       ▼
-Apply deterministic repair policy
-       │
-       ▼
-Verify in an isolated Docker sandbox
-       │
-       ▼
-Persist facts, audit history, and report
+Reproduce → Collect evidence → Cited diagnosis → Reviewer approval
+    → Bounded patch → Repair policy → Sandbox verification → Stored report
 ```
 
-The final result is derived from fixed verification checks—not from a model
-claiming that its own repair worked.
+- **Evidence integrity:** citations resolve to stored artifacts; missing data is
+  recorded as a gap. Source context is pinned to an exact Git commit.
+- **Approval and policy:** repair generation requires approval. Deterministic
+  path, size, secret, syntax, and clean-application checks constrain candidates.
+- **Independent verification:** network-disabled, non-root containers run
+  baseline reproduction, compilation, static analysis, unit tests, integration
+  tests, and repeated incident replay. Results and logs are hash-verified.
+- **Durable execution:** Temporal orchestrates retries; PostgreSQL stores run
+  state, evidence, decisions, model usage, and audit history.
 
-## System architecture
+React/Vite → FastAPI → PostgreSQL + Temporal → OpenAI adapters → trusted verifier.
+OpenTelemetry feeds Jaeger, Prometheus, and Loki. Only the separate trusted
+verifier receives Docker access; the API and model worker do not.
 
-```text
-Sample checkout service
-   ├── traces ─── Jaeger ──────┐
-   ├── metrics ─ Prometheus ───┼── Evidence collector
-   └── logs ──── Loki ─────────┘          │
-                                          ▼
-React console ─ FastAPI ─ PostgreSQL ─ Temporal workflow
-                                          │
-                                   OpenAI adapters
-                                          │
-                                   Repair policy
-                                          │
-                                          ▼
-                           Trusted verifier ─ Docker sandbox
-```
+## Run locally
 
-The API and model worker never receive the Docker socket. A separate trusted
-verifier owns sandbox execution and records check results before the workflow
-derives its terminal state.
-
-## Core design choices
-
-### Evidence before explanation
-
-Every diagnosis citation must resolve to stored evidence. Missing telemetry is
-recorded as an explicit gap rather than silently ignored.
-
-### Human-controlled repair generation
-
-Diagnosis is separated from repair. A reviewer must explicitly approve repair
-generation, and rejection closes the investigation without producing a patch.
-
-### Fail-closed repair policy
-
-Model output is converted into a deterministic unified diff against a pinned
-commit. Path, size, secret, syntax, and clean-application checks run before a
-candidate can reach verification.
-
-### Independent verification
-
-Candidates run in a network-disabled, non-root container with resource limits.
-Baseline reproduction, compilation, static analysis, unit tests, integration
-tests, and repeated incident replay are stored as hash-verified facts.
-
-### Durable and inspectable execution
-
-Temporal provides retry-safe orchestration. PostgreSQL stores investigation
-state, evidence, model usage, decisions, verification results, and the audit
-trail exposed by the review console.
-
-## Technology
-
-| Area | Technology |
-| --- | --- |
-| Frontend | React, TypeScript, Vite, TanStack Query |
-| API | FastAPI, SQLAlchemy, Alembic |
-| Workflow | Temporal |
-| Storage | PostgreSQL |
-| Observability | OpenTelemetry, Jaeger, Prometheus, Loki |
-| Model integration | OpenAI Structured Outputs |
-| Verification | Docker sandbox with fixed checks |
-| Local environment | Docker Compose, uv |
-
-## Build and run from source
-
-### Prerequisites
-
-- Docker Desktop with Docker Compose v2
-- Git
-- An OpenAI API key
-
-Clone the repository and enter its root directory:
+For the complete workflow, install Docker Desktop with Compose v2 and Git,
+and provide an OpenAI API key:
 
 ```sh
 git clone https://github.com/rajat-blr/incidentlab.git
 cd incidentlab
-```
-
-Cloning is preferred because IncidentLab uses the repository's `.git` metadata
-to pin each investigation to an exact commit. If you downloaded a GitHub source
-archive instead, initialize it once before continuing:
-
-```sh
-git init
-git add .
-git commit -m "Initialize local IncidentLab source"
-```
-
-Create the local environment file:
-
-```sh
 cp .env.example .env
-```
-
-Set `OPENAI_API_KEY` in `.env`. Keep this file private; it is ignored by Git.
-The default model is already configured as `gpt-5.4-mini`.
-
-With Docker Desktop running, build and start the complete application:
-
-```sh
+# Set OPENAI_API_KEY in .env; the default model is gpt-5.4-mini.
 docker compose up --build -d --wait
 ```
 
-This builds the API, workflow worker, frontend, verifier, and verification
-sandbox; starts PostgreSQL, Temporal, and the telemetry services; and applies
-the database migrations. Open `http://localhost:5173` to use the application.
-
-Useful lifecycle commands:
+Open **http://localhost:5173**. Compose builds the application and sandbox,
+starts the database, workflow, and telemetry services, and applies migrations.
+Keep `.env` private. Commit source changes before starting investigations so
+pinned source includes them. If using a source archive, initialize and commit
+a Git repository first.
 
 ```sh
-# Follow application and verification logs
-docker compose logs -f api worker verifier
-
-# Stop the stack while preserving its database volumes
-docker compose down
+docker compose logs -f api worker verifier  # Follow execution
+docker compose down                       # Stop; preserve database volumes
 ```
 
-## Repository map
+For the browser-only demo, install Node.js 22 and run:
 
-```text
-incidentlab/       API, workflows, persistence, evidence, policy, and verification
-frontend/          React review console, guided replay, and saved demo data
-sample_service/    Fault-injected checkout service and replay utilities
-scenarios/         Public scenario definitions and private evaluation truth
-telemetry/         Collector, Prometheus, and Loki configuration
-migrations/        Database migrations
-scripts/           Evaluation and operational utilities
-tests/             Backend test suite
-docs/              Architecture, threat model, sandbox, and evaluation notes
+```sh
+cd frontend
+npm ci
+npm run dev:demo -- --port 5176 --strictPort
 ```
 
-## Further reading
+Open **http://localhost:5176**. To run the frontend against the Compose backend
+on port 8000, use `npm run dev -- --port 5176 --strictPort` instead.
 
-- [Architecture](docs/architecture.md)
-- [Threat model](docs/threat-model.md)
-- [Sandbox boundary](docs/sandbox.md)
-- [Evaluation methodology](docs/evaluation.md)
-- [Failure modes](docs/failure-modes.md)
-- [Container releases](docs/container-release.md)
+## Development and repository
 
-## Scope
+CI runs backend lint and tests, PostgreSQL migration checks, the offline
+regression evaluation, frontend tests, and live/demo builds without an API key.
+The [CI workflow](.github/workflows/ci.yml) and
+[container release workflow](.github/workflows/publish-containers.yml) are separate.
 
-IncidentLab is a portfolio and educational system built around controlled,
-deterministic scenarios. It is not a production incident-response platform, and
-the sandbox should not be treated as a hardened boundary for arbitrary untrusted
+| Path | Contents |
+| --- | --- |
+| `incidentlab/` | API, workflows, persistence, evidence, policy, verification |
+| `frontend/` | Review console, guided replays, saved demo dataset |
+| `sample_service/`, `scenarios/` | Fault-injected service, public manifests, private evaluation truth |
+| `telemetry/`, `migrations/` | Observability configuration and database migrations |
+| `scripts/`, `tests/` | Evaluation, demo export, operational tools, backend tests |
+| `docs/` | Architecture, controls, evaluation records, setup notes |
+
+To refresh the demo with every trial from a recorded evaluation, including
+failures:
+
+```sh
+.venv/bin/python scripts/export_demo_runs.py \
+  docs/results/live-four-scenarios-matched-head-2026-10-09 --all-trials
+```
+
+The exporter checks artifact hashes and fetches missing artifacts from the
+recorded API URL. Local PRDs and `work/` scratch files are ignored and untracked.
+
+The optional [GitHub integration](docs/github-integration.md) validates signed
+App webhooks and supports separately approved draft PR creation after verified
+repair. It requires an installation token and is separate from the demo.
+
+## Scope and further reading
+
+IncidentLab is a portfolio and educational project built around controlled
+incidents. The sandbox is not a hardened boundary for arbitrary untrusted
 repositories.
+
+[Architecture](docs/architecture.md) · [Threat model](docs/threat-model.md) ·
+[Sandbox](docs/sandbox.md) · [Failure modes](docs/failure-modes.md) ·
+[Demo walkthrough](docs/demo.md) · [Container releases](docs/container-release.md)
+
+## License
+
+[MIT](LICENSE). Copyright © 2026 Rajat Varma.

@@ -1,0 +1,7 @@
+{"exit_code": 0, "failure_reason": null, "finished_at": "2026-10-09T07:17:55.373805+00:00", "name": "unit", "outcome": "PASS", "started_at": "2026-10-09T07:17:54.617536+00:00"}
+test_valid_checkout_and_unknown_sku_return_connections (tests.test_sample_service.CheckoutIncidentTests.test_valid_checkout_and_unknown_sku_return_connections) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK

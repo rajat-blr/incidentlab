@@ -1,0 +1,7 @@
+{
+  "scenario_id": "upstream-error-masking", "version": 1,
+  "root_cause_label": "upstream_error_status_overwritten",
+  "mechanism": "The gateway changes an upstream error status to 200 while preserving the error body.",
+  "expected_affected_files": ["sample_service/gateway.py"],
+  "expected_repair": "Preserve the upstream status when forwarding an inventory rejection."
+}

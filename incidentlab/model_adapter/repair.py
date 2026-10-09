@@ -16,16 +16,21 @@ from incidentlab.contracts.models import (
 )
 from incidentlab.model_adapter.diagnosis import Usage
 from incidentlab.policy.repair import POLICY_VERSION, PolicyDecision, RepairPolicy
+from sample_service.scenarios import SCENARIOS
 
-PROMPT_VERSION = "repair-v7"
+PROMPT_VERSION = "repair-v8"
 
 SCENARIO_FAULT_MODES = {
     "pool-exhaustion": "pool_leak",
     "inventory-underflow": "inventory_underflow",
+    "upstream-error-masking": "status_masking",
+    "mutation-response-cache": "mutation_cache",
 }
 SCENARIO_CHANGED_SOURCE_MARKERS = {
     "pool-exhaustion": ('"pool_leak"', "return_connection"),
     "inventory-underflow": ('"inventory_underflow"', "row[0] < quantity"),
+    "upstream-error-masking": ('"status_masking"', "status = 200"),
+    "mutation-response-cache": ('"mutation_cache"', "cached_responses", "cached is not None"),
 }
 
 
@@ -65,7 +70,8 @@ def generate_repairs(
 ) -> RepairGenerationResult:
     if len(pinned_source.encode()) > 32 * 1024:
         raise RepairError("repository context exceeds the byte limit")
-    repair_policy = policy or RepairPolicy()
+    source_path = SCENARIOS.get(scenario_id or "", {}).get("source_path", "sample_service/app.py")
+    repair_policy = policy or RepairPolicy(allowed_paths=(source_path,))
     payload = {
         "task": (
             "Propose a minimal repair for the approved root-cause hypothesis and active "
@@ -82,7 +88,7 @@ def generate_repairs(
         "failing_reproduction": reproduction,
         "allowed_files": list(repair_policy.allowed_paths),
         "untrusted_repository_context": {
-            "path": "sample_service/app.py",
+            "path": source_path,
             "content": pinned_source,
             "numbered_content": "\n".join(
                 f"{number}: {line}"

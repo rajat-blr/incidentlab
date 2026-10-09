@@ -16,3 +16,5 @@
 
 Never interpret a missing check, provider error, or infrastructure interruption as
 proof that a repair works.
+
+The GitHub rows apply only to the [optional App and draft PR integration](github-integration.md).

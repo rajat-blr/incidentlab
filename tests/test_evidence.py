@@ -51,7 +51,7 @@ class EvidenceCollectionTests(unittest.TestCase):
 
     def test_empty_telemetry_is_explicit_gap_evidence(self) -> None:
         bundle = self.collect(lambda _: b'{"data":{"result":[]}}')
-        self.assertEqual(len(bundle.items), 6)
+        self.assertEqual(len(bundle.items), 7)
         self.assertTrue(all(item.kind == "gap" for item in bundle.items))
         self.assertTrue(all(item.artifact_ref for item in bundle.items))
 
@@ -67,17 +67,17 @@ class EvidenceCollectionTests(unittest.TestCase):
             return response_for(url)
 
         bundle = self.collect(late, attempts=2)
-        self.assertEqual(len(bundle.items), 6)
+        self.assertEqual(len(bundle.items), 7)
         self.assertFalse(any(item.kind == "gap" for item in bundle.items))
 
     def test_duplicate_telemetry_produces_one_normalized_item_per_query(self) -> None:
         bundle = self.collect(lambda url: response_for(url, duplicate=True))
-        self.assertEqual(len(bundle.items), 6)
-        self.assertEqual(len({item.id for item in bundle.items}), 6)
+        self.assertEqual(len(bundle.items), 7)
+        self.assertEqual(len({item.id for item in bundle.items}), 7)
 
     def test_malformed_telemetry_is_saved_as_gap_not_raised(self) -> None:
         bundle = self.collect(lambda _: b"not-json")
-        self.assertEqual(len(bundle.items), 6)
+        self.assertEqual(len(bundle.items), 7)
         self.assertTrue(all(item.kind == "gap" for item in bundle.items))
         self.assertTrue(all("malformed" in item.summary for item in bundle.items))
         for artifact in bundle.artifacts:

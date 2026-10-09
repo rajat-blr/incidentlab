@@ -15,9 +15,10 @@ from pydantic import ValidationError
 
 from incidentlab.contracts.models import DiagnosisDraft, EvidenceLookup
 from incidentlab.model_adapter.diagnosis import redact_untrusted_text
-from sample_service.demo import replay, replay_inventory_underflow
+from sample_service.demo import replay_scenario
+from sample_service.scenarios import SCENARIOS, matches_results
 
-EVALUATION_VERSION = "evaluation-v1"
+EVALUATION_VERSION = "evaluation-v2"
 BASELINES = ("incidentlab", "deterministic-keyword", "one-shot-uncited")
 
 
@@ -45,15 +46,7 @@ class TrialResult:
 
 
 def _scenario_reproduction(scenario_id: str, database: Path) -> bool:
-    if scenario_id == "pool-exhaustion":
-        result = replay(database, "pool_leak")
-        return [status for status, _ in result] == [409, 409, 503]
-    if scenario_id == "inventory-underflow":
-        result = replay_inventory_underflow(database, "inventory_underflow")
-        return [status for status, _ in result] == [200] and result[0][1].get(
-            "remaining_inventory"
-        ) == -1
-    raise ValueError(f"unknown evaluation scenario: {scenario_id}")
+    return matches_results(scenario_id, replay_scenario(database, scenario_id), healthy=False)
 
 
 def _score_system(system: str, scenario_id: str, reproduced: bool) -> tuple[bool, bool, bool]:
@@ -160,7 +153,7 @@ def run_evaluation(output_dir: Path, config: EvaluationConfig | None = None) -> 
     results: list[TrialResult] = []
     with tempfile.TemporaryDirectory(prefix="incidentlab-evaluation-") as temporary:
         root = Path(temporary)
-        for scenario_id in ("pool-exhaustion", "inventory-underflow"):
+        for scenario_id in SCENARIOS:
             for trial in range(1, config.trials + 1):
                 trial_started = time.monotonic()
                 reproduced = _scenario_reproduction(
@@ -187,9 +180,7 @@ def run_evaluation(output_dir: Path, config: EvaluationConfig | None = None) -> 
     report = {
         "evaluation_version": EVALUATION_VERSION,
         "dataset_digest": hashlib.sha256(
-            json.dumps(
-                ["pool-exhaustion:1", "inventory-underflow:1"], separators=(",", ":")
-            ).encode()
+            json.dumps([f"{scenario}:1" for scenario in SCENARIOS], separators=(",", ":")).encode()
         ).hexdigest(),
         "config": asdict(config),
         "duration_ms": max(0, round((time.monotonic() - started) * 1000)),

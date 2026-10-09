@@ -142,8 +142,21 @@ def _parse(query: Query, payload: bytes) -> str | None:
             )
             for span in spans
         )
+        gateway_observations = [
+            {tag["key"]: tag.get("value")}
+            for span in spans
+            for tag in span.get("tags", [])
+            if isinstance(tag, dict)
+            and tag.get("key")
+            in {
+                "gateway.cache_hit",
+                "gateway.upstream_status",
+            }
+        ]
         return (
-            f"Found {len(trace_ids)} correlated trace(s); database acquisition timeout={timed_out}."
+            f"Found {len(trace_ids)} correlated trace(s); "
+            f"database acquisition timeout={timed_out}; "
+            f"gateway observations={json.dumps(gateway_observations, sort_keys=True)}."
         )
     if not isinstance(data, dict) or not isinstance(data.get("result"), list):
         raise ValueError("query result is malformed")
@@ -220,6 +233,7 @@ def telemetry_queries(
         ("pool-available", "incidentlab_db_pool_available", "inventory", ""),
         ("pool-timeouts", "incidentlab_db_pool_timeouts_total", "inventory", ""),
         ("gateway-503", "incidentlab_gateway_requests_total", "checkout", ',status="503"'),
+        ("gateway-requests", "incidentlab_gateway_requests_total", "checkout", ""),
     )
     for key, name, service, extra_selector in metrics:
         expression = f'{name}{{incidentlab_run_id="{run_id}"{extra_selector}}}'

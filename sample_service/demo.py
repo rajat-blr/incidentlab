@@ -10,6 +10,7 @@ from pathlib import Path
 from sample_service.app import CheckoutService, running_server
 from sample_service.gateway import running_gateway
 from sample_service.reset import reset_database
+from sample_service.scenarios import SCENARIOS
 
 
 def post_checkout(
@@ -40,17 +41,30 @@ def replay_traffic(
     database: Path,
     fault_mode: str,
     traffic: tuple[tuple[str, int], ...],
+    gateway_fault_mode: str = "off",
 ) -> list[tuple[int, dict]]:
     reset_database(database)
     service = CheckoutService(database, fault_mode)
     with running_server(service) as server:
-        with running_gateway(f"http://127.0.0.1:{server.server_port}") as gateway:
+        with running_gateway(
+            f"http://127.0.0.1:{server.server_port}", gateway_fault_mode
+        ) as gateway:
             port = gateway.server_port
             return [post_checkout(port, sku, quantity) for sku, quantity in traffic]
 
 
 def replay_inventory_underflow(database: Path, fault_mode: str) -> list[tuple[int, dict]]:
     return replay_traffic(database, fault_mode, (("widget", 11),))
+
+
+def replay_scenario(database: Path, scenario_id: str, *, healthy: bool = False):
+    scenario = SCENARIOS[scenario_id]
+    return replay_traffic(
+        database,
+        "off" if healthy else scenario["fault_mode"],
+        scenario["traffic"],
+        "off" if healthy else scenario["gateway_fault_mode"],
+    )
 
 
 def main() -> None:

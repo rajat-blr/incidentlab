@@ -1,0 +1,22 @@
+{"exit_code": 0, "failure_reason": null, "finished_at": "2026-10-09T07:31:18.195752+00:00", "name": "incident_replay", "outcome": "PASS", "started_at": "2026-10-09T07:31:14.002823+00:00"}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "9a84f5c0399a4dd98915344bbb651e5f", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "9a84f5c0399a4dd98915344bbb651e5f", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "9a84f5c0399a4dd98915344bbb651e5f", "trace_id": null}
+{"event": "gateway_result", "request_id": "9a84f5c0399a4dd98915344bbb651e5f", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "2c0e4a9e0fa742819d0d84c42e181acf", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "2c0e4a9e0fa742819d0d84c42e181acf", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "2c0e4a9e0fa742819d0d84c42e181acf", "trace_id": null}
+{"event": "gateway_result", "request_id": "2c0e4a9e0fa742819d0d84c42e181acf", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "35c726936a5646439bc00039ffdb2180", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "35c726936a5646439bc00039ffdb2180", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "35c726936a5646439bc00039ffdb2180", "trace_id": null}
+{"event": "gateway_result", "request_id": "35c726936a5646439bc00039ffdb2180", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "41c8d49602ca4f5e893b935873cf677a", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "41c8d49602ca4f5e893b935873cf677a", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "41c8d49602ca4f5e893b935873cf677a", "trace_id": null}
+{"event": "gateway_result", "request_id": "41c8d49602ca4f5e893b935873cf677a", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "e5fccc1c8c0540958cc4177438db1224", "trace_id": null}
+{"event": "checkout_result", "pool_available": 2, "request_id": "e5fccc1c8c0540958cc4177438db1224", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "e5fccc1c8c0540958cc4177438db1224", "trace_id": null}
+{"event": "gateway_result", "request_id": "e5fccc1c8c0540958cc4177438db1224", "status": 409, "trace_id": null}
+{"expected": [[409], [null], 10], "fault_mode": "inventory_underflow", "gateway_fault_mode": "off", "inactive_scenarios": [], "matches": 5, "mode": "repaired", "observed": [[[409], [null], 10], [[409], [null], 10], [[409], [null], 10], [[409], [null], 10], [[409], [null], 10]], "scenario": "inventory-underflow", "trials": 5}

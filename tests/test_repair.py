@@ -74,6 +74,45 @@ class SequenceRepairAdapter(FakeRepairAdapter):
 
 
 class RepairPolicyTests(unittest.TestCase):
+    def test_gateway_repairs_receive_only_the_gateway_source_path(self) -> None:
+        source = Path("sample_service/gateway.py").read_text()
+        fixed = source.replace("                    status = 200\n", "", 1)
+        draft = RepairGenerationDraft(
+            candidates=[
+                RepairCandidateDraft(
+                    unified_diff=unified_diff(source, fixed, "sample_service/gateway.py"),
+                    explanation="Preserve the upstream error status.",
+                    expected_behavior="An upstream stock rejection remains HTTP 409.",
+                )
+            ]
+        )
+        adapter = FakeRepairAdapter(draft)
+        run_id = uuid4()
+        result = generate_repairs(
+            run_id,
+            "a" * 40,
+            hypothesis(run_id),
+            {},
+            source,
+            adapter,
+            scenario_id="upstream-error-masking",
+        )
+        self.assertEqual(len(result.candidates), 1)
+        self.assertEqual(result.candidates[0].changed_paths, ["sample_service/gateway.py"])
+        self.assertEqual(adapter.payload["allowed_files"], ["sample_service/gateway.py"])
+        self.assertEqual(
+            adapter.payload["untrusted_repository_context"]["path"], "sample_service/gateway.py"
+        )
+        forbidden = RepairPolicy(allowed_paths=("sample_service/gateway.py",)).evaluate(
+            RepairCandidateDraft(
+                unified_diff=unified_diff(self.source, self.fixed),
+                explanation="Wrong component.",
+                expected_behavior="Not allowed.",
+            ),
+            source,
+        )
+        self.assertFalse(forbidden.accepted)
+
     def setUp(self) -> None:
         self.source = Path(APP_PATH).read_text()
         self.fixed = self.source.replace(

@@ -1,0 +1,41 @@
+{"exit_code": 0, "failure_reason": null, "finished_at": "2026-10-09T07:29:57.933798+00:00", "name": "baseline_replay", "outcome": "PASS", "started_at": "2026-10-09T07:29:54.707157+00:00"}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "b03b39148a8341bdb9e672a60b32e6e1", "trace_id": null}
+{"event": "checkout_result", "pool_available": 1, "request_id": "b03b39148a8341bdb9e672a60b32e6e1", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "b03b39148a8341bdb9e672a60b32e6e1", "trace_id": null}
+{"event": "gateway_result", "request_id": "b03b39148a8341bdb9e672a60b32e6e1", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "26426dc8112e42188118fcc91f1d724d", "trace_id": null}
+{"event": "checkout_result", "pool_available": 0, "request_id": "26426dc8112e42188118fcc91f1d724d", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "26426dc8112e42188118fcc91f1d724d", "trace_id": null}
+{"event": "gateway_result", "request_id": "26426dc8112e42188118fcc91f1d724d", "status": 409, "trace_id": null}
+{"available": 0, "event": "database_pool_timeout", "request_id": "2f0a9b31d4db44d58cb03cb625247d43", "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 503 -", "request_id": "2f0a9b31d4db44d58cb03cb625247d43", "trace_id": null}
+{"event": "checkout_result", "pool_available": 0, "request_id": "2f0a9b31d4db44d58cb03cb625247d43", "status": 503, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 503 -", "request_id": "2f0a9b31d4db44d58cb03cb625247d43", "trace_id": null}
+{"event": "gateway_result", "request_id": "2f0a9b31d4db44d58cb03cb625247d43", "status": 503, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "6d72b69b12e94e49a7210c6097e8f243", "trace_id": null}
+{"event": "checkout_result", "pool_available": 1, "request_id": "6d72b69b12e94e49a7210c6097e8f243", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "6d72b69b12e94e49a7210c6097e8f243", "trace_id": null}
+{"event": "gateway_result", "request_id": "6d72b69b12e94e49a7210c6097e8f243", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "894bf0e64d164ac0899c8048fd57c6df", "trace_id": null}
+{"event": "checkout_result", "pool_available": 0, "request_id": "894bf0e64d164ac0899c8048fd57c6df", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "894bf0e64d164ac0899c8048fd57c6df", "trace_id": null}
+{"event": "gateway_result", "request_id": "894bf0e64d164ac0899c8048fd57c6df", "status": 409, "trace_id": null}
+{"available": 0, "event": "database_pool_timeout", "request_id": "7a3bcf54391a4fb9a8ecc4bd1f22358b", "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 503 -", "request_id": "7a3bcf54391a4fb9a8ecc4bd1f22358b", "trace_id": null}
+{"event": "checkout_result", "pool_available": 0, "request_id": "7a3bcf54391a4fb9a8ecc4bd1f22358b", "status": 503, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 503 -", "request_id": "7a3bcf54391a4fb9a8ecc4bd1f22358b", "trace_id": null}
+{"event": "gateway_result", "request_id": "7a3bcf54391a4fb9a8ecc4bd1f22358b", "status": 503, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "ba22a2c904a94413a62e04874ee9dd2f", "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "ba22a2c904a94413a62e04874ee9dd2f", "trace_id": null}
+{"event": "checkout_result", "pool_available": 1, "request_id": "ba22a2c904a94413a62e04874ee9dd2f", "status": 409, "trace_id": null}
+{"event": "gateway_result", "request_id": "ba22a2c904a94413a62e04874ee9dd2f", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "ac73ca093cfa4e7da74c4a823dbdb600", "trace_id": null}
+{"event": "checkout_result", "pool_available": 0, "request_id": "ac73ca093cfa4e7da74c4a823dbdb600", "status": 409, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 409 -", "request_id": "ac73ca093cfa4e7da74c4a823dbdb600", "trace_id": null}
+{"event": "gateway_result", "request_id": "ac73ca093cfa4e7da74c4a823dbdb600", "status": 409, "trace_id": null}
+{"available": 0, "event": "database_pool_timeout", "request_id": "42ac1589bfd5497886bc88099051ba1c", "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 503 -", "request_id": "42ac1589bfd5497886bc88099051ba1c", "trace_id": null}
+{"event": "checkout_result", "pool_available": 0, "request_id": "42ac1589bfd5497886bc88099051ba1c", "status": 503, "trace_id": null}
+{"event": "http_request", "message": "\"POST /checkout HTTP/1.1\" 503 -", "request_id": "42ac1589bfd5497886bc88099051ba1c", "trace_id": null}
+{"event": "gateway_result", "request_id": "42ac1589bfd5497886bc88099051ba1c", "status": 503, "trace_id": null}
+{"expected": [[409, 409, 503], [null, null, null], 10], "fault_mode": "pool_leak", "gateway_fault_mode": "off", "inactive_scenarios": [], "matches": 3, "mode": "baseline", "observed": [[[409, 409, 503], [null, null, null], 10], [[409, 409, 503], [null, null, null], 10], [[409, 409, 503], [null, null, null], 10]], "scenario": "pool-exhaustion", "trials": 3}

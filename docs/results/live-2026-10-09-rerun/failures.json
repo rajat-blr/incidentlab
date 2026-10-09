@@ -1,0 +1,257 @@
+{
+  "evaluation_version": "live-evaluation-v1",
+  "failures": [
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 11151,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "follow-up query budget exhausted",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-527ec79e627e43b994de34a5d9376842",
+            "created_at": "2026-10-09T06:54:31.390914+00:00",
+            "details": {
+              "scenario_id": "pool-exhaustion",
+              "scenario_version": 1
+            },
+            "id": "76615a97-b374-42b6-b3e5-ad906aef75f5",
+            "kind": "run_created",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:31.418674+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "9e151a71-c8a7-479f-8d49-477d91a2bb48",
+            "kind": "state_changed",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:34.024074+00:00",
+            "details": {
+              "failure": "database_pool_timeout",
+              "observed_end": "2026-10-09T06:54:35.958535+00:00",
+              "observed_start": "2026-10-09T06:54:29.434401+00:00",
+              "request_ids": [
+                "run-4a6fdef7-c2b86ce4-a",
+                "run-4a6fdef7-c2b86ce4-b",
+                "run-4a6fdef7-c2b86ce4-failure"
+              ],
+              "response": {
+                "error": "database_pool_timeout"
+              },
+              "statuses": [
+                409,
+                409,
+                503
+              ]
+            },
+            "id": "cce5c188-3007-4486-b43a-c7780ba93a16",
+            "kind": "reproduction_recorded",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:34.039007+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "d96e38e6-7c7f-448d-ba91-6db268f1bcc4",
+            "kind": "state_changed",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:34.069327+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "5d423b8b-77d2-4184-8436-32386bd23b61",
+            "kind": "evidence_recorded",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:34.093325+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "6648c39e-e621-431a-ae2a-7cab6d983647",
+            "kind": "state_changed",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:42.416593+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "follow-up query budget exhausted"
+            },
+            "id": "284e048b-5b46-436a-91d0-2fc85ac52fdc",
+            "kind": "diagnosis_rejected",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "created_at": "2026-10-09T06:54:42.442562+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "7e6b3fcf-5273-4ca1-aff7-de48179945d3",
+            "kind": "state_changed",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/f402f1fc-61ef-55a3-b7ff-f4e76aa49e83",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-7a464bf5-e9a3-5e3e-990a-d39300410b84",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:54:34.069182Z",
+            "observed_start": "2026-10-09T06:54:34.069182Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/34cf4398-aaf5-5fad-ae6c-4d174b9010a5",
+            "content_sha256": "1e8ea86eac1b71acfedfef5482986c0c8e8cf51e346964f07de158cf316d0cd3",
+            "id": "ev-1201e7b8-4d28-5b8e-a47e-df318aced8b0",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/7e7389b7-1eff-5708-8d36-6414f6b9b1db",
+            "content_sha256": "37305fce4ef07867507276dadb40f89a930f518caf7b2f89738ce2f3b8d22d77",
+            "id": "ev-e7a30812-8b67-5afc-937f-6141c7285067",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2efee511-4ab6-5b12-9805-7635b5ceb4e4",
+            "content_sha256": "2086710f9f127ec3be09d89c9282d63053ae2ea99981d3707bfd2408e03d2627",
+            "id": "ev-0cf2f5f0-cd38-5fd4-9dcd-928eb6770284",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/277e0354-22bc-5ba7-a211-c5675f38e655",
+            "content_sha256": "da270ed9280c77e5cf2f56f27a70ea6529604e01d4c2091d1c6d8b534db8bba8",
+            "id": "ev-82833857-463d-5105-b839-5349c4ef97aa",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/87503597-92da-5fd6-a97d-18b829023825",
+            "content_sha256": "528db81627f4eb309b28fd2ae41854f217a7afada6dbc48230f34e1bc8d57656",
+            "id": "ev-f201d2ea-9648-5290-bffd-1968a954f0d1",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=0, maximum=0, latest=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/f6428782-e6d8-52b2-bff7-cee28b00d189",
+            "content_sha256": "989669566eb8f1ce8536b0cdc99fd5b0df997d1b73f68e6ea9f458aea5c376da",
+            "id": "ev-1ad1b736-b634-574f-b66b-2cdfc59128a1",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:54:35.958535Z",
+            "observed_start": "2026-10-09T06:54:29.434401Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=True."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:54:31.390914Z",
+          "id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "pool-exhaustion",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T06:54:42.442562Z",
+          "workflow_id": "incidentlab-run-4a6fdef7-d16d-5fb3-ab18-7e7fedfede68"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "4a6fdef7-d16d-5fb3-ab18-7e7fedfede68",
+      "scenario_id": "pool-exhaustion",
+      "state": "FAILED",
+      "trial": 2,
+      "verified_repair": false
+    }
+  ]
+}

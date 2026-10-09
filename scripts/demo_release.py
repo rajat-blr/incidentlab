@@ -1,4 +1,4 @@
-"""Run the release demo: two incidents, recovery controls, and evaluation export."""
+"""Run all four controlled incidents, healthy controls, and offline evaluation."""
 
 from __future__ import annotations
 
@@ -10,40 +10,40 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from incidentlab.evaluation import EvaluationConfig, run_evaluation
-from sample_service.demo import replay, replay_inventory_underflow
+from sample_service.demo import replay_scenario
+from sample_service.scenarios import SCENARIOS, matches_results
 
 
 def main() -> None:
+    output = Path("evaluation-results/demo")
+    scenarios = {}
     with tempfile.TemporaryDirectory(prefix="incidentlab-release-demo-") as temporary:
         root = Path(temporary)
-        pool_failure = replay(root / "pool-failure.sqlite3", "pool_leak")
-        pool_recovery = replay(root / "pool-recovery.sqlite3", "off")
-        underflow_failure = replay_inventory_underflow(
-            root / "underflow-failure.sqlite3", "inventory_underflow"
-        )
-        underflow_recovery = replay_inventory_underflow(root / "underflow-recovery.sqlite3", "off")
-        output = Path("evaluation-results/demo")
+        for scenario_id in SCENARIOS:
+            database = root / f"{scenario_id}.sqlite3"
+            failure = replay_scenario(database, scenario_id)
+            recovery = replay_scenario(database, scenario_id, healthy=True)
+            scenarios[scenario_id] = {
+                "failure": failure,
+                "healthy_control": recovery,
+                "reproduced": matches_results(scenario_id, failure, healthy=False),
+                "recovered": matches_results(scenario_id, recovery, healthy=True),
+            }
         evaluation = run_evaluation(output, EvaluationConfig(trials=1, seed=7))
-    result = {
-        "pool_exhaustion": {
-            "failure": [status for status, _ in pool_failure],
-            "recovery_after_reset": [status for status, _ in pool_recovery],
-        },
-        "inventory_underflow": {
-            "failure": underflow_failure,
-            "recovery_after_reset": underflow_recovery,
-        },
-        "evaluation_report": str(output / "report.json"),
-        "adversarial_cases_contained": sum(item["contained"] for item in evaluation["adversarial"]),
-    }
-    print(json.dumps(result, indent=2, sort_keys=True))
-    expected = (
-        result["pool_exhaustion"]["failure"] == [409, 409, 503]
-        and result["pool_exhaustion"]["recovery_after_reset"] == [409, 409, 200]
-        and underflow_failure[0][1].get("remaining_inventory") == -1
-        and underflow_recovery[0][0] == 409
+    print(
+        json.dumps(
+            {
+                "scenarios": scenarios,
+                "evaluation_report": str(output / "report.json"),
+                "adversarial_cases_contained": sum(
+                    item["contained"] for item in evaluation["adversarial"]
+                ),
+            },
+            indent=2,
+            sort_keys=True,
+        )
     )
-    if not expected:
+    if not all(item["reproduced"] and item["recovered"] for item in scenarios.values()):
         raise SystemExit(1)
 
 

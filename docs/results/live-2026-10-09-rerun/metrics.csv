@@ -1,0 +1,7 @@
+scenario_id,trial,run_id,pinned_commit,state,reproduced,citations_valid,citation_count,resolved_citation_count,verified_repair,failure_category,model_ids,prompt_versions,input_tokens,output_tokens,estimated_cost_usd,duration_ms,failure_detail
+pool-exhaustion,1,be09c1b5-ee7a-5227-8e4a-14336d1f956d,a8c1bd576f633b6c0202b5cc68918874ae575053,COMPLETED,True,True,4,4,True,,['gpt-5.4-mini'],"['diagnosis-v2', 'repair-v7']",11658,1288,0.01454,32394,
+pool-exhaustion,2,4a6fdef7-d16d-5fb3-ab18-7e7fedfede68,a8c1bd576f633b6c0202b5cc68918874ae575053,FAILED,True,False,0,0,False,DiagnosisError,[],[],0,0,0,11151,follow-up query budget exhausted
+pool-exhaustion,3,f4a474db-6b63-5c3c-a135-6030d921b5b2,a8c1bd576f633b6c0202b5cc68918874ae575053,COMPLETED,True,True,5,5,True,,['gpt-5.4-mini'],"['diagnosis-v2', 'repair-v7']",11667,1538,0.015672,30372,
+inventory-underflow,1,f373cd81-d65a-55a9-b63b-21fd518f8086,a8c1bd576f633b6c0202b5cc68918874ae575053,COMPLETED,True,True,11,11,True,,['gpt-5.4-mini'],"['diagnosis-v2', 'repair-v7']",16313,2170,0.022,37461,
+inventory-underflow,2,ee49cc92-aecc-5e01-9c85-bf2186e5dfaf,a8c1bd576f633b6c0202b5cc68918874ae575053,COMPLETED,True,True,9,9,True,,['gpt-5.4-mini'],"['diagnosis-v2', 'repair-v7']",11628,1596,0.015904,55612,
+inventory-underflow,3,ab9edbdc-9149-5153-acfa-cdc1f9eb01fa,a8c1bd576f633b6c0202b5cc68918874ae575053,COMPLETED,True,True,4,4,True,,['gpt-5.4-mini'],"['diagnosis-v2', 'repair-v7']",11893,1356,0.015022,32360,

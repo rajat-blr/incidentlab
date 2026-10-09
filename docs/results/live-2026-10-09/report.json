@@ -1,0 +1,1554 @@
+{
+  "config": {
+    "base_url": "http://127.0.0.1:8000",
+    "model": "gpt-5.4-mini",
+    "output": "docs/results/live-2026-10-09",
+    "timeout": 300,
+    "trials": 3
+  },
+  "evaluation_version": "live-evaluation-v1",
+  "limitations": [
+    "Two controlled scenarios from one checkout service; no cross-service generalization.",
+    "Citation validity checks IDs, gap handling and artifact integrity, not semantic entailment.",
+    "Approval is performed by the evaluator, not a human reviewer.",
+    "Provider retries inside an activity are part of one trial; recorded usage may omit rejected calls."
+  ],
+  "started_at": "2026-10-09T06:48:56.631929+00:00",
+  "summary": [
+    {
+      "citation_count": 0,
+      "citation_validity": 0.0,
+      "failure_count": 3,
+      "reproduction_rate": 1.0,
+      "resolved_citation_count": 0,
+      "scenario_id": "pool-exhaustion",
+      "trials": 3,
+      "verified_repair_rate": 0.0
+    },
+    {
+      "citation_count": 0,
+      "citation_validity": 0.0,
+      "failure_count": 3,
+      "reproduction_rate": 1.0,
+      "resolved_citation_count": 0,
+      "scenario_id": "inventory-underflow",
+      "trials": 3,
+      "verified_repair_rate": 0.0
+    },
+    {
+      "citation_count": 0,
+      "citation_validity": 0.0,
+      "failure_count": 6,
+      "reproduction_rate": 1.0,
+      "resolved_citation_count": 0,
+      "scenario_id": "all",
+      "trials": 6,
+      "verified_repair_rate": 0.0
+    }
+  ],
+  "trials": [
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 5127,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "OpenAI request failed: AuthenticationError",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-6185d16bcaa240149a12e54fe44eb315",
+            "created_at": "2026-10-09T06:48:56.635508+00:00",
+            "details": {
+              "scenario_id": "pool-exhaustion",
+              "scenario_version": 1
+            },
+            "id": "8be44e06-9df5-42ba-aca1-a967c5c79303",
+            "kind": "run_created",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "created_at": "2026-10-09T06:48:56.702278+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "1febcf52-349b-4792-bffd-8098e9bfb392",
+            "kind": "state_changed",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "created_at": "2026-10-09T06:48:59.405923+00:00",
+            "details": {
+              "failure": "database_pool_timeout",
+              "observed_end": "2026-10-09T06:49:01.335339+00:00",
+              "observed_start": "2026-10-09T06:48:54.812513+00:00",
+              "request_ids": [
+                "run-cafb6b59-8831937a-a",
+                "run-cafb6b59-8831937a-b",
+                "run-cafb6b59-8831937a-failure"
+              ],
+              "response": {
+                "error": "database_pool_timeout"
+              },
+              "statuses": [
+                409,
+                409,
+                503
+              ]
+            },
+            "id": "488a46de-e517-4d8f-b150-193cabbd8934",
+            "kind": "reproduction_recorded",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "created_at": "2026-10-09T06:48:59.438077+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "ff4ea9f1-61cd-40fd-8d86-42807e9408ed",
+            "kind": "state_changed",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "created_at": "2026-10-09T06:48:59.482899+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "69443ff1-fbfa-444d-af77-c6b9ce870658",
+            "kind": "evidence_recorded",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "created_at": "2026-10-09T06:48:59.506974+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "f3cd71fc-29ca-47d9-89fd-28e1ff82415a",
+            "kind": "state_changed",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "created_at": "2026-10-09T06:49:00.781917+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "OpenAI request failed: AuthenticationError"
+            },
+            "id": "e9045440-8fa0-4ee9-84c5-b6b92d1811ae",
+            "kind": "diagnosis_rejected",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "created_at": "2026-10-09T06:49:00.823283+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "c95cd993-3e83-4051-8fa4-982962c371f6",
+            "kind": "state_changed",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/f00d6145-084c-5096-b26b-056ff7560eea",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-b116cab1-2bfa-5bff-8029-f1e99610be13",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:48:59.482785Z",
+            "observed_start": "2026-10-09T06:48:59.482785Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/423c366c-41f6-5ce6-9c59-4a906b905233",
+            "content_sha256": "09381a3fd3eabaa86cd77b758bb4d12eacfe88e0e5367d8a410f97758fae21f5",
+            "id": "ev-9fb1343e-ac1b-5460-a690-9dfe03f3ace4",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:01.335339Z",
+            "observed_start": "2026-10-09T06:48:54.812513Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/e66bdae3-de34-5286-a47a-8ce40425a5ae",
+            "content_sha256": "9daefe045d4763571233277bfd4bddc588566f050933e2f3bdf0bfd55203a496",
+            "id": "ev-e0095328-d91a-51cb-a25f-1521ee78e432",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:01.335339Z",
+            "observed_start": "2026-10-09T06:48:54.812513Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/c10bd87e-c290-5f33-afb4-b24c46347947",
+            "content_sha256": "d88594759f5130aad46d70fccb00b7452f24827b19b4b5c7510c4d2bb109976c",
+            "id": "ev-1cc1520c-98a9-56d5-9c4e-532ca6787a09",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:01.335339Z",
+            "observed_start": "2026-10-09T06:48:54.812513Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2040f62a-aaff-5274-b4f1-aaa7f5185a7f",
+            "content_sha256": "e6b1bffbc127bb0a87d584604dd7c49002eed73ea87271b80f62f56c72f03360",
+            "id": "ev-5123ca25-62ff-53be-9313-1823470dee7c",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:01.335339Z",
+            "observed_start": "2026-10-09T06:48:54.812513Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/d9a547bd-174a-517e-a5a9-ef973ae4a6cb",
+            "content_sha256": "6d60b2ba03267dab2f76c83efa0493f447a0389f13319faf556929a1f77fdb67",
+            "id": "ev-cea6401d-e3e8-5043-aa70-b40920062d26",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:01.335339Z",
+            "observed_start": "2026-10-09T06:48:54.812513Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=0, maximum=0, latest=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/7449498d-4fc8-5cc1-9208-faeae1673c96",
+            "content_sha256": "8cec002f6284913933d292419b670779a1b233c84eec5d940c214b992541bd08",
+            "id": "ev-91ed2e70-6901-5dc2-81ab-2ab3229fa242",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:49:01.335339Z",
+            "observed_start": "2026-10-09T06:48:54.812513Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=True."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:48:56.635508Z",
+          "id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "pool-exhaustion",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T06:49:00.823283Z",
+          "workflow_id": "incidentlab-run-cafb6b59-d8a8-5053-b41d-ad34a0a0154b"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "cafb6b59-d8a8-5053-b41d-ad34a0a0154b",
+      "scenario_id": "pool-exhaustion",
+      "state": "FAILED",
+      "trial": 1,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 4074,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "OpenAI request failed: AuthenticationError",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-63032d0ca6a84ab7ae02024290714c64",
+            "created_at": "2026-10-09T06:49:01.760616+00:00",
+            "details": {
+              "scenario_id": "pool-exhaustion",
+              "scenario_version": 1
+            },
+            "id": "6d473dc9-c0f4-479f-9280-378dbab78621",
+            "kind": "run_created",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "created_at": "2026-10-09T06:49:01.791562+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "64cc55d2-8829-4301-9d00-9741f77bb9a2",
+            "kind": "state_changed",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "created_at": "2026-10-09T06:49:04.447823+00:00",
+            "details": {
+              "failure": "database_pool_timeout",
+              "observed_end": "2026-10-09T06:49:06.341035+00:00",
+              "observed_start": "2026-10-09T06:48:59.814719+00:00",
+              "request_ids": [
+                "run-5c5ebd4b-e3d7dc38-a",
+                "run-5c5ebd4b-e3d7dc38-b",
+                "run-5c5ebd4b-e3d7dc38-failure"
+              ],
+              "response": {
+                "error": "database_pool_timeout"
+              },
+              "statuses": [
+                409,
+                409,
+                503
+              ]
+            },
+            "id": "f26fb8ae-dda0-40a1-95be-0c97ef3e41e7",
+            "kind": "reproduction_recorded",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "created_at": "2026-10-09T06:49:04.464608+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "c0bdf910-8d9b-4b4d-8420-806ea1272632",
+            "kind": "state_changed",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "created_at": "2026-10-09T06:49:04.485222+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "d5e2c89d-ec6b-4f70-8ba8-6f2d1a53747a",
+            "kind": "evidence_recorded",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "created_at": "2026-10-09T06:49:04.501828+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "5483affe-dd45-41d0-ac4c-d5a97ff7438b",
+            "kind": "state_changed",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "created_at": "2026-10-09T06:49:05.186233+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "OpenAI request failed: AuthenticationError"
+            },
+            "id": "8bc921a8-8bd1-4fcc-8ec8-202d14caf5d6",
+            "kind": "diagnosis_rejected",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "created_at": "2026-10-09T06:49:05.226957+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "7c19b1a6-363f-4e90-b4a8-3224a5aeca30",
+            "kind": "state_changed",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/1089c1ea-56ce-5336-8aa9-35d7b4ee4b04",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-853bd59f-30e6-5e96-80de-c59776611891",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:49:04.485152Z",
+            "observed_start": "2026-10-09T06:49:04.485152Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/a0e43d59-8534-5d9e-8694-ec135ebde64a",
+            "content_sha256": "ffff6457efaeff19aafe148c4be22e655490a701241316c1ff1a37e336c1b1d0",
+            "id": "ev-60f42b5f-1d5d-52d0-9942-638c05c29112",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:06.341035Z",
+            "observed_start": "2026-10-09T06:48:59.814719Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/416e27bd-38ab-5eac-9850-da58a938a2d2",
+            "content_sha256": "1511469b022f073291ce78a8a3bc6500d7eef07e6ed9833c643b6b5d17aaec95",
+            "id": "ev-ff9303dd-63ce-54a0-b180-43a3a7b44084",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:06.341035Z",
+            "observed_start": "2026-10-09T06:48:59.814719Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/d5ffd3d0-7457-5d7a-a9f3-d19320c5be22",
+            "content_sha256": "41be1b80ac69c04b94ab313484ae2973680c5a99474fc27c3cbd6783bf8de02e",
+            "id": "ev-0bfdd811-d327-569f-b8d0-c84d4ad5445e",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:06.341035Z",
+            "observed_start": "2026-10-09T06:48:59.814719Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2eb3333b-a12c-5d7a-be0e-91d306f43d91",
+            "content_sha256": "cfaf63c2287c850b3484cb095ead9cd823a4ad8bc792b867c96a7c89950c04e6",
+            "id": "ev-5c23b954-8974-5f2b-bd7c-5c9cb1ed45d9",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:06.341035Z",
+            "observed_start": "2026-10-09T06:48:59.814719Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/966cdebf-e7fe-564a-b426-d171407e67ef",
+            "content_sha256": "733a9aaa4913b9f3e4783738ddca9f1434813c1751c6603f01a2241723e412f7",
+            "id": "ev-f957abbe-425d-5895-90e4-ad32863c28a9",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:06.341035Z",
+            "observed_start": "2026-10-09T06:48:59.814719Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=0, maximum=0, latest=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/c7019e19-903c-5aeb-8184-1f09335c92fe",
+            "content_sha256": "8d234b7301ee42632ec30eaa68afdf22d601fa9b5ad41d1a878014b003f12d89",
+            "id": "ev-b6f7673b-b59e-5604-9d97-458d4ee607a0",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:49:06.341035Z",
+            "observed_start": "2026-10-09T06:48:59.814719Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=True."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:49:01.760616Z",
+          "id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "pool-exhaustion",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T06:49:05.226957Z",
+          "workflow_id": "incidentlab-run-5c5ebd4b-3cc2-5198-921b-6b15336324c7"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "5c5ebd4b-3cc2-5198-921b-6b15336324c7",
+      "scenario_id": "pool-exhaustion",
+      "state": "FAILED",
+      "trial": 2,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 4079,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "OpenAI request failed: AuthenticationError",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-78ec3b7b1da6413094e7437f7822bf83",
+            "created_at": "2026-10-09T06:49:05.838510+00:00",
+            "details": {
+              "scenario_id": "pool-exhaustion",
+              "scenario_version": 1
+            },
+            "id": "39f122a4-3304-4ea6-b5b6-1cb98319ad17",
+            "kind": "run_created",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "created_at": "2026-10-09T06:49:05.870854+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "bd399d6a-14d5-4a0a-91b7-da7e905567e6",
+            "kind": "state_changed",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "created_at": "2026-10-09T06:49:08.514208+00:00",
+            "details": {
+              "failure": "database_pool_timeout",
+              "observed_end": "2026-10-09T06:49:10.406701+00:00",
+              "observed_start": "2026-10-09T06:49:03.889077+00:00",
+              "request_ids": [
+                "run-9cd5dc9a-cf38cd10-a",
+                "run-9cd5dc9a-cf38cd10-b",
+                "run-9cd5dc9a-cf38cd10-failure"
+              ],
+              "response": {
+                "error": "database_pool_timeout"
+              },
+              "statuses": [
+                409,
+                409,
+                503
+              ]
+            },
+            "id": "c46a8da9-02b5-4f31-a079-1c76ad2e04fe",
+            "kind": "reproduction_recorded",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "created_at": "2026-10-09T06:49:08.533299+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "4a0db1fc-8966-40e0-958e-98406c0007c7",
+            "kind": "state_changed",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "created_at": "2026-10-09T06:49:08.557501+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "77c1031c-310b-402a-9ef2-633ee2dca29a",
+            "kind": "evidence_recorded",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "created_at": "2026-10-09T06:49:08.576095+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "2b2decb0-40de-4c22-a40b-ccf43258ef40",
+            "kind": "state_changed",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "created_at": "2026-10-09T06:49:09.218416+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "OpenAI request failed: AuthenticationError"
+            },
+            "id": "3f3240ff-6317-483d-a1bc-281d5408b321",
+            "kind": "diagnosis_rejected",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "created_at": "2026-10-09T06:49:09.256062+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "15404a7b-ee14-4ee7-9111-4aa45663cdf9",
+            "kind": "state_changed",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/646c29cf-5b81-5ee1-8bc9-824727214931",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-6cfe2dc4-47e2-5a29-b0a0-881ca4a962d6",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:49:08.557424Z",
+            "observed_start": "2026-10-09T06:49:08.557424Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/1a3a5fa3-4a9e-5ff0-a15d-8451510e23fa",
+            "content_sha256": "76a6a0eabf22de6868a7a2a3d48b8cef6f179e6cde33d89f5b377e084db3077f",
+            "id": "ev-c5ca879b-eff8-5402-99f9-84dc097f9c4d",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:10.406701Z",
+            "observed_start": "2026-10-09T06:49:03.889077Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 3 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/2c3568ff-943d-5c27-be70-1856a5901649",
+            "content_sha256": "756f99de38be1c278d57fbb689cf443964d29eec3dbc9768c97441aa10c82dfc",
+            "id": "ev-ea9a8404-b57a-5a2f-81be-f8480ee10767",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:10.406701Z",
+            "observed_start": "2026-10-09T06:49:03.889077Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/6eb90fb5-0961-5cf6-ba44-431090938006",
+            "content_sha256": "ac70dffe7a6d548590b251e306aca6f7e5b49ea346d204f5983651342017f14d",
+            "id": "ev-03cced08-dd2d-575e-87ee-847c2b02b064",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:10.406701Z",
+            "observed_start": "2026-10-09T06:49:03.889077Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/bc885e8f-cb90-5558-a022-5e00cfc2ba3c",
+            "content_sha256": "e9d89a6cd4e76c28f01c5ef02457eecf38ce50c6a49079971a6c029cc50246ff",
+            "id": "ev-0da8f613-1d5a-56f1-afad-79ae869bd305",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:10.406701Z",
+            "observed_start": "2026-10-09T06:49:03.889077Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=0, maximum=0, latest=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/60d85021-2fda-54c3-9ed3-6ffc349fdea7",
+            "content_sha256": "9565f094d63758dee4d2b16e769ef365a1b5fd9b52fb2ca1dfbe3ac3792af600",
+            "id": "ev-b6d3d675-3148-5919-8dd1-fdd28f474173",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:10.406701Z",
+            "observed_start": "2026-10-09T06:49:03.889077Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=1, maximum=1, latest=1."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/1258704b-ac8e-50cf-8811-6848943fdb1e",
+            "content_sha256": "e6770655b3a6a370882c1283c1a03766505e7c9a848073ab5e58fc95a9c1b625",
+            "id": "ev-cd1df6c2-ec14-5180-9298-f0121ee56ff9",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:49:10.406701Z",
+            "observed_start": "2026-10-09T06:49:03.889077Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=True."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:49:05.838510Z",
+          "id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "pool-exhaustion",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T06:49:09.256062Z",
+          "workflow_id": "incidentlab-run-9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "9cd5dc9a-53bc-5288-9a6f-8d757bbc75bc",
+      "scenario_id": "pool-exhaustion",
+      "state": "FAILED",
+      "trial": 3,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 8114,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "OpenAI request failed: AuthenticationError",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-0f73dd0afbd546d79661ca0ab1964fa3",
+            "created_at": "2026-10-09T06:49:09.920066+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "86666f55-c91e-4d4a-ae61-6427cb1aec30",
+            "kind": "run_created",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "created_at": "2026-10-09T06:49:09.952179+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "889f982c-bedc-4f49-9d7d-81e0fcd1143c",
+            "kind": "state_changed",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "created_at": "2026-10-09T06:49:12.534829+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T06:49:14.433263+00:00",
+              "observed_start": "2026-10-09T06:49:07.969168+00:00",
+              "request_ids": [
+                "run-0693814c-fe83ff0b-failure"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "statuses": [
+                200
+              ]
+            },
+            "id": "d20fd57f-5008-46cc-aafe-680875c9c137",
+            "kind": "reproduction_recorded",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "created_at": "2026-10-09T06:49:12.553154+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "3b70be1c-8061-4856-ae74-2401c5920d60",
+            "kind": "state_changed",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "created_at": "2026-10-09T06:49:16.609862+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "f05f793c-0730-4bda-983a-e0dcac2a9a11",
+            "kind": "evidence_recorded",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "created_at": "2026-10-09T06:49:16.651690+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "ee02804c-86e7-4b16-ae02-65713cf10046",
+            "kind": "state_changed",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "created_at": "2026-10-09T06:49:17.290936+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "OpenAI request failed: AuthenticationError"
+            },
+            "id": "aa36c21f-04e2-49b9-abc3-e4ba3340b7c1",
+            "kind": "diagnosis_rejected",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "created_at": "2026-10-09T06:49:17.323060+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "ca0f3985-0788-440c-9d9d-af1114740b00",
+            "kind": "state_changed",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/3e9d072e-b82e-575d-a732-8ea822bfb431",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-d1325454-19ce-5076-830d-b689dddd1a39",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:49:16.609546Z",
+            "observed_start": "2026-10-09T06:49:16.609546Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/934a5398-dec5-55a1-abe6-4a753c7ab3c9",
+            "content_sha256": "f5fb02e07ad3fe7b26420f4473eb5fbc967e9fb9a8f6576ed716a07facfff536",
+            "id": "ev-8b1d401d-b974-56e4-a2f8-0a22a74bb0f2",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:49:14.433263Z",
+            "observed_start": "2026-10-09T06:49:07.969168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/e4e3b6cb-9829-5d93-bb0c-49a44bd2dfaf",
+            "content_sha256": "8bb1a7dfcc5985fbbcdba265c90f6cb0df33a6e1700458811a663d8a8cd3f474",
+            "id": "ev-cd0564eb-1962-592e-af5e-c3c6fd4f9660",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:49:14.433263Z",
+            "observed_start": "2026-10-09T06:49:07.969168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/f5db0ff5-bc50-5abe-8dd2-ef4512c6ec02",
+            "content_sha256": "93ca80ddb2674123b81dff68f6e53d3857a545f24102da1519502e20273bbdb8",
+            "id": "ev-48e07188-7ba8-519f-b9e6-93421608ee29",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:14.433263Z",
+            "observed_start": "2026-10-09T06:49:07.969168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/a4aa75e0-dd30-5f10-8531-92fd25856a1a",
+            "content_sha256": "e679b12815054e7e275df4c4609edb28414d714f67c4e908dd4001a3842955e5",
+            "id": "ev-6f6fd55e-a23a-5890-9fcd-81cdf58c5d51",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:14.433263Z",
+            "observed_start": "2026-10-09T06:49:07.969168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/879a122c-0925-5d50-9fc1-9dc5d6e21f3d",
+            "content_sha256": "442a9e69e16e2f4d78f64cbfbfe3acccc39558690f7ab6f09e43ff02d49bec82",
+            "id": "ev-d38e2f94-2d21-5905-a850-f1fc4a23fbb2",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:14.433263Z",
+            "observed_start": "2026-10-09T06:49:07.969168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 2 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/586f3a70-f0a5-5baf-9d80-f7cdce104ab9",
+            "content_sha256": "d788f1658ec82e28104c5b7fd738d54adea6fcb74a5c5a020d7f6ab4634bc4bd",
+            "id": "ev-d038100b-45e3-5ff6-8b97-e72f203c3b1b",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:49:14.433263Z",
+            "observed_start": "2026-10-09T06:49:07.969168Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:49:09.920066Z",
+          "id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T06:49:17.323060Z",
+          "workflow_id": "incidentlab-run-0693814c-16f8-52cf-94a3-085b31e7d64b"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "0693814c-16f8-52cf-94a3-085b31e7d64b",
+      "scenario_id": "inventory-underflow",
+      "state": "FAILED",
+      "trial": 1,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 8139,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "OpenAI request failed: AuthenticationError",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-6bc2125923ec47e0a9fa2580a6de24d0",
+            "created_at": "2026-10-09T06:49:18.036389+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "7dd28cfa-6b6e-442c-a18d-77d4c6de54c3",
+            "kind": "run_created",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "created_at": "2026-10-09T06:49:18.067115+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "33a4766f-9be0-4996-a005-f0c828523d69",
+            "kind": "state_changed",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "created_at": "2026-10-09T06:49:20.651980+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T06:49:22.550425+00:00",
+              "observed_start": "2026-10-09T06:49:16.084961+00:00",
+              "request_ids": [
+                "run-3fcc5446-df4a5e33-failure"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "statuses": [
+                200
+              ]
+            },
+            "id": "4c84a01e-5289-4df0-9387-8bf4176530e5",
+            "kind": "reproduction_recorded",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "created_at": "2026-10-09T06:49:20.668889+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "3e1cc045-b579-4bab-a1ad-94b3e6ca2f58",
+            "kind": "state_changed",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "created_at": "2026-10-09T06:49:24.715234+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "1f085669-3af3-4db6-8204-4b2ae21df34d",
+            "kind": "evidence_recorded",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "created_at": "2026-10-09T06:49:24.754985+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "014e7ac3-aee3-4e76-970f-a930bd13c7ef",
+            "kind": "state_changed",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "created_at": "2026-10-09T06:49:25.218016+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "OpenAI request failed: AuthenticationError"
+            },
+            "id": "373dee21-5f3c-49a3-9e09-021a49b5f719",
+            "kind": "diagnosis_rejected",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "created_at": "2026-10-09T06:49:25.254867+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "7b2eca4d-277d-4eb1-95cf-0ee9f86946cf",
+            "kind": "state_changed",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/380295ab-8a5e-5315-b07f-e6b1b5f39825",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-d0a34a8a-e966-5fcc-bb6a-8b3e19543e09",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:49:24.714728Z",
+            "observed_start": "2026-10-09T06:49:24.714728Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/069db3d1-ecc0-5c6f-b37e-3ec411784c54",
+            "content_sha256": "99720437824903734c9edab6a593860e5e43f32d1699849352c269f42aa81ef6",
+            "id": "ev-e050a616-25b8-5d4f-9c0d-3d651b0922e4",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:49:22.550425Z",
+            "observed_start": "2026-10-09T06:49:16.084961Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/ece5200a-4ea5-5b77-b03c-d8fa2443dfc1",
+            "content_sha256": "0880f80d59f3504c4d526e549a710384b273dae52021c5cf2fb12e7d40c3b7dc",
+            "id": "ev-ead724d0-6591-589e-a914-7f3e8748df04",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:49:22.550425Z",
+            "observed_start": "2026-10-09T06:49:16.084961Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/35a3fd7c-85a9-503a-ba75-cbfc4a2aa973",
+            "content_sha256": "2a01f431453f2d589ae0517e1ff61c02ef40f690ba01ffdb77b6a7ab94dd8408",
+            "id": "ev-04aba9e0-5614-580b-ac81-3fe651123376",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:22.550425Z",
+            "observed_start": "2026-10-09T06:49:16.084961Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/e76df0e8-aaaf-5ef2-9896-5a14b4caae4b",
+            "content_sha256": "4416c68e41ec325375c52384ad50265510b13da1dd91e1ac45ea84de757e2d9e",
+            "id": "ev-62cb5864-5081-5333-895d-19d9701d07d1",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:22.550425Z",
+            "observed_start": "2026-10-09T06:49:16.084961Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/f97d8aa4-7c43-5b59-9001-c24fb353f274",
+            "content_sha256": "8f3f5ad1702932c749ebc7759441946fde236da85acaf77e7ff3ad7e4f930c57",
+            "id": "ev-71888af3-ed51-5464-8170-611a3c0de91a",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:22.550425Z",
+            "observed_start": "2026-10-09T06:49:16.084961Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 3 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/1fd5d42e-e0e4-52d7-8dc3-ebb4b57567bd",
+            "content_sha256": "aa2496d724a24062c16f2d2c16d7cb78ac634adb0aadbca9207f4c64a20637be",
+            "id": "ev-cd8c4713-da18-52bc-890a-0360f98df657",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:49:22.550425Z",
+            "observed_start": "2026-10-09T06:49:16.084961Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:49:18.036389Z",
+          "id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T06:49:25.254867Z",
+          "workflow_id": "incidentlab-run-3fcc5446-ec2b-5941-9674-d20a672fe772"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "3fcc5446-ec2b-5941-9674-d20a672fe772",
+      "scenario_id": "inventory-underflow",
+      "state": "FAILED",
+      "trial": 2,
+      "verified_repair": false
+    },
+    {
+      "citation_count": 0,
+      "citations_valid": false,
+      "duration_ms": 7108,
+      "estimated_cost_usd": 0,
+      "failure_category": "DiagnosisError",
+      "failure_detail": "OpenAI request failed: AuthenticationError",
+      "input_tokens": 0,
+      "model_ids": [],
+      "output_tokens": 0,
+      "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+      "prompt_versions": [],
+      "report": {
+        "candidates": [],
+        "events": [
+          {
+            "actor": "api",
+            "correlation_id": "live-evaluation-v1-ebe3e980b3414decbaaa3635754389d9",
+            "created_at": "2026-10-09T06:49:26.179113+00:00",
+            "details": {
+              "scenario_id": "inventory-underflow",
+              "scenario_version": 1
+            },
+            "id": "c197d774-869c-4779-b0c7-fc4b65a6f2e7",
+            "kind": "run_created",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "created_at": "2026-10-09T06:49:26.209730+00:00",
+            "details": {
+              "state": "REPRODUCING"
+            },
+            "id": "b1deaa8d-caee-485b-a30d-7da007581f22",
+            "kind": "state_changed",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "created_at": "2026-10-09T06:49:28.764022+00:00",
+            "details": {
+              "failure": null,
+              "observed_end": "2026-10-09T06:49:30.695920+00:00",
+              "observed_start": "2026-10-09T06:49:24.227685+00:00",
+              "request_ids": [
+                "run-f73146bc-a26032de-failure"
+              ],
+              "response": {
+                "remaining_inventory": -1,
+                "sku": "widget"
+              },
+              "statuses": [
+                200
+              ]
+            },
+            "id": "49a25ccb-aad6-44be-9066-8c41e1156d36",
+            "kind": "reproduction_recorded",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "created_at": "2026-10-09T06:49:28.780108+00:00",
+            "details": {
+              "state": "COLLECTING"
+            },
+            "id": "e99865bc-4a7a-461c-888b-33915b141c5e",
+            "kind": "state_changed",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "created_at": "2026-10-09T06:49:32.827082+00:00",
+            "details": {
+              "artifact_count": 7,
+              "evidence_count": 7
+            },
+            "id": "0e786f94-d0e3-4788-972f-dba6c64aa0bb",
+            "kind": "evidence_recorded",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "created_at": "2026-10-09T06:49:32.865784+00:00",
+            "details": {
+              "state": "DIAGNOSING"
+            },
+            "id": "1176be89-12f8-413f-baae-56ba28863d59",
+            "kind": "state_changed",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929"
+          },
+          {
+            "actor": "worker",
+            "correlation_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "created_at": "2026-10-09T06:49:33.245507+00:00",
+            "details": {
+              "category": "DiagnosisError",
+              "detail": "OpenAI request failed: AuthenticationError"
+            },
+            "id": "5eb749ee-5138-40e7-a1a1-ad3ffe375aa7",
+            "kind": "diagnosis_rejected",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929"
+          },
+          {
+            "actor": "workflow",
+            "correlation_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "created_at": "2026-10-09T06:49:33.268046+00:00",
+            "details": {
+              "failure_category": "ActivityError",
+              "state": "FAILED"
+            },
+            "id": "fbd3f731-f8bb-4d01-92c7-b2ec3a052139",
+            "kind": "state_changed",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929"
+          }
+        ],
+        "evidence": [
+          {
+            "artifact_ref": "/evidence/artifacts/f1858da0-1913-5672-8f43-0fd9c5612d3d",
+            "content_sha256": "a1175a3be034a42e596eee1bbd36d03fbbbc29c1cb708f48c820fa4f438853c0",
+            "id": "ev-5e8dbc6a-cb0f-5569-b8b6-0e2c9fab9dc2",
+            "kind": "commit",
+            "observed_end": "2026-10-09T06:49:32.826742Z",
+            "observed_start": "2026-10-09T06:49:32.826742Z",
+            "retrieval_method": "local_git_metadata",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "schema_version": 1,
+            "service": "repository",
+            "source": "git",
+            "summary": "Run is pinned to Git commit a8c1bd576f633b6c0202b5cc68918874ae575053."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/94fba8fc-2c1d-5e1d-951a-55f873f992d8",
+            "content_sha256": "73f3e07525f2a5aabdfa607a2c49bc415c2e6ecffd9ca48f5f7db1431f1cb73e",
+            "id": "ev-22b8a896-dbcd-575f-a532-e6bd2864124f",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:49:30.695920Z",
+            "observed_start": "2026-10-09T06:49:24.227685Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/8bf264ae-25ea-5469-81b0-1b687616b32e",
+            "content_sha256": "af544ee11fc668b82f593944365bca93617d1ddf5080f45b162aba15d414c945",
+            "id": "ev-27655486-2f09-5d18-95d8-2daebcdda71d",
+            "kind": "gap",
+            "observed_end": "2026-10-09T06:49:30.695920Z",
+            "observed_start": "2026-10-09T06:49:24.227685Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "no matching telemetry"
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/af6da70d-0137-5998-8105-017ffd7d9714",
+            "content_sha256": "8db4586d748532a65ef450f69fecc1f7d751cd7bd9dd635c22bbda7cb59a20d7",
+            "id": "ev-2adff417-fb61-5976-b1bf-34be25237188",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:30.695920Z",
+            "observed_start": "2026-10-09T06:49:24.227685Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "schema_version": 1,
+            "service": "checkout",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/1502821c-ee94-57b9-b820-fc1d2cf7e001",
+            "content_sha256": "e6dee52b03248216314f6789b83913ca26f0259bec36b8ec73a80bf32b93b9f3",
+            "id": "ev-34131331-c26c-5cf0-bbb0-1a4ffa09131a",
+            "kind": "log",
+            "observed_end": "2026-10-09T06:49:30.695920Z",
+            "observed_start": "2026-10-09T06:49:24.227685Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "loki",
+            "summary": "Found 2 structured log record(s); malformed=0."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/e1a7530f-42f0-51c0-9999-d4446ce1f860",
+            "content_sha256": "b3f9bd319799d69c78988d891afb472b7c9e6ffd54d4ceab15763f5ed4f73299",
+            "id": "ev-da04eba6-d87a-5706-8dcc-d5120d6e56f0",
+            "kind": "metric",
+            "observed_end": "2026-10-09T06:49:30.695920Z",
+            "observed_start": "2026-10-09T06:49:24.227685Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "schema_version": 1,
+            "service": "inventory",
+            "source": "prometheus",
+            "summary": "Found 1 metric series with 3 sample(s); minimum=2, maximum=2, latest=2."
+          },
+          {
+            "artifact_ref": "/evidence/artifacts/8a0f9242-b6a1-5d53-9801-03e3c4fa014a",
+            "content_sha256": "918664efa2ff2016ef9a998d8ea088e0a99a33c33ba054e6e1c8939f8df60570",
+            "id": "ev-ffe9882f-50a9-5655-b8aa-f8db04a2bd2b",
+            "kind": "trace",
+            "observed_end": "2026-10-09T06:49:30.695920Z",
+            "observed_start": "2026-10-09T06:49:24.227685Z",
+            "retrieval_method": "bounded_http_query",
+            "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+            "schema_version": 1,
+            "service": "checkout,inventory",
+            "source": "jaeger",
+            "summary": "Found 1 correlated trace(s); database acquisition timeout=False."
+          }
+        ],
+        "hypotheses": [],
+        "limitations": [
+          "This is a local educational system and does not deploy or merge changes.",
+          "Verification applies only to the pinned commit and recorded sandbox environment.",
+          "Model output is untrusted until deterministic policy and verification complete."
+        ],
+        "model_usage": [],
+        "report_version": "incident-report-v1",
+        "run": {
+          "created_at": "2026-10-09T06:49:26.179113Z",
+          "id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+          "pinned_commit": "a8c1bd576f633b6c0202b5cc68918874ae575053",
+          "scenario_id": "inventory-underflow",
+          "scenario_version": 1,
+          "schema_version": 1,
+          "state": "FAILED",
+          "updated_at": "2026-10-09T06:49:33.268046Z",
+          "workflow_id": "incidentlab-run-f73146bc-dd38-556d-9bb0-0da7f1daf929"
+        },
+        "verifications": []
+      },
+      "reproduced": true,
+      "resolved_citation_count": 0,
+      "run_id": "f73146bc-dd38-556d-9bb0-0da7f1daf929",
+      "scenario_id": "inventory-underflow",
+      "state": "FAILED",
+      "trial": 3,
+      "verified_repair": false
+    }
+  ]
+}
