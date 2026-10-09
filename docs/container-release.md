@@ -29,7 +29,7 @@ docker compose --env-file .env.ghcr -f compose.ghcr.yaml up -d --wait
 ```
 
 `INCIDENTLAB_VERSION` selects one version across all IncidentLab images. Prefer
-an immutable release such as `0.1.0`; `latest` follows the most recent release.
+an immutable release such as `0.3.0`; `latest` follows the most recent release.
 The verifier pulls the matching sandbox image through the trusted Docker socket
 instead of rebuilding it locally.
 
@@ -44,14 +44,14 @@ docker compose --env-file .env.ghcr -f compose.ghcr.yaml down
 The `Publish container release` workflow runs for semantic version tags:
 
 ```sh
-git tag -a v0.1.0 -m "IncidentLab v0.1.0"
-git push origin v0.1.0
+git tag -a v0.3.0 -m "IncidentLab v0.3.0"
+git push origin v0.3.0
 ```
 
 A successful workflow publishes these tags for every component:
 
-- `0.1.0`
-- `0.1`
+- `0.3.0`
+- `0.3`
 - `latest`
 - `sha-<commit>`
 
